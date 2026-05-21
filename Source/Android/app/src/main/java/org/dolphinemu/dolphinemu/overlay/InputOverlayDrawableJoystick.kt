@@ -5,7 +5,10 @@ package org.dolphinemu.dolphinemu.overlay
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.view.MotionEvent
 import org.dolphinemu.dolphinemu.features.input.model.InputOverrider
@@ -39,7 +42,8 @@ class InputOverlayDrawableJoystick(
     val legacyId: Int,
     val xControl: Int,
     val yControl: Int,
-    private val controllerIndex: Int
+    private val controllerIndex: Int,
+    val overlayLabel: String? = null
 ) {
     var x = 0.0f
         private set
@@ -92,6 +96,24 @@ class InputOverlayDrawableJoystick(
         outerBitmap.draw(canvas)
         currentStateBitmapDrawable.draw(canvas)
         boundsBoxBitmap.draw(canvas)
+        // Label drawn on outer bitmap center, stays fixed regardless of stick position
+        overlayLabel?.let { drawLabel(canvas, it, outerBitmap.bounds) }
+    }
+
+    private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = bounds.width() * 0.20f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            setShadowLayer(4f, 0f, 0f, Color.BLACK)
+        }
+        canvas.drawText(
+            label,
+            bounds.exactCenterX(),
+            bounds.exactCenterY() + paint.textSize / 3f,
+            paint
+        )
     }
 
     fun trackEvent(event: MotionEvent): Boolean {

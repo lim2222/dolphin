@@ -80,9 +80,20 @@ Common::Quaternion ComplementaryFilter(const Common::Quaternion& gyroscope,
 }
 
 void EmulateShake(PositionalState* state, ControllerEmu::Shake* const shake_group,
-                  float time_elapsed)
+                  float time_elapsed, const ShakeOverride* override_state)
 {
-  auto target_position = shake_group->GetState() * float(shake_group->GetIntensity() / 2);
+  ControllerEmu::Shake::StateData raw_state;
+  if (override_state)
+  {
+    raw_state.x = override_state->x;
+    raw_state.y = override_state->y;
+    raw_state.z = override_state->z;
+  }
+  else
+  {
+    raw_state = shake_group->GetState();
+  }
+  auto target_position = raw_state * float(shake_group->GetIntensity() / 2);
   for (std::size_t i = 0; i != target_position.data.size(); ++i)
   {
     if (state->velocity.data[i] * std::copysign(1.f, target_position.data[i]) < 0 ||
@@ -107,9 +118,22 @@ void EmulateShake(PositionalState* state, ControllerEmu::Shake* const shake_grou
   ApproachPositionWithJerk(state, target_position, jerk, time_elapsed);
 }
 
-void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group, float time_elapsed)
+void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group, float time_elapsed,
+                 const TiltOverride* override_state)
 {
-  const auto target = tilt_group->GetState();
+  ControllerEmu::Tilt::StateData target;
+  if (override_state)
+  {
+    // Matches WiimoteNew.ini axis names:
+    // Tilt/Forward + Tilt/Backward → X axis (pitch)
+    // Tilt/Left + Tilt/Right       → Y axis (roll)
+    target.x = override_state->forward - override_state->backward;
+    target.y = override_state->right - override_state->left;
+  }
+  else
+  {
+    target = tilt_group->GetState();
+  }
 
   // 180 degrees is currently the max tilt value.
   const ControlState roll = target.x * MathUtil::PI;
@@ -130,9 +154,21 @@ void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group, 
   ApproachAngleWithAccel(state, target_angle, max_accel, time_elapsed);
 }
 
-void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed)
+void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed,
+                  const SwingOverride* override_state)
 {
-  const auto input_state = swing_group->GetState();
+  ControllerEmu::Force::StateData input_state;
+  if (override_state)
+  {
+    // X/Y from joystick, Z from forward/backward buttons
+    input_state.x = override_state->x;
+    input_state.y = override_state->y;
+    input_state.z = override_state->forward - override_state->backward;
+  }
+  else
+  {
+    input_state = swing_group->GetState();
+  }
   const float max_distance = swing_group->GetMaxDistance();
   const float max_angle = swing_group->GetTwistAngle();
 

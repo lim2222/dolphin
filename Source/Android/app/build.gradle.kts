@@ -36,7 +36,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "org.dolphinemu.dolphinemu"
+        applicationId = "org.dolphinemu.dolphinemu.motion"
         minSdk = 24
         targetSdk = 36
 
@@ -69,7 +69,7 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
 
-            resValue("string", "app_name_suffixed", "Dolphin Emulator")
+            resValue("string", "app_name_suffixed", "Dolphin Motion")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -81,9 +81,9 @@ android {
         // Signed by debug key disallowing distribution on Play Store.
         // Attaches "debug" suffix to version and package name, allowing installation alongside the release build.
         debug {
-            resValue("string", "app_name_suffixed", "Dolphin Debug")
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+            resValue("string", "app_name_suffixed", "Dolphin Motion")
+            applicationIdSuffix = ""
+            versionNameSuffix = ""
             isJniDebuggable = true
         }
     }
@@ -102,7 +102,8 @@ android {
                 arguments(
                     "-DANDROID_STL=c++_static",
                     "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
-                    "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+                    "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+					"-DFETCHCONTENT_BASE_DIR=C:/fc"
                     // , "-DENABLE_GENERIC=ON"
                 )
                 abiFilters("arm64-v8a", "x86_64") //, "armeabi-v7a", "x86"
