@@ -28,10 +28,16 @@ class InputDeviceSetting(
         controller.setDefaultDevice(selection)
 
     override fun refreshChoicesAndValues() {
-        val devices = ControllerInterface.getAllDeviceStrings()
+        val devices = ControllerInterface.getAllDeviceStrings().toMutableList()
 
-        choices = devices
-        values = devices
+        // Always include the touchscreen device so users can reselect it
+        val touchscreenDevice = "Android/4/Touchscreen"
+        if (!devices.contains(touchscreenDevice)) {
+            devices.add(0, touchscreenDevice)
+        }
+
+        choices = devices.toTypedArray()
+        values = devices.toTypedArray()
     }
 
     override val isEditable: Boolean = true

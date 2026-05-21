@@ -215,6 +215,7 @@
         <item>@string/extension_guitar</item>
         <item>@string/extension_drums</item>
         <item>@string/extension_turntable</item>
+        <item>@string/extension_tatacon</item>
     </string-array>
     <integer-array name="wiimoteExtensionsValues">
         <item>0</item>
@@ -223,6 +224,7 @@
         <item>3</item>
         <item>4</item>
         <item>5</item>
+        <item>8</item>
     </integer-array>
 
     <!-- Texture Cache Accuracy Preference -->
@@ -436,6 +438,15 @@
         <item>-</item>
         <item>@string/gamepad_home</item>
         <item>@string/gamepad_d_pad</item>
+        <item>WSKX</item>
+        <item>WSKY</item>
+        <item>WSKZ</item>
+        <item>WSW</item>
+        <item>WSF</item>
+        <item>WSB</item>
+        <item>WT</item>
+        <item>WTF</item>
+        <item>WTB</item>
     </string-array>
 
     <string-array name="wiimoteLatchableButtons">
@@ -460,6 +471,24 @@
         <item>C</item>
         <item>Z</item>
         <item>@string/gamepad_nunchuk_stick</item>
+        <item>WSKX</item>
+        <item>WSKY</item>
+        <item>WSKZ</item>
+        <item>WSW</item>
+        <item>WSF</item>
+        <item>WSB</item>
+        <item>WT</item>
+        <item>WTF</item>
+        <item>WTB</item>
+        <item>NSKX</item>
+        <item>NSKY</item>
+        <item>NSKZ</item>
+        <item>NSW</item>
+        <item>NSF</item>
+        <item>NSB</item>
+        <item>NT</item>
+        <item>NTF</item>
+        <item>NTB</item>
     </string-array>
 
     <string-array name="nunchukLatchableButtons">

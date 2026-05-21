@@ -5,7 +5,10 @@ package org.dolphinemu.dolphinemu.overlay
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.view.MotionEvent
 
@@ -32,7 +35,8 @@ class InputOverlayDrawableDpad(
     upControl: Int,
     downControl: Int,
     leftControl: Int,
-    rightControl: Int
+    rightControl: Int,
+    val overlayLabel: String? = null
 ) {
     private val controls = IntArray(4)
     var trackId: Int = -1
@@ -122,6 +126,23 @@ class InputOverlayDrawableDpad(
                 }
             }
         }
+        overlayLabel?.let { drawLabel(canvas, it, defaultStateBitmap.bounds) }
+    }
+
+    private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = bounds.width() * 0.22f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            setShadowLayer(4f, 0f, 0f, Color.BLACK)
+        }
+        canvas.drawText(
+            label,
+            bounds.exactCenterX(),
+            bounds.exactCenterY() + paint.textSize / 3f,
+            paint
+        )
     }
 
     /**

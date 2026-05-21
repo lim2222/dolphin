@@ -5,7 +5,10 @@ package org.dolphinemu.dolphinemu.overlay
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.view.MotionEvent
 
@@ -26,9 +29,11 @@ class InputOverlayDrawableButton(
     pressedStateBitmap: Bitmap,
     val legacyId: Int,
     val control: Int,
-    var latching: Boolean
+    var latching: Boolean,
+    val overlayLabel: String? = null
 ) {
     var trackId: Int = -1
+    var useAlphaHitTest: Boolean = false
     private var previousTouchX = 0
     private var previousTouchY = 0
     private var controlPositionX = 0
@@ -75,6 +80,23 @@ class InputOverlayDrawableButton(
 
     fun draw(canvas: Canvas) {
         currentStateBitmapDrawable.draw(canvas)
+        overlayLabel?.let { drawLabel(canvas, it, bounds) }
+    }
+
+    private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = bounds.width() * 0.28f
+            typeface = Typeface.DEFAULT_BOLD
+            textAlign = Paint.Align.CENTER
+            setShadowLayer(4f, 0f, 0f, Color.BLACK)
+        }
+        canvas.drawText(
+            label,
+            bounds.exactCenterX(),
+            bounds.exactCenterY() + paint.textSize / 3f,
+            paint
+        )
     }
 
     private val currentStateBitmapDrawable: BitmapDrawable
@@ -92,6 +114,23 @@ class InputOverlayDrawableButton(
 
     val bounds: Rect
         get() = defaultStateBitmap.bounds
+
+    /**
+     * Returns true only if the pixel at (x, y) has alpha > threshold.
+     * Falls back to bounds check if useAlphaHitTest is false.
+     */
+    fun hitTest(x: Int, y: Int, useAlphaHitTest: Boolean = false): Boolean {
+        if (!bounds.contains(x, y)) return false
+        if (!useAlphaHitTest) return true
+
+        val bitmap = defaultStateBitmap.bitmap ?: return true
+        val bx = ((x - bounds.left).toFloat() / bounds.width() * bitmap.width).toInt()
+            .coerceIn(0, bitmap.width - 1)
+        val by = ((y - bounds.top).toFloat() / bounds.height() * bitmap.height).toInt()
+            .coerceIn(0, bitmap.height - 1)
+        val pixel = bitmap.getPixel(bx, by)
+        return (pixel ushr 24) > 10  // alpha threshold
+    }
 
     fun setPressedState(isPressed: Boolean) {
         pressedState = isPressed

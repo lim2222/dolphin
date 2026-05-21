@@ -12,6 +12,7 @@
 #include "Core/HW/Wiimote.h"
 #include "Core/HW/WiimoteEmu/Extension/DesiredExtensionState.h"
 #include "Core/HW/WiimoteEmu/WiimoteEmu.h"
+#include "InputCommon/ControllerInterface/Touch/InputOverrider.h"
 
 #include "InputCommon/ControllerEmu/ControlGroup/AnalogStick.h"
 #include "InputCommon/ControllerEmu/ControlGroup/Buttons.h"
@@ -75,9 +76,27 @@ void Nunchuk::BuildDesiredExtensionState(DesiredExtensionState* target_state)
   nc_data.SetButtons(buttons);
 
   // Acceleration data:
-  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ);
+  const auto& mo = ciface::Touch::GetMotionOverrideState(m_controller_index);
+
+  SwingOverride swing_override{float(mo.nunchuk_swing_x), float(mo.nunchuk_swing_y),
+                               float(mo.nunchuk_swing_forward), float(mo.nunchuk_swing_backward)};
+  TiltOverride tilt_override{float(mo.nunchuk_tilt_forward), float(mo.nunchuk_tilt_backward),
+                             float(mo.nunchuk_tilt_left), float(mo.nunchuk_tilt_right)};
+  ShakeOverride shake_override{float(mo.nunchuk_shake_x), float(mo.nunchuk_shake_y),
+                               float(mo.nunchuk_shake_z)};
+
+  const bool any_swing = mo.nunchuk_swing_x || mo.nunchuk_swing_y ||
+                         mo.nunchuk_swing_forward || mo.nunchuk_swing_backward;
+  const bool any_tilt = mo.nunchuk_tilt_forward || mo.nunchuk_tilt_backward ||
+                        mo.nunchuk_tilt_left || mo.nunchuk_tilt_right;
+  const bool any_shake = mo.nunchuk_shake_x || mo.nunchuk_shake_y || mo.nunchuk_shake_z;
+
+  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ,
+               any_swing ? &swing_override : nullptr);
+  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ,
+              any_tilt ? &tilt_override : nullptr);
+  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ,
+               any_shake ? &shake_override : nullptr);
 
   const auto transformation =
       GetRotationalMatrix(-m_tilt_state.angle) * GetRotationalMatrix(-m_swing_state.angle);

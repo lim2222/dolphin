@@ -75,9 +75,28 @@ void ApproachPositionWithJerk(PositionalState* state, const Common::Vec3& target
 void ApproachAngleWithAccel(RotationalState* state, const Common::Vec3& target, float max_accel,
                             float time_elapsed);
 
-void EmulateShake(PositionalState* state, ControllerEmu::Shake* shake_group, float time_elapsed);
-void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* tilt_group, float time_elapsed);
-void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed);
+struct ShakeOverride
+{
+  float x = 0, y = 0, z = 0;
+};
+
+struct SwingOverride
+{
+  float x = 0, y = 0, forward = 0, backward = 0;
+};
+
+struct TiltOverride
+{
+  float forward = 0, backward = 0;
+  float left = 0, right = 0;
+};
+
+void EmulateShake(PositionalState* state, ControllerEmu::Shake* shake_group, float time_elapsed,
+                  const ShakeOverride* override_state = nullptr);
+void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* tilt_group, float time_elapsed,
+                 const TiltOverride* override_state = nullptr);
+void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed,
+                  const SwingOverride* override_state = nullptr);
 void EmulatePoint(MotionState* state, ControllerEmu::Cursor* ir_group,
                   const ControllerEmu::InputOverrideFunction& override_func, float time_elapsed);
 void EmulateIMUCursor(IMUCursorState* state, ControllerEmu::IMUCursor* imu_ir_group,
