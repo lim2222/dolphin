@@ -28,6 +28,7 @@
 #include "Core/HW/WiimoteCommon/WiimoteHid.h"
 #include "Core/HW/WiimoteEmu/DesiredWiimoteState.h"
 #include "Core/HW/WiimoteEmu/Extension/Classic.h"
+#include "InputCommon/ControllerInterface/Touch/InputOverrider.h"
 #include "Core/HW/WiimoteEmu/Extension/DesiredExtensionState.h"
 #include "Core/HW/WiimoteEmu/Extension/DrawsomeTablet.h"
 #include "Core/HW/WiimoteEmu/Extension/Drums.h"
@@ -270,7 +271,9 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
   // Extension
   groups.emplace_back(m_attachments = new ControllerEmu::Attachments(_trans("Extension")));
   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::None>());
-  m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Nunchuk>());
+  auto nunchuk = std::make_unique<WiimoteEmu::Nunchuk>();
+  nunchuk->SetControllerIndex(m_index);
+  m_attachments->AddAttachment(std::move(nunchuk));
   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Classic>());
   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Guitar>());
   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Drums>());
@@ -834,10 +837,28 @@ void Wiimote::RefreshConfig()
 
 void Wiimote::StepDynamics()
 {
-  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ);
+  const auto& mo = ciface::Touch::GetMotionOverrideState(m_index);
+
+  SwingOverride swing_override{float(mo.wiimote_swing_x), float(mo.wiimote_swing_y),
+                               float(mo.wiimote_swing_forward), float(mo.wiimote_swing_backward)};
+  TiltOverride tilt_override{float(mo.wiimote_tilt_forward), float(mo.wiimote_tilt_backward),
+                             float(mo.wiimote_tilt_left), float(mo.wiimote_tilt_right)};
+  ShakeOverride shake_override{float(mo.wiimote_shake_x), float(mo.wiimote_shake_y),
+                               float(mo.wiimote_shake_z)};
+
+  const bool any_swing = mo.wiimote_swing_x || mo.wiimote_swing_y ||
+                         mo.wiimote_swing_forward || mo.wiimote_swing_backward;
+  const bool any_tilt = mo.wiimote_tilt_forward || mo.wiimote_tilt_backward ||
+                        mo.wiimote_tilt_left || mo.wiimote_tilt_right;
+  const bool any_shake = mo.wiimote_shake_x || mo.wiimote_shake_y || mo.wiimote_shake_z;
+
+  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ,
+               any_swing ? &swing_override : nullptr);
+  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ,
+              any_tilt ? &tilt_override : nullptr);
   EmulatePoint(&m_point_state, m_ir, m_input_override_function, 1.f / ::Wiimote::UPDATE_FREQ);
-  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ);
+  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ,
+               any_shake ? &shake_override : nullptr);
   EmulateIMUCursor(&m_imu_cursor_state, m_imu_ir, m_imu_accelerometer, m_imu_gyroscope,
                    1.f / ::Wiimote::UPDATE_FREQ);
 }

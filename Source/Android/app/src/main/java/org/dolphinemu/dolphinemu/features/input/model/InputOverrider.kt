@@ -78,5 +78,41 @@ object InputOverrider {
         const val CLASSIC_LEFT_STICK_Y = 53
         const val CLASSIC_RIGHT_STICK_X = 54
         const val CLASSIC_RIGHT_STICK_Y = 55
+
+        // Wiimote motion controls
+        const val WIIMOTE_SHAKE_X = 56
+        const val WIIMOTE_SHAKE_Y = 57
+        const val WIIMOTE_SHAKE_Z = 58
+
+        const val WIIMOTE_SWING_X = 59
+        const val WIIMOTE_SWING_Y = 60
+        const val WIIMOTE_SWING_FORWARD = 61
+        const val WIIMOTE_SWING_BACKWARD = 62
+
+        const val WIIMOTE_TILT_FORWARD = 63
+        const val WIIMOTE_TILT_BACKWARD = 64
+        const val WIIMOTE_TILT_LEFT = 65
+        const val WIIMOTE_TILT_RIGHT = 66
+
+        // Nunchuk motion controls
+        const val NUNCHUK_SHAKE_X = 67
+        const val NUNCHUK_SHAKE_Y = 68
+        const val NUNCHUK_SHAKE_Z = 69
+
+        const val NUNCHUK_SWING_X = 70
+        const val NUNCHUK_SWING_Y = 71
+        const val NUNCHUK_SWING_FORWARD = 72
+        const val NUNCHUK_SWING_BACKWARD = 73
+
+        const val NUNCHUK_TILT_FORWARD = 74
+        const val NUNCHUK_TILT_BACKWARD = 75
+        const val NUNCHUK_TILT_LEFT = 76
+        const val NUNCHUK_TILT_RIGHT = 77
+
+        // TaTaCon
+        const val TATACON_CENTER_LEFT = 78
+        const val TATACON_CENTER_RIGHT = 79
+        const val TATACON_RIM_LEFT = 80
+        const val TATACON_RIM_RIGHT = 81
     }
 }

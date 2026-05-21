@@ -1,0 +1,1305 @@
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/NativeLibrary.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/NativeLibrary.kt
+index 2ead4b5..729aca1 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/NativeLibrary.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/NativeLibrary.kt
+@@ -197,6 +197,12 @@ object NativeLibrary {
+         const val WIIMOTE_GYRO_ROLL_RIGHT = 634
+         const val WIIMOTE_GYRO_YAW_LEFT = 635
+         const val WIIMOTE_GYRO_YAW_RIGHT = 636
++
++        // TaTaCon (Taiko Drum) extension
++        const val TATACON_CENTER_LEFT = 700
++        const val TATACON_CENTER_RIGHT = 701
++        const val TATACON_RIM_LEFT = 702
++        const val TATACON_RIM_RIGHT = 703
+     }
+ 
+     object ButtonState {
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/activities/EmulationActivity.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/activities/EmulationActivity.kt
+index 8a1d8ad..4a504ec 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/activities/EmulationActivity.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/activities/EmulationActivity.kt
+@@ -331,6 +331,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
+ 
+             emulationFragment?.refreshInputOverlay()
+ 
++            // Refresh again after a short delay to ensure per-game profiles
++            // (WiimoteProfile1 etc.) are fully loaded before building the overlay
++            Handler(Looper.getMainLooper()).postDelayed({
++                emulationFragment?.refreshInputOverlay()
++            }, 1000)
++
+             updateDisplaySettings()
+         } catch (_: IllegalStateException) {
+             // Most likely the core delivered an onTitleChanged while emulation was shutting down.
+@@ -666,13 +672,13 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
+                 emulationFragment?.refreshInputOverlay()
+             }
+         } else {
+-            val wiiEnabledButtons = BooleanArray(11)
+             val wiiSettingBase = "MAIN_BUTTON_TOGGLE_WII_"
+ 
+-            for (i in wiiEnabledButtons.indices) {
+-                wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
+-            }
+             if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
++                val wiiEnabledButtons = BooleanArray(29)  // 0~28
++                for (i in wiiEnabledButtons.indices) {
++                    wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
++                }
+                 builder.setMultiChoiceItems(
+                     R.array.nunchukButtons, wiiEnabledButtons
+                 ) { _: DialogInterface?, indexSelected: Int, isChecked: Boolean ->
+@@ -681,6 +687,10 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
+                     emulationFragment?.refreshInputOverlay()
+                 }
+             } else {
++                val wiiEnabledButtons = BooleanArray(17)  // 0~16 (wiimote only, no nunchuk)
++                for (i in wiiEnabledButtons.indices) {
++                    wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
++                }
+                 builder.setMultiChoiceItems(
+                     R.array.wiimoteButtons, wiiEnabledButtons
+                 ) { _: DialogInterface?, indexSelected: Int, isChecked: Boolean ->
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/InputOverrider.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/InputOverrider.kt
+index 8224434..575187c 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/InputOverrider.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/InputOverrider.kt
+@@ -78,5 +78,41 @@ object InputOverrider {
+         const val CLASSIC_LEFT_STICK_Y = 53
+         const val CLASSIC_RIGHT_STICK_X = 54
+         const val CLASSIC_RIGHT_STICK_Y = 55
++
++        // Wiimote motion controls
++        const val WIIMOTE_SHAKE_X = 56
++        const val WIIMOTE_SHAKE_Y = 57
++        const val WIIMOTE_SHAKE_Z = 58
++
++        const val WIIMOTE_SWING_X = 59
++        const val WIIMOTE_SWING_Y = 60
++        const val WIIMOTE_SWING_FORWARD = 61
++        const val WIIMOTE_SWING_BACKWARD = 62
++
++        const val WIIMOTE_TILT_FORWARD = 63
++        const val WIIMOTE_TILT_BACKWARD = 64
++        const val WIIMOTE_TILT_LEFT = 65
++        const val WIIMOTE_TILT_RIGHT = 66
++
++        // Nunchuk motion controls
++        const val NUNCHUK_SHAKE_X = 67
++        const val NUNCHUK_SHAKE_Y = 68
++        const val NUNCHUK_SHAKE_Z = 69
++
++        const val NUNCHUK_SWING_X = 70
++        const val NUNCHUK_SWING_Y = 71
++        const val NUNCHUK_SWING_FORWARD = 72
++        const val NUNCHUK_SWING_BACKWARD = 73
++
++        const val NUNCHUK_TILT_FORWARD = 74
++        const val NUNCHUK_TILT_BACKWARD = 75
++        const val NUNCHUK_TILT_LEFT = 76
++        const val NUNCHUK_TILT_RIGHT = 77
++
++        // TaTaCon
++        const val TATACON_CENTER_LEFT = 78
++        const val TATACON_CENTER_RIGHT = 79
++        const val TATACON_RIM_LEFT = 80
++        const val TATACON_RIM_RIGHT = 81
+     }
+ }
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/view/InputDeviceSetting.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/view/InputDeviceSetting.kt
+index 4ca29d9..ad7bcdb 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/view/InputDeviceSetting.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/input/model/view/InputDeviceSetting.kt
+@@ -28,10 +28,16 @@ class InputDeviceSetting(
+         controller.setDefaultDevice(selection)
+ 
+     override fun refreshChoicesAndValues() {
+-        val devices = ControllerInterface.getAllDeviceStrings()
++        val devices = ControllerInterface.getAllDeviceStrings().toMutableList()
+ 
+-        choices = devices
+-        values = devices
++        // Always include the touchscreen device so users can reselect it
++        val touchscreenDevice = "Android/4/Touchscreen"
++        if (!devices.contains(touchscreenDevice)) {
++            devices.add(0, touchscreenDevice)
++        }
++
++        choices = devices.toTypedArray()
++        values = devices.toTypedArray()
+     }
+ 
+     override val isEditable: Boolean = true
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/settings/model/BooleanSetting.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/settings/model/BooleanSetting.kt
+index cd0ea42..1d735cf 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/settings/model/BooleanSetting.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/settings/model/BooleanSetting.kt
+@@ -618,6 +618,114 @@ enum class BooleanSetting(
+         "ButtonToggleNunchukStick",
+         true
+     ),
++    MAIN_BUTTON_TOGGLE_WII_11(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteShakeX",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_12(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteShakeY",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_13(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteShakeZ",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_14(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteSwing",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_15(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteSwingForward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_16(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteSwingBackward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_17(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteTilt",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_18(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteTiltForward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_19(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleWiimoteTiltBackward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_20(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukShakeX",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_21(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukShakeY",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_22(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukShakeZ",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_23(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukSwing",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_24(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukSwingForward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_25(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukSwingBackward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_26(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukTilt",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_27(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukTiltForward",
++        false
++    ),
++    MAIN_BUTTON_TOGGLE_WII_28(
++        Settings.FILE_DOLPHIN,
++        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
++        "ButtonToggleNunchukTiltBackward",
++        false
++    ),
+     MAIN_BUTTON_LATCHING_WII_0(
+         Settings.FILE_DOLPHIN,
+         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlay.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlay.kt
+index 3d991fe..1596fbc 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlay.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlay.kt
+@@ -149,9 +149,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+                 MotionEvent.ACTION_DOWN,
+                 MotionEvent.ACTION_POINTER_DOWN -> {
+                     // If a pointer enters the bounds of a button, press that button.
+-                    if (button.bounds.contains(
++                    if (button.hitTest(
+                             event.getX(pointerIndex).toInt(),
+-                            event.getY(pointerIndex).toInt()
++                            event.getY(pointerIndex).toInt(),
++                            button.useAlphaHitTest
+                         )
+                     ) {
+                         button.setPressedState(if (button.latching) !button.getPressedState() else true)
+@@ -748,6 +749,55 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+                 )
+             )
+         }
++        // Wiimote motion controls (toggle off by default)
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_11.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X,
++                orientation, false, "WSKX"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_12.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y,
++                orientation, false, "WSKY"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_13.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
++                orientation, false, "WSKZ"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_14.boolean) {
++            overlayJoysticks.add(initializeOverlayJoystick(context,
++                R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
++                R.drawable.gcwii_joystick_pressed,
++                ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y,
++                orientation, "WSW"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_15.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD,
++                orientation, false, "WSF"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_16.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD,
++                orientation, false, "WSB"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_17.boolean) {
++            overlayDpads.add(initializeOverlayDpad(context,
++                R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
++                R.drawable.gcwii_dpad_pressed_two_directions,
++                ButtonType.WIIMOTE_TILT,
++                ControlId.WIIMOTE_TILT_RIGHT,    // 上 → Right
++                ControlId.WIIMOTE_TILT_LEFT,     // 下 → Left
++                ControlId.WIIMOTE_TILT_FORWARD,  // 左 → Forward
++                ControlId.WIIMOTE_TILT_BACKWARD, // 右 → Backward
++                orientation, "WT"))
++        }
+     }
+ 
+     private fun addNunchukOverlayControls(orientation: String) {
+@@ -791,6 +841,105 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+                 )
+             )
+         }
++        // Nunchuk motion controls (toggle off by default)
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_20.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X,
++                orientation, false, "NSKX"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_21.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y,
++                orientation, false, "NSKY"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_22.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z,
++                orientation, false, "NSKZ"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_23.boolean) {
++            overlayJoysticks.add(initializeOverlayJoystick(context,
++                R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
++                R.drawable.gcwii_joystick_pressed,
++                ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y,
++                orientation, "NSW"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_24.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD,
++                orientation, false, "NSF"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_25.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
++                ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD,
++                orientation, false, "NSB"))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_26.boolean) {
++            overlayDpads.add(initializeOverlayDpad(context,
++                R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
++                R.drawable.gcwii_dpad_pressed_two_directions,
++                ButtonType.NUNCHUK_TILT,
++                ControlId.NUNCHUK_TILT_RIGHT,    // 上 → Right
++                ControlId.NUNCHUK_TILT_LEFT,     // 下 → Left
++                ControlId.NUNCHUK_TILT_FORWARD,  // 左 → Forward
++                ControlId.NUNCHUK_TILT_BACKWARD, // 右 → Backward
++                orientation, "NT"))
++        }
++    }
++
++    private fun addTaTaConOverlayControls(orientation: String) {
++        // Basic Wiimote buttons (minus, plus, 1, 2, home)
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_4.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_plus, R.drawable.wiimote_plus_pressed,
++                ButtonType.WIIMOTE_BUTTON_PLUS, ControlId.WIIMOTE_PLUS_BUTTON, orientation, false))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_3.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_minus, R.drawable.wiimote_minus_pressed,
++                ButtonType.WIIMOTE_BUTTON_MINUS, ControlId.WIIMOTE_MINUS_BUTTON, orientation, false))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_2.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_two, R.drawable.wiimote_two_pressed,
++                ButtonType.WIIMOTE_BUTTON_2, ControlId.WIIMOTE_TWO_BUTTON, orientation, false))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_1.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_one, R.drawable.wiimote_one_pressed,
++                ButtonType.WIIMOTE_BUTTON_1, ControlId.WIIMOTE_ONE_BUTTON, orientation, false))
++        }
++        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_5.boolean) {
++            overlayButtons.add(initializeOverlayButton(context,
++                R.drawable.wiimote_home, R.drawable.wiimote_home_pressed,
++                ButtonType.WIIMOTE_BUTTON_HOME, ControlId.WIIMOTE_HOME_BUTTON, orientation, false))
++        }
++
++        // TaTaCon drum pads - use initializeOverlayButton for proper scale/position/orientation
++        overlayButtons.add(initializeOverlayButton(context,
++            R.drawable.tatacon_rim_left, R.drawable.tatacon_rim_left_pressed,
++            ButtonType.TATACON_RIM_LEFT, ControlId.TATACON_RIM_LEFT,
++            orientation, false).also { it.useAlphaHitTest = true })
++
++        overlayButtons.add(initializeOverlayButton(context,
++            R.drawable.tatacon_rim_right, R.drawable.tatacon_rim_right_pressed,
++            ButtonType.TATACON_RIM_RIGHT, ControlId.TATACON_RIM_RIGHT,
++            orientation, false).also { it.useAlphaHitTest = true })
++
++        overlayButtons.add(initializeOverlayButton(context,
++            R.drawable.tatacon_center_left, R.drawable.tatacon_center_left_pressed,
++            ButtonType.TATACON_CENTER_LEFT, ControlId.TATACON_CENTER_LEFT,
++            orientation, false).also { it.useAlphaHitTest = true })
++
++        overlayButtons.add(initializeOverlayButton(context,
++            R.drawable.tatacon_center_right, R.drawable.tatacon_center_right_pressed,
++            ButtonType.TATACON_CENTER_RIGHT, ControlId.TATACON_CENTER_RIGHT,
++            orientation, false).also { it.useAlphaHitTest = true })
+     }
+ 
+     private fun addClassicOverlayControls(orientation: String) {
+@@ -1045,6 +1194,14 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+                     addClassicOverlayControls(orientation)
+                 }
+ 
++                OVERLAY_WIIMOTE_TATACON -> {
++                    this.controllerIndex = controllerIndex - 4
++                    InputOverrider.registerWii(this.controllerIndex)
++                    wiimoteRegistered[this.controllerIndex] = true
++
++                    addTaTaConOverlayControls(orientation)
++                }
++
+                 OVERLAY_NONE -> {}
+             }
+         }
+@@ -1133,7 +1290,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+         legacyId: Int,
+         control: Int,
+         orientation: String,
+-        latching: Boolean
++        latching: Boolean,
++        overlayLabel: String? = null
+     ): InputOverlayDrawableButton {
+         // Decide scale based on button ID and user preference
+         var scale = when (legacyId) {
+@@ -1182,15 +1340,16 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+             pressedStateBitmap,
+             legacyId,
+             control,
+-            latching
++            latching,
++            overlayLabel
+         )
+ 
+         // The X and Y coordinates of the InputOverlayDrawableButton on the InputOverlay.
+         // These were set in the input overlay configuration menu.
+         val drawableX =
+-            preferences.getFloat(getXKey(legacyId, controllerType, orientation), 0f).toInt()
++            preferences.getFloat(getXKey(legacyId, controllerType, orientation), getMotionButtonDefaultX(legacyId)).toInt()
+         val drawableY =
+-            preferences.getFloat(getYKey(legacyId, controllerType, orientation), 0f).toInt()
++            preferences.getFloat(getYKey(legacyId, controllerType, orientation), getMotionButtonDefaultY(legacyId)).toInt()
+ 
+         val width = overlayDrawable.width
+         val height = overlayDrawable.height
+@@ -1230,7 +1389,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+         downControl: Int,
+         leftControl: Int,
+         rightControl: Int,
+-        orientation: String
++        orientation: String,
++        overlayLabel: String? = null
+     ): InputOverlayDrawableDpad {
+         // Decide scale based on button ID and user preference
+         var scale: Float = when (legacyId) {
+@@ -1264,15 +1424,16 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+             upControl,
+             downControl,
+             leftControl,
+-            rightControl
++            rightControl,
++            overlayLabel
+         )
+ 
+         // The X and Y coordinates of the InputOverlayDrawableDpad on the InputOverlay.
+         // These were set in the input overlay configuration menu.
+         val drawableX =
+-            preferences.getFloat(getXKey(legacyId, controllerType, orientation), 0f).toInt()
++            preferences.getFloat(getXKey(legacyId, controllerType, orientation), getMotionButtonDefaultX(legacyId)).toInt()
+         val drawableY =
+-            preferences.getFloat(getYKey(legacyId, controllerType, orientation), 0f).toInt()
++            preferences.getFloat(getYKey(legacyId, controllerType, orientation), getMotionButtonDefaultY(legacyId)).toInt()
+ 
+         val width = overlayDrawable.width
+         val height = overlayDrawable.height
+@@ -1308,7 +1469,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+         legacyId: Int,
+         xControl: Int,
+         yControl: Int,
+-        orientation: String
++        orientation: String,
++        overlayLabel: String? = null
+     ): InputOverlayDrawableJoystick {
+         // Decide scale based on user preference
+         var scale = 0.275f
+@@ -1324,9 +1486,9 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+         // The X and Y coordinates of the InputOverlayDrawableButton on the InputOverlay.
+         // These were set in the input overlay configuration menu.
+         val drawableX =
+-            preferences.getFloat(getXKey(legacyId, controllerType, orientation), 0f).toInt()
++            preferences.getFloat(getXKey(legacyId, controllerType, orientation), getMotionButtonDefaultX(legacyId)).toInt()
+         val drawableY =
+-            preferences.getFloat(getYKey(legacyId, controllerType, orientation), 0f).toInt()
++            preferences.getFloat(getYKey(legacyId, controllerType, orientation), getMotionButtonDefaultY(legacyId)).toInt()
+ 
+         // Decide inner scale based on joystick ID
+         val innerScale: Float = if (legacyId == ButtonType.STICK_C) 1.833f else 1.375f
+@@ -1349,7 +1511,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+             legacyId,
+             xControl,
+             yControl,
+-            controllerIndex
++            controllerIndex,
++            overlayLabel
+         )
+ 
+         // Need to set the image's position
+@@ -2283,6 +2446,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+         const val OVERLAY_WIIMOTE_NUNCHUK = 3
+         const val OVERLAY_WIIMOTE_CLASSIC = 4
+         const val OVERLAY_NONE = 5
++        const val OVERLAY_WIIMOTE_TATACON = 6
+         private const val DISABLED_GAMECUBE_CONTROLLER = 0
+         private const val EMULATED_GAMECUBE_CONTROLLER = 6
+         private const val EMULATED_AM_BASEBOARD = 11
+@@ -2350,6 +2514,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+                         when (EmulatedController.getSelectedWiimoteAttachment(wiimoteIndex)) {
+                             1 -> return OVERLAY_WIIMOTE_NUNCHUK
+                             2 -> return OVERLAY_WIIMOTE_CLASSIC
++                            8 -> return OVERLAY_WIIMOTE_TATACON
+                         }
+ 
+                         val sidewaysSetting =
+@@ -2383,4 +2548,49 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
+ 
+     private fun getYKey(sharedPrefsId: Int, controller: Int, orientation: String): String =
+         getKey(sharedPrefsId, controller, orientation, "-Y")
++
++    // Default positions for motion buttons so they don't all stack at 0,0
++    private fun getMotionButtonDefaultX(legacyId: Int): Float = when (legacyId) {
++        ButtonType.WIIMOTE_SHAKE_X        -> 20f
++        ButtonType.WIIMOTE_SHAKE_Y        -> 120f
++        ButtonType.WIIMOTE_SHAKE_Z        -> 220f
++        ButtonType.WIIMOTE_SWING          -> 320f   // WSW joystick
++        ButtonType.WIIMOTE_TILT           -> 20f    // WT dpad
++        ButtonType.WIIMOTE_SWING_FORWARD  -> 20f
++        ButtonType.WIIMOTE_SWING_BACKWARD -> 120f
++        ButtonType.NUNCHUK_SHAKE_X        -> 20f
++        ButtonType.NUNCHUK_SHAKE_Y        -> 120f
++        ButtonType.NUNCHUK_SHAKE_Z        -> 220f
++        ButtonType.NUNCHUK_SWING          -> 320f   // NSW joystick
++        ButtonType.NUNCHUK_TILT           -> 20f    // NT dpad
++        ButtonType.NUNCHUK_SWING_FORWARD  -> 20f
++        ButtonType.NUNCHUK_SWING_BACKWARD -> 120f
++        ButtonType.TATACON_RIM_LEFT      -> 20f
++        ButtonType.TATACON_RIM_RIGHT     -> 400f
++        ButtonType.TATACON_CENTER_LEFT   -> 20f
++        ButtonType.TATACON_CENTER_RIGHT  -> 400f
++        else -> 0f
++    }
++
++    private fun getMotionButtonDefaultY(legacyId: Int): Float = when (legacyId) {
++        ButtonType.WIIMOTE_SHAKE_X,
++        ButtonType.WIIMOTE_SHAKE_Y,
++        ButtonType.WIIMOTE_SHAKE_Z        -> 20f
++        ButtonType.WIIMOTE_SWING          -> 300f   // WSW joystick
++        ButtonType.WIIMOTE_TILT           -> 500f   // WT dpad
++        ButtonType.WIIMOTE_SWING_FORWARD,
++        ButtonType.WIIMOTE_SWING_BACKWARD -> 140f
++        ButtonType.NUNCHUK_SHAKE_X,
++        ButtonType.NUNCHUK_SHAKE_Y,
++        ButtonType.NUNCHUK_SHAKE_Z        -> 280f
++        ButtonType.NUNCHUK_SWING          -> 500f   // NSW joystick
++        ButtonType.NUNCHUK_TILT           -> 700f   // NT dpad
++        ButtonType.NUNCHUK_SWING_FORWARD,
++        ButtonType.NUNCHUK_SWING_BACKWARD -> 400f
++        ButtonType.TATACON_RIM_LEFT,
++        ButtonType.TATACON_RIM_RIGHT      -> 800f
++        ButtonType.TATACON_CENTER_LEFT,
++        ButtonType.TATACON_CENTER_RIGHT   -> 1200f
++        else -> 0f
++    }
+ }
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableButton.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableButton.kt
+index 643d65f..1174b53 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableButton.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableButton.kt
+@@ -5,7 +5,10 @@ package org.dolphinemu.dolphinemu.overlay
+ import android.content.res.Resources
+ import android.graphics.Bitmap
+ import android.graphics.Canvas
++import android.graphics.Color
++import android.graphics.Paint
+ import android.graphics.Rect
++import android.graphics.Typeface
+ import android.graphics.drawable.BitmapDrawable
+ import android.view.MotionEvent
+ 
+@@ -26,9 +29,11 @@ class InputOverlayDrawableButton(
+     pressedStateBitmap: Bitmap,
+     val legacyId: Int,
+     val control: Int,
+-    var latching: Boolean
++    var latching: Boolean,
++    val overlayLabel: String? = null
+ ) {
+     var trackId: Int = -1
++    var useAlphaHitTest: Boolean = false
+     private var previousTouchX = 0
+     private var previousTouchY = 0
+     private var controlPositionX = 0
+@@ -75,6 +80,23 @@ class InputOverlayDrawableButton(
+ 
+     fun draw(canvas: Canvas) {
+         currentStateBitmapDrawable.draw(canvas)
++        overlayLabel?.let { drawLabel(canvas, it, bounds) }
++    }
++
++    private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
++        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++            color = Color.WHITE
++            textSize = bounds.width() * 0.28f
++            typeface = Typeface.DEFAULT_BOLD
++            textAlign = Paint.Align.CENTER
++            setShadowLayer(4f, 0f, 0f, Color.BLACK)
++        }
++        canvas.drawText(
++            label,
++            bounds.exactCenterX(),
++            bounds.exactCenterY() + paint.textSize / 3f,
++            paint
++        )
+     }
+ 
+     private val currentStateBitmapDrawable: BitmapDrawable
+@@ -93,6 +115,23 @@ class InputOverlayDrawableButton(
+     val bounds: Rect
+         get() = defaultStateBitmap.bounds
+ 
++    /**
++     * Returns true only if the pixel at (x, y) has alpha > threshold.
++     * Falls back to bounds check if useAlphaHitTest is false.
++     */
++    fun hitTest(x: Int, y: Int, useAlphaHitTest: Boolean = false): Boolean {
++        if (!bounds.contains(x, y)) return false
++        if (!useAlphaHitTest) return true
++
++        val bitmap = defaultStateBitmap.bitmap ?: return true
++        val bx = ((x - bounds.left).toFloat() / bounds.width() * bitmap.width).toInt()
++            .coerceIn(0, bitmap.width - 1)
++        val by = ((y - bounds.top).toFloat() / bounds.height() * bitmap.height).toInt()
++            .coerceIn(0, bitmap.height - 1)
++        val pixel = bitmap.getPixel(bx, by)
++        return (pixel ushr 24) > 10  // alpha threshold
++    }
++
+     fun setPressedState(isPressed: Boolean) {
+         pressedState = isPressed
+     }
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableDpad.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableDpad.kt
+index 2b53046..9f15c12 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableDpad.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableDpad.kt
+@@ -5,7 +5,10 @@ package org.dolphinemu.dolphinemu.overlay
+ import android.content.res.Resources
+ import android.graphics.Bitmap
+ import android.graphics.Canvas
++import android.graphics.Color
++import android.graphics.Paint
+ import android.graphics.Rect
++import android.graphics.Typeface
+ import android.graphics.drawable.BitmapDrawable
+ import android.view.MotionEvent
+ 
+@@ -32,7 +35,8 @@ class InputOverlayDrawableDpad(
+     upControl: Int,
+     downControl: Int,
+     leftControl: Int,
+-    rightControl: Int
++    rightControl: Int,
++    val overlayLabel: String? = null
+ ) {
+     private val controls = IntArray(4)
+     var trackId: Int = -1
+@@ -122,6 +126,23 @@ class InputOverlayDrawableDpad(
+                 }
+             }
+         }
++        overlayLabel?.let { drawLabel(canvas, it, defaultStateBitmap.bounds) }
++    }
++
++    private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
++        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++            color = Color.WHITE
++            textSize = bounds.width() * 0.22f
++            typeface = Typeface.DEFAULT_BOLD
++            textAlign = Paint.Align.CENTER
++            setShadowLayer(4f, 0f, 0f, Color.BLACK)
++        }
++        canvas.drawText(
++            label,
++            bounds.exactCenterX(),
++            bounds.exactCenterY() + paint.textSize / 3f,
++            paint
++        )
+     }
+ 
+     /**
+diff --git a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableJoystick.kt b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableJoystick.kt
+index 7dff339..8cda828 100644
+--- a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableJoystick.kt
++++ b/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/overlay/InputOverlayDrawableJoystick.kt
+@@ -5,7 +5,10 @@ package org.dolphinemu.dolphinemu.overlay
+ import android.content.res.Resources
+ import android.graphics.Bitmap
+ import android.graphics.Canvas
++import android.graphics.Color
++import android.graphics.Paint
+ import android.graphics.Rect
++import android.graphics.Typeface
+ import android.graphics.drawable.BitmapDrawable
+ import android.view.MotionEvent
+ import org.dolphinemu.dolphinemu.features.input.model.InputOverrider
+@@ -39,7 +42,8 @@ class InputOverlayDrawableJoystick(
+     val legacyId: Int,
+     val xControl: Int,
+     val yControl: Int,
+-    private val controllerIndex: Int
++    private val controllerIndex: Int,
++    val overlayLabel: String? = null
+ ) {
+     var x = 0.0f
+         private set
+@@ -92,6 +96,24 @@ class InputOverlayDrawableJoystick(
+         outerBitmap.draw(canvas)
+         currentStateBitmapDrawable.draw(canvas)
+         boundsBoxBitmap.draw(canvas)
++        // Label drawn on outer bitmap center, stays fixed regardless of stick position
++        overlayLabel?.let { drawLabel(canvas, it, outerBitmap.bounds) }
++    }
++
++    private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
++        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
++            color = Color.WHITE
++            textSize = bounds.width() * 0.20f
++            typeface = Typeface.DEFAULT_BOLD
++            textAlign = Paint.Align.CENTER
++            setShadowLayer(4f, 0f, 0f, Color.BLACK)
++        }
++        canvas.drawText(
++            label,
++            bounds.exactCenterX(),
++            bounds.exactCenterY() + paint.textSize / 3f,
++            paint
++        )
+     }
+ 
+     fun trackEvent(event: MotionEvent): Boolean {
+diff --git a/Source/Android/app/src/main/res/values/arrays.xml b/Source/Android/app/src/main/res/values/arrays.xml
+index d919edb..ffab023 100644
+--- a/Source/Android/app/src/main/res/values/arrays.xml
++++ b/Source/Android/app/src/main/res/values/arrays.xml
+@@ -215,6 +215,7 @@
+         <item>@string/extension_guitar</item>
+         <item>@string/extension_drums</item>
+         <item>@string/extension_turntable</item>
++        <item>@string/extension_tatacon</item>
+     </string-array>
+     <integer-array name="wiimoteExtensionsValues">
+         <item>0</item>
+@@ -223,6 +224,7 @@
+         <item>3</item>
+         <item>4</item>
+         <item>5</item>
++        <item>8</item>
+     </integer-array>
+ 
+     <!-- Texture Cache Accuracy Preference -->
+@@ -436,6 +438,15 @@
+         <item>-</item>
+         <item>@string/gamepad_home</item>
+         <item>@string/gamepad_d_pad</item>
++        <item>WSKX</item>
++        <item>WSKY</item>
++        <item>WSKZ</item>
++        <item>WSW</item>
++        <item>WSF</item>
++        <item>WSB</item>
++        <item>WT</item>
++        <item>WTF</item>
++        <item>WTB</item>
+     </string-array>
+ 
+     <string-array name="wiimoteLatchableButtons">
+@@ -460,6 +471,24 @@
+         <item>C</item>
+         <item>Z</item>
+         <item>@string/gamepad_nunchuk_stick</item>
++        <item>WSKX</item>
++        <item>WSKY</item>
++        <item>WSKZ</item>
++        <item>WSW</item>
++        <item>WSF</item>
++        <item>WSB</item>
++        <item>WT</item>
++        <item>WTF</item>
++        <item>WTB</item>
++        <item>NSKX</item>
++        <item>NSKY</item>
++        <item>NSKZ</item>
++        <item>NSW</item>
++        <item>NSF</item>
++        <item>NSB</item>
++        <item>NT</item>
++        <item>NTF</item>
++        <item>NTB</item>
+     </string-array>
+ 
+     <string-array name="nunchukLatchableButtons">
+diff --git a/Source/Android/app/src/main/res/values/strings.xml b/Source/Android/app/src/main/res/values/strings.xml
+index 04c48bc..fd3b5ed 100644
+--- a/Source/Android/app/src/main/res/values/strings.xml
++++ b/Source/Android/app/src/main/res/values/strings.xml
+@@ -744,6 +744,7 @@ It can efficiently compress both junk data and encrypted Wii data.
+     <string name="extension_guitar">Guitar</string>
+     <string name="extension_drums">Drums</string>
+     <string name="extension_turntable">Turntable</string>
++    <string name="extension_tatacon">Taiko Drum</string>
+ 
+     <!-- Accuracy Preference -->
+     <string name="accuracy_fast">Fast</string>
+diff --git a/Source/Core/Core/HW/WiimoteEmu/Dynamics.cpp b/Source/Core/Core/HW/WiimoteEmu/Dynamics.cpp
+index ebf24f7..f685437 100644
+--- a/Source/Core/Core/HW/WiimoteEmu/Dynamics.cpp
++++ b/Source/Core/Core/HW/WiimoteEmu/Dynamics.cpp
+@@ -80,9 +80,20 @@ Common::Quaternion ComplementaryFilter(const Common::Quaternion& gyroscope,
+ }
+ 
+ void EmulateShake(PositionalState* state, ControllerEmu::Shake* const shake_group,
+-                  float time_elapsed)
++                  float time_elapsed, const ShakeOverride* override_state)
+ {
+-  auto target_position = shake_group->GetState() * float(shake_group->GetIntensity() / 2);
++  ControllerEmu::Shake::StateData raw_state;
++  if (override_state)
++  {
++    raw_state.x = override_state->x;
++    raw_state.y = override_state->y;
++    raw_state.z = override_state->z;
++  }
++  else
++  {
++    raw_state = shake_group->GetState();
++  }
++  auto target_position = raw_state * float(shake_group->GetIntensity() / 2);
+   for (std::size_t i = 0; i != target_position.data.size(); ++i)
+   {
+     if (state->velocity.data[i] * std::copysign(1.f, target_position.data[i]) < 0 ||
+@@ -107,9 +118,22 @@ void EmulateShake(PositionalState* state, ControllerEmu::Shake* const shake_grou
+   ApproachPositionWithJerk(state, target_position, jerk, time_elapsed);
+ }
+ 
+-void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group, float time_elapsed)
++void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group, float time_elapsed,
++                 const TiltOverride* override_state)
+ {
+-  const auto target = tilt_group->GetState();
++  ControllerEmu::Tilt::StateData target;
++  if (override_state)
++  {
++    // Matches WiimoteNew.ini axis names:
++    // Tilt/Forward + Tilt/Backward → X axis (pitch)
++    // Tilt/Left + Tilt/Right       → Y axis (roll)
++    target.x = override_state->forward - override_state->backward;
++    target.y = override_state->right - override_state->left;
++  }
++  else
++  {
++    target = tilt_group->GetState();
++  }
+ 
+   // 180 degrees is currently the max tilt value.
+   const ControlState roll = target.x * MathUtil::PI;
+@@ -130,9 +154,21 @@ void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group,
+   ApproachAngleWithAccel(state, target_angle, max_accel, time_elapsed);
+ }
+ 
+-void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed)
++void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed,
++                  const SwingOverride* override_state)
+ {
+-  const auto input_state = swing_group->GetState();
++  ControllerEmu::Force::StateData input_state;
++  if (override_state)
++  {
++    // X/Y from joystick, Z from forward/backward buttons
++    input_state.x = override_state->x;
++    input_state.y = override_state->y;
++    input_state.z = override_state->forward - override_state->backward;
++  }
++  else
++  {
++    input_state = swing_group->GetState();
++  }
+   const float max_distance = swing_group->GetMaxDistance();
+   const float max_angle = swing_group->GetTwistAngle();
+ 
+diff --git a/Source/Core/Core/HW/WiimoteEmu/Dynamics.h b/Source/Core/Core/HW/WiimoteEmu/Dynamics.h
+index 8f35c30..c737603 100644
+--- a/Source/Core/Core/HW/WiimoteEmu/Dynamics.h
++++ b/Source/Core/Core/HW/WiimoteEmu/Dynamics.h
+@@ -75,9 +75,28 @@ void ApproachPositionWithJerk(PositionalState* state, const Common::Vec3& target
+ void ApproachAngleWithAccel(RotationalState* state, const Common::Vec3& target, float max_accel,
+                             float time_elapsed);
+ 
+-void EmulateShake(PositionalState* state, ControllerEmu::Shake* shake_group, float time_elapsed);
+-void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* tilt_group, float time_elapsed);
+-void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed);
++struct ShakeOverride
++{
++  float x = 0, y = 0, z = 0;
++};
++
++struct SwingOverride
++{
++  float x = 0, y = 0, forward = 0, backward = 0;
++};
++
++struct TiltOverride
++{
++  float forward = 0, backward = 0;
++  float left = 0, right = 0;
++};
++
++void EmulateShake(PositionalState* state, ControllerEmu::Shake* shake_group, float time_elapsed,
++                  const ShakeOverride* override_state = nullptr);
++void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* tilt_group, float time_elapsed,
++                 const TiltOverride* override_state = nullptr);
++void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float time_elapsed,
++                  const SwingOverride* override_state = nullptr);
+ void EmulatePoint(MotionState* state, ControllerEmu::Cursor* ir_group,
+                   const ControllerEmu::InputOverrideFunction& override_func, float time_elapsed);
+ void EmulateIMUCursor(IMUCursorState* state, ControllerEmu::IMUCursor* imu_ir_group,
+diff --git a/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.cpp b/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.cpp
+index 6745602..095b61b 100644
+--- a/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.cpp
++++ b/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.cpp
+@@ -12,6 +12,7 @@
+ #include "Core/HW/Wiimote.h"
+ #include "Core/HW/WiimoteEmu/Extension/DesiredExtensionState.h"
+ #include "Core/HW/WiimoteEmu/WiimoteEmu.h"
++#include "InputCommon/ControllerInterface/Touch/InputOverrider.h"
+ 
+ #include "InputCommon/ControllerEmu/ControlGroup/AnalogStick.h"
+ #include "InputCommon/ControllerEmu/ControlGroup/Buttons.h"
+@@ -75,9 +76,27 @@ void Nunchuk::BuildDesiredExtensionState(DesiredExtensionState* target_state)
+   nc_data.SetButtons(buttons);
+ 
+   // Acceleration data:
+-  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ);
+-  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ);
+-  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ);
++  const auto& mo = ciface::Touch::GetMotionOverrideState(m_controller_index);
++
++  SwingOverride swing_override{float(mo.nunchuk_swing_x), float(mo.nunchuk_swing_y),
++                               float(mo.nunchuk_swing_forward), float(mo.nunchuk_swing_backward)};
++  TiltOverride tilt_override{float(mo.nunchuk_tilt_forward), float(mo.nunchuk_tilt_backward),
++                             float(mo.nunchuk_tilt_left), float(mo.nunchuk_tilt_right)};
++  ShakeOverride shake_override{float(mo.nunchuk_shake_x), float(mo.nunchuk_shake_y),
++                               float(mo.nunchuk_shake_z)};
++
++  const bool any_swing = mo.nunchuk_swing_x || mo.nunchuk_swing_y ||
++                         mo.nunchuk_swing_forward || mo.nunchuk_swing_backward;
++  const bool any_tilt = mo.nunchuk_tilt_forward || mo.nunchuk_tilt_backward ||
++                        mo.nunchuk_tilt_left || mo.nunchuk_tilt_right;
++  const bool any_shake = mo.nunchuk_shake_x || mo.nunchuk_shake_y || mo.nunchuk_shake_z;
++
++  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ,
++               any_swing ? &swing_override : nullptr);
++  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ,
++              any_tilt ? &tilt_override : nullptr);
++  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ,
++               any_shake ? &shake_override : nullptr);
+ 
+   const auto transformation =
+       GetRotationalMatrix(-m_tilt_state.angle) * GetRotationalMatrix(-m_swing_state.angle);
+diff --git a/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.h b/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.h
+index 440a2d3..3031702 100644
+--- a/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.h
++++ b/Source/Core/Core/HW/WiimoteEmu/Extension/Nunchuk.h
+@@ -153,6 +153,8 @@ public:
+ 
+   Nunchuk();
+ 
++  void SetControllerIndex(int index) { m_controller_index = index; }
++
+   void BuildDesiredExtensionState(DesiredExtensionState* target_state) override;
+   void Update(const DesiredExtensionState& target_state) override;
+   void Reset() override;
+@@ -182,6 +184,7 @@ public:
+   static constexpr const char* Z_BUTTON = "Z";
+ 
+ private:
++  int m_controller_index = 0;
+   ControllerEmu::Tilt* m_tilt;
+   ControllerEmu::Force* m_swing;
+   ControllerEmu::Shake* m_shake;
+diff --git a/Source/Core/Core/HW/WiimoteEmu/WiimoteEmu.cpp b/Source/Core/Core/HW/WiimoteEmu/WiimoteEmu.cpp
+index bbbea66..5a9ee92 100644
+--- a/Source/Core/Core/HW/WiimoteEmu/WiimoteEmu.cpp
++++ b/Source/Core/Core/HW/WiimoteEmu/WiimoteEmu.cpp
+@@ -28,6 +28,7 @@
+ #include "Core/HW/WiimoteCommon/WiimoteHid.h"
+ #include "Core/HW/WiimoteEmu/DesiredWiimoteState.h"
+ #include "Core/HW/WiimoteEmu/Extension/Classic.h"
++#include "InputCommon/ControllerInterface/Touch/InputOverrider.h"
+ #include "Core/HW/WiimoteEmu/Extension/DesiredExtensionState.h"
+ #include "Core/HW/WiimoteEmu/Extension/DrawsomeTablet.h"
+ #include "Core/HW/WiimoteEmu/Extension/Drums.h"
+@@ -270,7 +271,9 @@ Wiimote::Wiimote(const unsigned int index) : m_index(index), m_bt_device_index(i
+   // Extension
+   groups.emplace_back(m_attachments = new ControllerEmu::Attachments(_trans("Extension")));
+   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::None>());
+-  m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Nunchuk>());
++  auto nunchuk = std::make_unique<WiimoteEmu::Nunchuk>();
++  nunchuk->SetControllerIndex(m_index);
++  m_attachments->AddAttachment(std::move(nunchuk));
+   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Classic>());
+   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Guitar>());
+   m_attachments->AddAttachment(std::make_unique<WiimoteEmu::Drums>());
+@@ -834,10 +837,28 @@ void Wiimote::RefreshConfig()
+ 
+ void Wiimote::StepDynamics()
+ {
+-  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ);
+-  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ);
++  const auto& mo = ciface::Touch::GetMotionOverrideState(m_index);
++
++  SwingOverride swing_override{float(mo.wiimote_swing_x), float(mo.wiimote_swing_y),
++                               float(mo.wiimote_swing_forward), float(mo.wiimote_swing_backward)};
++  TiltOverride tilt_override{float(mo.wiimote_tilt_forward), float(mo.wiimote_tilt_backward),
++                             float(mo.wiimote_tilt_left), float(mo.wiimote_tilt_right)};
++  ShakeOverride shake_override{float(mo.wiimote_shake_x), float(mo.wiimote_shake_y),
++                               float(mo.wiimote_shake_z)};
++
++  const bool any_swing = mo.wiimote_swing_x || mo.wiimote_swing_y ||
++                         mo.wiimote_swing_forward || mo.wiimote_swing_backward;
++  const bool any_tilt = mo.wiimote_tilt_forward || mo.wiimote_tilt_backward ||
++                        mo.wiimote_tilt_left || mo.wiimote_tilt_right;
++  const bool any_shake = mo.wiimote_shake_x || mo.wiimote_shake_y || mo.wiimote_shake_z;
++
++  EmulateSwing(&m_swing_state, m_swing, 1.f / ::Wiimote::UPDATE_FREQ,
++               any_swing ? &swing_override : nullptr);
++  EmulateTilt(&m_tilt_state, m_tilt, 1.f / ::Wiimote::UPDATE_FREQ,
++              any_tilt ? &tilt_override : nullptr);
+   EmulatePoint(&m_point_state, m_ir, m_input_override_function, 1.f / ::Wiimote::UPDATE_FREQ);
+-  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ);
++  EmulateShake(&m_shake_state, m_shake, 1.f / ::Wiimote::UPDATE_FREQ,
++               any_shake ? &shake_override : nullptr);
+   EmulateIMUCursor(&m_imu_cursor_state, m_imu_ir, m_imu_accelerometer, m_imu_gyroscope,
+                    1.f / ::Wiimote::UPDATE_FREQ);
+ }
+diff --git a/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.cpp b/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.cpp
+index 9ddbaff..9eabcf3 100644
+--- a/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.cpp
++++ b/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.cpp
+@@ -18,6 +18,7 @@
+ #include "Core/HW/Wiimote.h"
+ #include "Core/HW/WiimoteEmu/Extension/Classic.h"
+ #include "Core/HW/WiimoteEmu/Extension/Nunchuk.h"
++#include "Core/HW/WiimoteEmu/Extension/TaTaCon.h"
+ #include "Core/HW/WiimoteEmu/WiimoteEmu.h"
+ 
+ #include "InputCommon/ControllerEmu/ControlGroup/Attachments.h"
+@@ -42,6 +43,7 @@ using ControlsMap = std::map<std::pair<std::string_view, std::string_view>, Cont
+ using StateArray = std::array<InputState, ControlID::NUMBER_OF_CONTROLS>;
+ 
+ std::array<StateArray, 4> s_state_arrays;
++std::array<ciface::Touch::MotionOverrideState, 4> s_motion_override_states;
+ 
+ const ControlsMap s_gcpad_controls_map = {{
+     {{GCPad::BUTTONS_GROUP, GCPad::A_BUTTON}, ControlID::GCPAD_A_BUTTON},
+@@ -145,6 +147,13 @@ const ControlsMap s_classic_controls_map = {{
+      ControlID::CLASSIC_RIGHT_STICK_Y},
+ }};
+ 
++const ControlsMap s_tatacon_controls_map = {{
++    {{"Center", "Left"},  ControlID::TATACON_CENTER_LEFT},
++    {{"Center", "Right"}, ControlID::TATACON_CENTER_RIGHT},
++    {{"Rim",    "Left"},  ControlID::TATACON_RIM_LEFT},
++    {{"Rim",    "Right"}, ControlID::TATACON_RIM_RIGHT},
++}};
++
+ ControllerEmu::InputOverrideFunction GetInputOverrideFunction(const ControlsMap& controls_map,
+                                                               size_t i)
+ {
+@@ -193,6 +202,8 @@ void RegisterWiiInputOverrider(int controller_index)
+       GetInputOverrideFunction(s_nunchuk_controls_map, controller_index));
+   attachments[WiimoteEmu::ExtensionNumber::CLASSIC]->SetInputOverrideFunction(
+       GetInputOverrideFunction(s_classic_controls_map, controller_index));
++  attachments[WiimoteEmu::ExtensionNumber::TATACON]->SetInputOverrideFunction(
++      GetInputOverrideFunction(s_tatacon_controls_map, controller_index));
+ }
+ 
+ void UnregisterGameCubeInputOverrider(int controller_index)
+@@ -223,19 +234,80 @@ void UnregisterWiiInputOverrider(int controller_index)
+ 
+ void SetControlState(int controller_index, ControlID control, double state)
+ {
+-  InputState& input_state = s_state_arrays[controller_index][control];
++  // Route motion controls to MotionOverrideState instead of InputOverrideFunction
++  MotionOverrideState& m = s_motion_override_states[controller_index];
++  switch (control)
++  {
++  case ControlID::WIIMOTE_SHAKE_X:        m.wiimote_shake_x = state; return;
++  case ControlID::WIIMOTE_SHAKE_Y:        m.wiimote_shake_y = state; return;
++  case ControlID::WIIMOTE_SHAKE_Z:        m.wiimote_shake_z = state; return;
++  case ControlID::WIIMOTE_SWING_X:        m.wiimote_swing_x = state; return;
++  case ControlID::WIIMOTE_SWING_Y:        m.wiimote_swing_y = state; return;
++  case ControlID::WIIMOTE_SWING_FORWARD:  m.wiimote_swing_forward = state; return;
++  case ControlID::WIIMOTE_SWING_BACKWARD: m.wiimote_swing_backward = state; return;
++  case ControlID::WIIMOTE_TILT_FORWARD:  m.wiimote_tilt_forward = state; return;
++  case ControlID::WIIMOTE_TILT_BACKWARD: m.wiimote_tilt_backward = state; return;
++  case ControlID::WIIMOTE_TILT_LEFT:     m.wiimote_tilt_left = state; return;
++  case ControlID::WIIMOTE_TILT_RIGHT:    m.wiimote_tilt_right = state; return;
++  case ControlID::NUNCHUK_SHAKE_X:        m.nunchuk_shake_x = state; return;
++  case ControlID::NUNCHUK_SHAKE_Y:        m.nunchuk_shake_y = state; return;
++  case ControlID::NUNCHUK_SHAKE_Z:        m.nunchuk_shake_z = state; return;
++  case ControlID::NUNCHUK_SWING_X:        m.nunchuk_swing_x = state; return;
++  case ControlID::NUNCHUK_SWING_Y:        m.nunchuk_swing_y = state; return;
++  case ControlID::NUNCHUK_SWING_FORWARD:  m.nunchuk_swing_forward = state; return;
++  case ControlID::NUNCHUK_SWING_BACKWARD: m.nunchuk_swing_backward = state; return;
++  case ControlID::NUNCHUK_TILT_FORWARD:  m.nunchuk_tilt_forward = state; return;
++  case ControlID::NUNCHUK_TILT_BACKWARD: m.nunchuk_tilt_backward = state; return;
++  case ControlID::NUNCHUK_TILT_LEFT:     m.nunchuk_tilt_left = state; return;
++  case ControlID::NUNCHUK_TILT_RIGHT:    m.nunchuk_tilt_right = state; return;
++  default: break;
++  }
+ 
++  InputState& input_state = s_state_arrays[controller_index][control];
+   input_state.override_state = state;
+   input_state.overriding = true;
+ }
+ 
+ void ClearControlState(int controller_index, ControlID control)
+ {
+-  InputState& input_state = s_state_arrays[controller_index][control];
++  // Clear motion override fields too
++  MotionOverrideState& m = s_motion_override_states[controller_index];
++  switch (control)
++  {
++  case ControlID::WIIMOTE_SHAKE_X:        m.wiimote_shake_x = 0; return;
++  case ControlID::WIIMOTE_SHAKE_Y:        m.wiimote_shake_y = 0; return;
++  case ControlID::WIIMOTE_SHAKE_Z:        m.wiimote_shake_z = 0; return;
++  case ControlID::WIIMOTE_SWING_X:        m.wiimote_swing_x = 0; return;
++  case ControlID::WIIMOTE_SWING_Y:        m.wiimote_swing_y = 0; return;
++  case ControlID::WIIMOTE_SWING_FORWARD:  m.wiimote_swing_forward = 0; return;
++  case ControlID::WIIMOTE_SWING_BACKWARD: m.wiimote_swing_backward = 0; return;
++  case ControlID::WIIMOTE_TILT_FORWARD:  m.wiimote_tilt_forward = 0; return;
++  case ControlID::WIIMOTE_TILT_BACKWARD: m.wiimote_tilt_backward = 0; return;
++  case ControlID::WIIMOTE_TILT_LEFT:     m.wiimote_tilt_left = 0; return;
++  case ControlID::WIIMOTE_TILT_RIGHT:    m.wiimote_tilt_right = 0; return;
++  case ControlID::NUNCHUK_SHAKE_X:        m.nunchuk_shake_x = 0; return;
++  case ControlID::NUNCHUK_SHAKE_Y:        m.nunchuk_shake_y = 0; return;
++  case ControlID::NUNCHUK_SHAKE_Z:        m.nunchuk_shake_z = 0; return;
++  case ControlID::NUNCHUK_SWING_X:        m.nunchuk_swing_x = 0; return;
++  case ControlID::NUNCHUK_SWING_Y:        m.nunchuk_swing_y = 0; return;
++  case ControlID::NUNCHUK_SWING_FORWARD:  m.nunchuk_swing_forward = 0; return;
++  case ControlID::NUNCHUK_SWING_BACKWARD: m.nunchuk_swing_backward = 0; return;
++  case ControlID::NUNCHUK_TILT_FORWARD:  m.nunchuk_tilt_forward = 0; return;
++  case ControlID::NUNCHUK_TILT_BACKWARD: m.nunchuk_tilt_backward = 0; return;
++  case ControlID::NUNCHUK_TILT_LEFT:     m.nunchuk_tilt_left = 0; return;
++  case ControlID::NUNCHUK_TILT_RIGHT:    m.nunchuk_tilt_right = 0; return;
++  default: break;
++  }
+ 
++  InputState& input_state = s_state_arrays[controller_index][control];
+   input_state.overriding = false;
+ }
+ 
++const MotionOverrideState& GetMotionOverrideState(int controller_index)
++{
++  return s_motion_override_states[controller_index];
++}
++
+ double GetGateRadiusAtAngle(int controller_index, ControlID stick, double angle)
+ {
+   ControllerEmu::ControlGroup* group;
+@@ -254,6 +326,13 @@ double GetGateRadiusAtAngle(int controller_index, ControlID stick, double angle)
+   case ControlID::NUNCHUK_STICK_Y:
+     group = Wiimote::GetNunchukGroup(controller_index, WiimoteEmu::NunchukGroup::Stick);
+     break;
++  // Motion controls (Swing/Tilt) use a fixed radius, not a gate shape
++  case ControlID::WIIMOTE_SWING_X:
++  case ControlID::WIIMOTE_SWING_Y:
++    return 1.0;
++  case ControlID::NUNCHUK_SWING_X:
++  case ControlID::NUNCHUK_SWING_Y:
++    return 1.0;
+   case ControlID::CLASSIC_LEFT_STICK_X:
+   case ControlID::CLASSIC_LEFT_STICK_Y:
+     group = Wiimote::GetClassicGroup(controller_index, WiimoteEmu::ClassicGroup::LeftStick);
+diff --git a/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.h b/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.h
+index 6217b44..7113020 100644
+--- a/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.h
++++ b/Source/Core/InputCommon/ControllerInterface/Touch/InputOverrider.h
+@@ -68,12 +68,47 @@ enum ControlID
+   CLASSIC_RIGHT_STICK_X = 54,
+   CLASSIC_RIGHT_STICK_Y = 55,
+ 
++  // Wiimote motion controls
++  WIIMOTE_SHAKE_X = 56,
++  WIIMOTE_SHAKE_Y = 57,
++  WIIMOTE_SHAKE_Z = 58,
++
++  WIIMOTE_SWING_X = 59,
++  WIIMOTE_SWING_Y = 60,
++  WIIMOTE_SWING_FORWARD = 61,
++  WIIMOTE_SWING_BACKWARD = 62,
++
++  WIIMOTE_TILT_FORWARD = 63,
++  WIIMOTE_TILT_BACKWARD = 64,
++  WIIMOTE_TILT_LEFT = 65,
++  WIIMOTE_TILT_RIGHT = 66,
++
++  // Nunchuk motion controls
++  NUNCHUK_SHAKE_X = 67,
++  NUNCHUK_SHAKE_Y = 68,
++  NUNCHUK_SHAKE_Z = 69,
++
++  NUNCHUK_SWING_X = 70,
++  NUNCHUK_SWING_Y = 71,
++  NUNCHUK_SWING_FORWARD = 72,
++  NUNCHUK_SWING_BACKWARD = 73,
++
++  NUNCHUK_TILT_FORWARD = 74,
++  NUNCHUK_TILT_BACKWARD = 75,
++  NUNCHUK_TILT_LEFT = 76,
++  NUNCHUK_TILT_RIGHT = 77,
++
++  TATACON_CENTER_LEFT = 78,
++  TATACON_CENTER_RIGHT = 79,
++  TATACON_RIM_LEFT = 80,
++  TATACON_RIM_RIGHT = 81,
++
+   NUMBER_OF_CONTROLS,
+ 
+   FIRST_GC_CONTROL = GCPAD_A_BUTTON,
+   LAST_GC_CONTROL = GCPAD_C_STICK_Y,
+   FIRST_WII_CONTROL = WIIMOTE_A_BUTTON,
+-  LAST_WII_CONTROL = CLASSIC_RIGHT_STICK_Y,
++  LAST_WII_CONTROL = NUNCHUK_TILT_BACKWARD,
+ 
+ };
+ void RegisterGameCubeInputOverrider(int controller_index);
+@@ -84,6 +119,28 @@ void UnregisterWiiInputOverrider(int controller_index);
+ void SetControlState(int controller_index, ControlID control, double state);
+ void ClearControlState(int controller_index, ControlID control);
+ 
++// Motion override state for Shake/Swing/Tilt (not accessible via InputOverrideFunction)
++struct MotionOverrideState
++{
++  // Shake: 0.0 = off, 1.0 = on (per axis)
++  double wiimote_shake_x = 0, wiimote_shake_y = 0, wiimote_shake_z = 0;
++  double nunchuk_shake_x = 0, nunchuk_shake_y = 0, nunchuk_shake_z = 0;
++
++  // Swing XY: joystick -1.0 ~ 1.0; Forward/Backward: 0.0 ~ 1.0
++  double wiimote_swing_x = 0, wiimote_swing_y = 0;
++  double wiimote_swing_forward = 0, wiimote_swing_backward = 0;
++  double nunchuk_swing_x = 0, nunchuk_swing_y = 0;
++  double nunchuk_swing_forward = 0, nunchuk_swing_backward = 0;
++
++  // Tilt: dpad 4 directions, 0.0 ~ 1.0 each
++  double wiimote_tilt_forward = 0, wiimote_tilt_backward = 0;
++  double wiimote_tilt_left = 0, wiimote_tilt_right = 0;
++  double nunchuk_tilt_forward = 0, nunchuk_tilt_backward = 0;
++  double nunchuk_tilt_left = 0, nunchuk_tilt_right = 0;
++};
++
++const MotionOverrideState& GetMotionOverrideState(int controller_index);
++
+ // Angle is in radians and should be non-negative
+ double GetGateRadiusAtAngle(int controller_index, ControlID stick, double angle);
+ }  // namespace ciface::Touch

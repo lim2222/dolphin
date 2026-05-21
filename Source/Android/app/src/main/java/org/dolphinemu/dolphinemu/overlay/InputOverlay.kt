@@ -149,9 +149,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_POINTER_DOWN -> {
                     // If a pointer enters the bounds of a button, press that button.
-                    if (button.bounds.contains(
+                    if (button.hitTest(
                             event.getX(pointerIndex).toInt(),
-                            event.getY(pointerIndex).toInt()
+                            event.getY(pointerIndex).toInt(),
+                            button.useAlphaHitTest
                         )
                     ) {
                         button.setPressedState(if (button.latching) !button.getPressedState() else true)
@@ -748,6 +749,55 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+        // Wiimote motion controls (toggle off by default)
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_11.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X,
+                orientation, false, "WSKX"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_12.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y,
+                orientation, false, "WSKY"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_13.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
+                orientation, false, "WSKZ"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_14.boolean) {
+            overlayJoysticks.add(initializeOverlayJoystick(context,
+                R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+                R.drawable.gcwii_joystick_pressed,
+                ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y,
+                orientation, "WSW"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_15.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD,
+                orientation, false, "WSF"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_16.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD,
+                orientation, false, "WSB"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_17.boolean) {
+            overlayDpads.add(initializeOverlayDpad(context,
+                R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
+                R.drawable.gcwii_dpad_pressed_two_directions,
+                ButtonType.WIIMOTE_TILT,
+                ControlId.WIIMOTE_TILT_RIGHT,    // 上 → Right
+                ControlId.WIIMOTE_TILT_LEFT,     // 下 → Left
+                ControlId.WIIMOTE_TILT_FORWARD,  // 左 → Forward
+                ControlId.WIIMOTE_TILT_BACKWARD, // 右 → Backward
+                orientation, "WT"))
+        }
     }
 
     private fun addNunchukOverlayControls(orientation: String) {
@@ -791,6 +841,105 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+        // Nunchuk motion controls (toggle off by default)
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_20.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X,
+                orientation, false, "NSKX"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_21.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y,
+                orientation, false, "NSKY"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_22.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z,
+                orientation, false, "NSKZ"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_23.boolean) {
+            overlayJoysticks.add(initializeOverlayJoystick(context,
+                R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+                R.drawable.gcwii_joystick_pressed,
+                ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y,
+                orientation, "NSW"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_24.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD,
+                orientation, false, "NSF"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_25.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+                ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD,
+                orientation, false, "NSB"))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_26.boolean) {
+            overlayDpads.add(initializeOverlayDpad(context,
+                R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
+                R.drawable.gcwii_dpad_pressed_two_directions,
+                ButtonType.NUNCHUK_TILT,
+                ControlId.NUNCHUK_TILT_RIGHT,    // 上 → Right
+                ControlId.NUNCHUK_TILT_LEFT,     // 下 → Left
+                ControlId.NUNCHUK_TILT_FORWARD,  // 左 → Forward
+                ControlId.NUNCHUK_TILT_BACKWARD, // 右 → Backward
+                orientation, "NT"))
+        }
+    }
+
+    private fun addTaTaConOverlayControls(orientation: String) {
+        // Basic Wiimote buttons (minus, plus, 1, 2, home)
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_4.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_plus, R.drawable.wiimote_plus_pressed,
+                ButtonType.WIIMOTE_BUTTON_PLUS, ControlId.WIIMOTE_PLUS_BUTTON, orientation, false))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_3.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_minus, R.drawable.wiimote_minus_pressed,
+                ButtonType.WIIMOTE_BUTTON_MINUS, ControlId.WIIMOTE_MINUS_BUTTON, orientation, false))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_2.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_two, R.drawable.wiimote_two_pressed,
+                ButtonType.WIIMOTE_BUTTON_2, ControlId.WIIMOTE_TWO_BUTTON, orientation, false))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_1.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_one, R.drawable.wiimote_one_pressed,
+                ButtonType.WIIMOTE_BUTTON_1, ControlId.WIIMOTE_ONE_BUTTON, orientation, false))
+        }
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_5.boolean) {
+            overlayButtons.add(initializeOverlayButton(context,
+                R.drawable.wiimote_home, R.drawable.wiimote_home_pressed,
+                ButtonType.WIIMOTE_BUTTON_HOME, ControlId.WIIMOTE_HOME_BUTTON, orientation, false))
+        }
+
+        // TaTaCon drum pads - use initializeOverlayButton for proper scale/position/orientation
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.tatacon_rim_left, R.drawable.tatacon_rim_left_pressed,
+            ButtonType.TATACON_RIM_LEFT, ControlId.TATACON_RIM_LEFT,
+            orientation, false).also { it.useAlphaHitTest = true })
+
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.tatacon_rim_right, R.drawable.tatacon_rim_right_pressed,
+            ButtonType.TATACON_RIM_RIGHT, ControlId.TATACON_RIM_RIGHT,
+            orientation, false).also { it.useAlphaHitTest = true })
+
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.tatacon_center_left, R.drawable.tatacon_center_left_pressed,
+            ButtonType.TATACON_CENTER_LEFT, ControlId.TATACON_CENTER_LEFT,
+            orientation, false).also { it.useAlphaHitTest = true })
+
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.tatacon_center_right, R.drawable.tatacon_center_right_pressed,
+            ButtonType.TATACON_CENTER_RIGHT, ControlId.TATACON_CENTER_RIGHT,
+            orientation, false).also { it.useAlphaHitTest = true })
     }
 
     private fun addClassicOverlayControls(orientation: String) {
@@ -1045,6 +1194,14 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     addClassicOverlayControls(orientation)
                 }
 
+                OVERLAY_WIIMOTE_TATACON -> {
+                    this.controllerIndex = controllerIndex - 4
+                    InputOverrider.registerWii(this.controllerIndex)
+                    wiimoteRegistered[this.controllerIndex] = true
+
+                    addTaTaConOverlayControls(orientation)
+                }
+
                 OVERLAY_NONE -> {}
             }
         }
@@ -1133,7 +1290,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         legacyId: Int,
         control: Int,
         orientation: String,
-        latching: Boolean
+        latching: Boolean,
+        overlayLabel: String? = null
     ): InputOverlayDrawableButton {
         // Decide scale based on button ID and user preference
         var scale = when (legacyId) {
@@ -1169,6 +1327,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         scale *= (IntSetting.MAIN_CONTROL_SCALE.int + 50).toFloat()
         scale /= 100f
+		// TaTaCon buttons extra scale
+		when (legacyId) {
+		ButtonType.TATACON_RIM_LEFT,
+		ButtonType.TATACON_RIM_RIGHT -> scale *= 7.6f
+		ButtonType.TATACON_CENTER_LEFT,
+		ButtonType.TATACON_CENTER_RIGHT -> scale *= 5.5f
+		}
 
         // Initialize the InputOverlayDrawableButton.
         val defaultStateBitmap =
@@ -1182,15 +1347,16 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             pressedStateBitmap,
             legacyId,
             control,
-            latching
+            latching,
+            overlayLabel
         )
 
         // The X and Y coordinates of the InputOverlayDrawableButton on the InputOverlay.
         // These were set in the input overlay configuration menu.
         val drawableX =
-            preferences.getFloat(getXKey(legacyId, controllerType, orientation), 0f).toInt()
+            preferences.getFloat(getXKey(legacyId, controllerType, orientation), getMotionButtonDefaultX(legacyId)).toInt()
         val drawableY =
-            preferences.getFloat(getYKey(legacyId, controllerType, orientation), 0f).toInt()
+            preferences.getFloat(getYKey(legacyId, controllerType, orientation), getMotionButtonDefaultY(legacyId)).toInt()
 
         val width = overlayDrawable.width
         val height = overlayDrawable.height
@@ -1230,7 +1396,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         downControl: Int,
         leftControl: Int,
         rightControl: Int,
-        orientation: String
+        orientation: String,
+        overlayLabel: String? = null
     ): InputOverlayDrawableDpad {
         // Decide scale based on button ID and user preference
         var scale: Float = when (legacyId) {
@@ -1264,15 +1431,16 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             upControl,
             downControl,
             leftControl,
-            rightControl
+            rightControl,
+            overlayLabel
         )
 
         // The X and Y coordinates of the InputOverlayDrawableDpad on the InputOverlay.
         // These were set in the input overlay configuration menu.
         val drawableX =
-            preferences.getFloat(getXKey(legacyId, controllerType, orientation), 0f).toInt()
+            preferences.getFloat(getXKey(legacyId, controllerType, orientation), getMotionButtonDefaultX(legacyId)).toInt()
         val drawableY =
-            preferences.getFloat(getYKey(legacyId, controllerType, orientation), 0f).toInt()
+            preferences.getFloat(getYKey(legacyId, controllerType, orientation), getMotionButtonDefaultY(legacyId)).toInt()
 
         val width = overlayDrawable.width
         val height = overlayDrawable.height
@@ -1308,7 +1476,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         legacyId: Int,
         xControl: Int,
         yControl: Int,
-        orientation: String
+        orientation: String,
+        overlayLabel: String? = null
     ): InputOverlayDrawableJoystick {
         // Decide scale based on user preference
         var scale = 0.275f
@@ -1324,9 +1493,9 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         // The X and Y coordinates of the InputOverlayDrawableButton on the InputOverlay.
         // These were set in the input overlay configuration menu.
         val drawableX =
-            preferences.getFloat(getXKey(legacyId, controllerType, orientation), 0f).toInt()
+            preferences.getFloat(getXKey(legacyId, controllerType, orientation), getMotionButtonDefaultX(legacyId)).toInt()
         val drawableY =
-            preferences.getFloat(getYKey(legacyId, controllerType, orientation), 0f).toInt()
+            preferences.getFloat(getYKey(legacyId, controllerType, orientation), getMotionButtonDefaultY(legacyId)).toInt()
 
         // Decide inner scale based on joystick ID
         val innerScale: Float = if (legacyId == ButtonType.STICK_C) 1.833f else 1.375f
@@ -1349,7 +1518,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             legacyId,
             xControl,
             yControl,
-            controllerIndex
+            controllerIndex,
+            overlayLabel
         )
 
         // Need to set the image's position
@@ -2283,6 +2453,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         const val OVERLAY_WIIMOTE_NUNCHUK = 3
         const val OVERLAY_WIIMOTE_CLASSIC = 4
         const val OVERLAY_NONE = 5
+        const val OVERLAY_WIIMOTE_TATACON = 6
         private const val DISABLED_GAMECUBE_CONTROLLER = 0
         private const val EMULATED_GAMECUBE_CONTROLLER = 6
         private const val EMULATED_AM_BASEBOARD = 11
@@ -2350,6 +2521,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                         when (EmulatedController.getSelectedWiimoteAttachment(wiimoteIndex)) {
                             1 -> return OVERLAY_WIIMOTE_NUNCHUK
                             2 -> return OVERLAY_WIIMOTE_CLASSIC
+                            8 -> return OVERLAY_WIIMOTE_TATACON
                         }
 
                         val sidewaysSetting =
@@ -2383,4 +2555,49 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun getYKey(sharedPrefsId: Int, controller: Int, orientation: String): String =
         getKey(sharedPrefsId, controller, orientation, "-Y")
+
+    // Default positions for motion buttons so they don't all stack at 0,0
+    private fun getMotionButtonDefaultX(legacyId: Int): Float = when (legacyId) {
+        ButtonType.WIIMOTE_SHAKE_X        -> 20f
+        ButtonType.WIIMOTE_SHAKE_Y        -> 120f
+        ButtonType.WIIMOTE_SHAKE_Z        -> 220f
+        ButtonType.WIIMOTE_SWING          -> 320f   // WSW joystick
+        ButtonType.WIIMOTE_TILT           -> 20f    // WT dpad
+        ButtonType.WIIMOTE_SWING_FORWARD  -> 20f
+        ButtonType.WIIMOTE_SWING_BACKWARD -> 120f
+        ButtonType.NUNCHUK_SHAKE_X        -> 20f
+        ButtonType.NUNCHUK_SHAKE_Y        -> 120f
+        ButtonType.NUNCHUK_SHAKE_Z        -> 220f
+        ButtonType.NUNCHUK_SWING          -> 320f   // NSW joystick
+        ButtonType.NUNCHUK_TILT           -> 20f    // NT dpad
+        ButtonType.NUNCHUK_SWING_FORWARD  -> 20f
+        ButtonType.NUNCHUK_SWING_BACKWARD -> 120f
+        ButtonType.TATACON_RIM_LEFT      -> 20f
+        ButtonType.TATACON_RIM_RIGHT     -> 400f
+        ButtonType.TATACON_CENTER_LEFT   -> 20f
+        ButtonType.TATACON_CENTER_RIGHT  -> 400f
+        else -> 0f
+    }
+
+    private fun getMotionButtonDefaultY(legacyId: Int): Float = when (legacyId) {
+        ButtonType.WIIMOTE_SHAKE_X,
+        ButtonType.WIIMOTE_SHAKE_Y,
+        ButtonType.WIIMOTE_SHAKE_Z        -> 20f
+        ButtonType.WIIMOTE_SWING          -> 300f   // WSW joystick
+        ButtonType.WIIMOTE_TILT           -> 500f   // WT dpad
+        ButtonType.WIIMOTE_SWING_FORWARD,
+        ButtonType.WIIMOTE_SWING_BACKWARD -> 140f
+        ButtonType.NUNCHUK_SHAKE_X,
+        ButtonType.NUNCHUK_SHAKE_Y,
+        ButtonType.NUNCHUK_SHAKE_Z        -> 280f
+        ButtonType.NUNCHUK_SWING          -> 500f   // NSW joystick
+        ButtonType.NUNCHUK_TILT           -> 700f   // NT dpad
+        ButtonType.NUNCHUK_SWING_FORWARD,
+        ButtonType.NUNCHUK_SWING_BACKWARD -> 400f
+        ButtonType.TATACON_RIM_LEFT,
+        ButtonType.TATACON_RIM_RIGHT      -> 800f
+        ButtonType.TATACON_CENTER_LEFT,
+        ButtonType.TATACON_CENTER_RIGHT   -> 300f
+        else -> 0f
+    }
 }

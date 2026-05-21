@@ -197,6 +197,12 @@ object NativeLibrary {
         const val WIIMOTE_GYRO_ROLL_RIGHT = 634
         const val WIIMOTE_GYRO_YAW_LEFT = 635
         const val WIIMOTE_GYRO_YAW_RIGHT = 636
+
+        // TaTaCon (Taiko Drum) extension
+        const val TATACON_CENTER_LEFT = 700
+        const val TATACON_CENTER_RIGHT = 701
+        const val TATACON_RIM_LEFT = 702
+        const val TATACON_RIM_RIGHT = 703
     }
 
     object ButtonState {

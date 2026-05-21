@@ -331,6 +331,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
             emulationFragment?.refreshInputOverlay()
 
+            // Refresh again after a short delay to ensure per-game profiles
+            // (WiimoteProfile1 etc.) are fully loaded before building the overlay
+            Handler(Looper.getMainLooper()).postDelayed({
+                emulationFragment?.refreshInputOverlay()
+            }, 1000)
+
             updateDisplaySettings()
         } catch (_: IllegalStateException) {
             // Most likely the core delivered an onTitleChanged while emulation was shutting down.
@@ -666,13 +672,13 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 emulationFragment?.refreshInputOverlay()
             }
         } else {
-            val wiiEnabledButtons = BooleanArray(11)
             val wiiSettingBase = "MAIN_BUTTON_TOGGLE_WII_"
 
-            for (i in wiiEnabledButtons.indices) {
-                wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
-            }
             if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
+                val wiiEnabledButtons = BooleanArray(29)  // 0~28
+                for (i in wiiEnabledButtons.indices) {
+                    wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
+                }
                 builder.setMultiChoiceItems(
                     R.array.nunchukButtons, wiiEnabledButtons
                 ) { _: DialogInterface?, indexSelected: Int, isChecked: Boolean ->
@@ -681,6 +687,10 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     emulationFragment?.refreshInputOverlay()
                 }
             } else {
+                val wiiEnabledButtons = BooleanArray(17)  // 0~16 (wiimote only, no nunchuk)
+                for (i in wiiEnabledButtons.indices) {
+                    wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
+                }
                 builder.setMultiChoiceItems(
                     R.array.wiimoteButtons, wiiEnabledButtons
                 ) { _: DialogInterface?, indexSelected: Int, isChecked: Boolean ->

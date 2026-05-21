@@ -153,6 +153,8 @@ public:
 
   Nunchuk();
 
+  void SetControllerIndex(int index) { m_controller_index = index; }
+
   void BuildDesiredExtensionState(DesiredExtensionState* target_state) override;
   void Update(const DesiredExtensionState& target_state) override;
   void Reset() override;
@@ -182,6 +184,7 @@ public:
   static constexpr const char* Z_BUTTON = "Z";
 
 private:
+  int m_controller_index = 0;
   ControllerEmu::Tilt* m_tilt;
   ControllerEmu::Force* m_swing;
   ControllerEmu::Shake* m_shake;

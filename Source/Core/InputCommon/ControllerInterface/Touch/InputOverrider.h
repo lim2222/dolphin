@@ -68,12 +68,47 @@ enum ControlID
   CLASSIC_RIGHT_STICK_X = 54,
   CLASSIC_RIGHT_STICK_Y = 55,
 
+  // Wiimote motion controls
+  WIIMOTE_SHAKE_X = 56,
+  WIIMOTE_SHAKE_Y = 57,
+  WIIMOTE_SHAKE_Z = 58,
+
+  WIIMOTE_SWING_X = 59,
+  WIIMOTE_SWING_Y = 60,
+  WIIMOTE_SWING_FORWARD = 61,
+  WIIMOTE_SWING_BACKWARD = 62,
+
+  WIIMOTE_TILT_FORWARD = 63,
+  WIIMOTE_TILT_BACKWARD = 64,
+  WIIMOTE_TILT_LEFT = 65,
+  WIIMOTE_TILT_RIGHT = 66,
+
+  // Nunchuk motion controls
+  NUNCHUK_SHAKE_X = 67,
+  NUNCHUK_SHAKE_Y = 68,
+  NUNCHUK_SHAKE_Z = 69,
+
+  NUNCHUK_SWING_X = 70,
+  NUNCHUK_SWING_Y = 71,
+  NUNCHUK_SWING_FORWARD = 72,
+  NUNCHUK_SWING_BACKWARD = 73,
+
+  NUNCHUK_TILT_FORWARD = 74,
+  NUNCHUK_TILT_BACKWARD = 75,
+  NUNCHUK_TILT_LEFT = 76,
+  NUNCHUK_TILT_RIGHT = 77,
+
+  TATACON_CENTER_LEFT = 78,
+  TATACON_CENTER_RIGHT = 79,
+  TATACON_RIM_LEFT = 80,
+  TATACON_RIM_RIGHT = 81,
+
   NUMBER_OF_CONTROLS,
 
   FIRST_GC_CONTROL = GCPAD_A_BUTTON,
   LAST_GC_CONTROL = GCPAD_C_STICK_Y,
   FIRST_WII_CONTROL = WIIMOTE_A_BUTTON,
-  LAST_WII_CONTROL = CLASSIC_RIGHT_STICK_Y,
+  LAST_WII_CONTROL = NUNCHUK_TILT_BACKWARD,
 
 };
 void RegisterGameCubeInputOverrider(int controller_index);
@@ -83,6 +118,28 @@ void UnregisterWiiInputOverrider(int controller_index);
 
 void SetControlState(int controller_index, ControlID control, double state);
 void ClearControlState(int controller_index, ControlID control);
+
+// Motion override state for Shake/Swing/Tilt (not accessible via InputOverrideFunction)
+struct MotionOverrideState
+{
+  // Shake: 0.0 = off, 1.0 = on (per axis)
+  double wiimote_shake_x = 0, wiimote_shake_y = 0, wiimote_shake_z = 0;
+  double nunchuk_shake_x = 0, nunchuk_shake_y = 0, nunchuk_shake_z = 0;
+
+  // Swing XY: joystick -1.0 ~ 1.0; Forward/Backward: 0.0 ~ 1.0
+  double wiimote_swing_x = 0, wiimote_swing_y = 0;
+  double wiimote_swing_forward = 0, wiimote_swing_backward = 0;
+  double nunchuk_swing_x = 0, nunchuk_swing_y = 0;
+  double nunchuk_swing_forward = 0, nunchuk_swing_backward = 0;
+
+  // Tilt: dpad 4 directions, 0.0 ~ 1.0 each
+  double wiimote_tilt_forward = 0, wiimote_tilt_backward = 0;
+  double wiimote_tilt_left = 0, wiimote_tilt_right = 0;
+  double nunchuk_tilt_forward = 0, nunchuk_tilt_backward = 0;
+  double nunchuk_tilt_left = 0, nunchuk_tilt_right = 0;
+};
+
+const MotionOverrideState& GetMotionOverrideState(int controller_index);
 
 // Angle is in radians and should be non-negative
 double GetGateRadiusAtAngle(int controller_index, ControlID stick, double angle);

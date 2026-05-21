@@ -2,7 +2,7 @@
 <resources>
 
     <!-- Title of the app -->
-    <string name="app_name">Dolphin Emulator</string>
+    <string name="app_name">Dolphin Motion</string>
     <string name="host">app</string>
     <string name="scheme">dolphinemu</string>
 
@@ -755,6 +755,7 @@ It can efficiently compress both junk data and encrypted Wii data.
     <string name="extension_guitar">Guitar</string>
     <string name="extension_drums">Drums</string>
     <string name="extension_turntable">Turntable</string>
+    <string name="extension_tatacon">Taiko Drum</string>
 
     <!-- Accuracy Preference -->
     <string name="accuracy_fast">Fast</string>
