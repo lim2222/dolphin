@@ -660,18 +660,6 @@ enum class BooleanSetting(
         "ButtonToggleWiimoteTilt",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_18(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteTiltForward",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_19(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteTiltBackward",
-        false
-    ),
     MAIN_BUTTON_TOGGLE_WII_20(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
@@ -712,18 +700,6 @@ enum class BooleanSetting(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukTilt",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_27(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukTiltForward",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_28(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukTiltBackward",
         false
     ),
     MAIN_BUTTON_LATCHING_WII_0(
