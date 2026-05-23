@@ -445,8 +445,6 @@
         <item>WSF</item>
         <item>WSB</item>
         <item>WT</item>
-        <item>WTF</item>
-        <item>WTB</item>
     </string-array>
 
     <string-array name="wiimoteLatchableButtons">
@@ -478,8 +476,6 @@
         <item>WSF</item>
         <item>WSB</item>
         <item>WT</item>
-        <item>WTF</item>
-        <item>WTB</item>
         <item>NSKX</item>
         <item>NSKY</item>
         <item>NSKZ</item>
@@ -487,8 +483,6 @@
         <item>NSF</item>
         <item>NSB</item>
         <item>NT</item>
-        <item>NTF</item>
-        <item>NTB</item>
     </string-array>
 
     <string-array name="nunchukLatchableButtons">
