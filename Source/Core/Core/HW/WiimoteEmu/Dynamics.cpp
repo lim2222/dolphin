@@ -127,8 +127,8 @@ void EmulateTilt(RotationalState* state, ControllerEmu::Tilt* const tilt_group, 
     // Matches WiimoteNew.ini axis names:
     // Tilt/Forward + Tilt/Backward → X axis (pitch)
     // Tilt/Left + Tilt/Right       → Y axis (roll)
-    target.x = override_state->forward - override_state->backward;
-    target.y = override_state->right - override_state->left;
+    target.x = (override_state->forward - override_state->backward) * 0.5f;
+    target.y = (override_state->right - override_state->left) * 0.5f;
   }
   else
   {
