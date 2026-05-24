@@ -792,8 +792,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
                 R.drawable.gcwii_dpad_pressed_two_directions,
                 ButtonType.WIIMOTE_TILT,
-                ControlId.WIIMOTE_TILT_RIGHT,    // 上 → Right
-                ControlId.WIIMOTE_TILT_LEFT,     // 下 → Left
+                ControlId.WIIMOTE_TILT_LEFT,    // 上 → Right
+                ControlId.WIIMOTE_TILT_RIGHT,     // 下 → Left
                 ControlId.WIIMOTE_TILT_FORWARD,  // 左 → Forward
                 ControlId.WIIMOTE_TILT_BACKWARD, // 右 → Backward
                 orientation, "WT"))
@@ -842,44 +842,44 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
         }
         // Nunchuk motion controls (toggle off by default)
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_20.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_18.boolean) {
             overlayButtons.add(initializeOverlayButton(context,
                 R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
                 ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X,
                 orientation, false, "NSKX"))
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_21.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_19.boolean) {
             overlayButtons.add(initializeOverlayButton(context,
                 R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
                 ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y,
                 orientation, false, "NSKY"))
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_22.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_20.boolean) {
             overlayButtons.add(initializeOverlayButton(context,
                 R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
                 ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z,
                 orientation, false, "NSKZ"))
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_23.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_21.boolean) {
             overlayJoysticks.add(initializeOverlayJoystick(context,
                 R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
                 R.drawable.gcwii_joystick_pressed,
                 ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y,
                 orientation, "NSW"))
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_24.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_22.boolean) {
             overlayButtons.add(initializeOverlayButton(context,
                 R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
                 ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD,
                 orientation, false, "NSF"))
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_25.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_23.boolean) {
             overlayButtons.add(initializeOverlayButton(context,
                 R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
                 ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD,
                 orientation, false, "NSB"))
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_26.boolean) {
+        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_24.boolean) {
             overlayDpads.add(initializeOverlayDpad(context,
                 R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
                 R.drawable.gcwii_dpad_pressed_two_directions,

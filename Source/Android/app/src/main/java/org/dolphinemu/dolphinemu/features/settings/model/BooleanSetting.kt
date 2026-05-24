@@ -660,43 +660,43 @@ enum class BooleanSetting(
         "ButtonToggleWiimoteTilt",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_20(
+    MAIN_BUTTON_TOGGLE_WII_18(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukShakeX",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_21(
+    MAIN_BUTTON_TOGGLE_WII_19(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukShakeY",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_22(
+    MAIN_BUTTON_TOGGLE_WII_20(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukShakeZ",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_23(
+    MAIN_BUTTON_TOGGLE_WII_21(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukSwing",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_24(
+    MAIN_BUTTON_TOGGLE_WII_22(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukSwingForward",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_25(
+    MAIN_BUTTON_TOGGLE_WII_23(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukSwingBackward",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_26(
+    MAIN_BUTTON_TOGGLE_WII_24(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonToggleNunchukTilt",
