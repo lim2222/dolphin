@@ -675,7 +675,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             val wiiSettingBase = "MAIN_BUTTON_TOGGLE_WII_"
 
             if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
-                val wiiEnabledButtons = BooleanArray(29)  // 0~28
+                val wiiEnabledButtons = BooleanArray(25)  // 0~28
                 for (i in wiiEnabledButtons.indices) {
                     wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
                 }
@@ -687,7 +687,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     emulationFragment?.refreshInputOverlay()
                 }
             } else {
-                val wiiEnabledButtons = BooleanArray(17)  // 0~16 (wiimote only, no nunchuk)
+                val wiiEnabledButtons = BooleanArray(15)  // 0~16 (wiimote only, no nunchuk)
                 for (i in wiiEnabledButtons.indices) {
                     wiiEnabledButtons[i] = BooleanSetting.valueOf(wiiSettingBase + i).boolean
                 }
