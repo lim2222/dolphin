@@ -171,7 +171,6 @@ void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float t
       state->position.z = 0;
       state->velocity.z = 0;
       state->acceleration.z = 0;
-    
   }
   else
   {
