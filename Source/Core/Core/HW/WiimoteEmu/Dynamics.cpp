@@ -168,6 +168,12 @@ void EmulateSwing(MotionState* state, ControllerEmu::Force* swing_group, float t
 	// Prevent Z-axis bleed from XY motion when no forward/backward input
     if (override_state->forward == 0 && override_state->backward == 0)
     {
+	  state->position.x = 0;
+      state->velocity.x = 0;
+      state->acceleration.x = 0;	
+      state->position.y = 0;
+      state->velocity.y = 0;
+      state->acceleration.y = 0;
       state->position.z = 0;
       state->velocity.z = 0;
       state->acceleration.z = 0;
