@@ -43,7 +43,8 @@ class InputOverlayDrawableJoystick(
     val xControl: Int,
     val yControl: Int,
     private val controllerIndex: Int,
-    val overlayLabel: String? = null
+    val overlayLabel: String? = null,
+    val isAnalogTriggerStick: Boolean = false
 ) {
     var x = 0.0f
         private set
@@ -180,7 +181,7 @@ class InputOverlayDrawableJoystick(
                 touchY -= virtBounds.centerY().toFloat()
                 maxY -= virtBounds.centerY().toFloat()
                 x = touchX / maxX
-                y = touchY / maxY
+                y = if (isAnalogTriggerStick) 0f else touchY / maxY
 
                 setInnerBounds()
             }
@@ -233,7 +234,11 @@ class InputOverlayDrawableJoystick(
 
         val angle = atan2(y, x) + Math.PI + Math.PI
         val radius = hypot(y, x)
-        val maxRadius = InputOverrider.getGateRadiusAtAngle(controllerIndex, xControl, angle)
+        val maxRadius = if (isAnalogTriggerStick) {
+            1.0
+        } else {
+            InputOverrider.getGateRadiusAtAngle(controllerIndex, xControl, angle)
+        }
         if (radius > maxRadius) {
             x = maxRadius * cos(angle)
             y = maxRadius * sin(angle)

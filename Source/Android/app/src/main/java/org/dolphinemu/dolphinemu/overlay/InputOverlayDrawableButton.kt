@@ -30,7 +30,10 @@ class InputOverlayDrawableButton(
     val legacyId: Int,
     val control: Int,
     var latching: Boolean,
-    val overlayLabel: String? = null
+    val overlayLabel: String? = null,
+    val overlayLabelScale: Float = 0.28f,
+    val isAnalogOnly: Boolean = false,
+    val analogPressValue: Double = 1.0
 ) {
     var trackId: Int = -1
     var useAlphaHitTest: Boolean = false
@@ -86,7 +89,7 @@ class InputOverlayDrawableButton(
     private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
-            textSize = bounds.width() * 0.28f
+            textSize = bounds.width() * overlayLabelScale
             typeface = Typeface.DEFAULT_BOLD
             textAlign = Paint.Align.CENTER
             setShadowLayer(4f, 0f, 0f, Color.BLACK)
