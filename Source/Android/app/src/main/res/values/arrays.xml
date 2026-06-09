@@ -416,6 +416,9 @@
         <item>@string/gamepad_d_pad</item>
         <item>@string/gamepad_main_stick</item>
         <item>@string/gamepad_c_stick</item>
+        <item>@string/gamepad_trigger_l_half</item>
+        <item>@string/gamepad_trigger_r_half</item>
+        <item>@string/gamepad_trigger_analog_stick</item>
     </string-array>
 
     <string-array name="gcpadLatchableButtons">
@@ -427,6 +430,8 @@
         <item>@string/gamepad_start</item>
         <item>L</item>
         <item>R</item>
+        <item>@string/gamepad_trigger_l_half</item>
+        <item>@string/gamepad_trigger_r_half</item>
     </string-array>
 
     <string-array name="wiimoteButtons">
@@ -455,6 +460,9 @@
         <item>+</item>
         <item>-</item>
         <item>@string/gamepad_home</item>
+        <item>WSKX</item>
+        <item>WSKY</item>
+        <item>WSKZ</item>
     </string-array>
 
     <string-array name="nunchukButtons">
@@ -495,6 +503,12 @@
         <item>@string/gamepad_home</item>
         <item>C</item>
         <item>Z</item>
+        <item>WSKX</item>
+        <item>WSKY</item>
+        <item>WSKZ</item>
+        <item>NSKX</item>
+        <item>NSKY</item>
+        <item>NSKZ</item>
     </string-array>
 
     <string-array name="classicButtons">
@@ -782,4 +796,26 @@
         <item>1</item>
         <item>2</item>
     </integer-array>
+	
+	<!-- TaTaCon 专用按钮列表（用于 Toggle Controls） -->
+    <string-array name="tataconButtons">
+        <item>1</item>
+        <item>2</item>
+        <item>+</item>
+        <item>-</item>
+        <item>@string/gamepad_home</item>
+        <item>tatacon_rim_left</item>
+        <item>tatacon_rim_right</item>
+        <item>tatacon_center_left</item>
+        <item>tatacon_center_right</item>
+    </string-array>
+	
+	<!-- TaTaCon Latching Buttons（只保留基础按钮） -->
+    <string-array name="tataconLatchableButtons">
+        <item>1</item>
+        <item>2</item>
+        <item>+</item>
+        <item>-</item>
+        <item>@string/gamepad_home</item>
+    </string-array>
 </resources>

@@ -354,6 +354,24 @@ enum class BooleanSetting(
         "ButtonToggleGCStickC",
         true
     ),
+    MAIN_BUTTON_TOGGLE_GC_11(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonToggleGCTriggerLHalf",
+        false
+    ),
+    MAIN_BUTTON_TOGGLE_GC_12(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonToggleGCTriggerRHalf",
+        false
+    ),
+    MAIN_BUTTON_TOGGLE_GC_13(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonToggleGCTriggerAnalogStick",
+        false
+    ),
     MAIN_BUTTON_LATCHING_GC_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
@@ -400,6 +418,18 @@ enum class BooleanSetting(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonLatchingGCTriggerR",
+        false
+    ),
+    MAIN_BUTTON_LATCHING_GC_8(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonLatchingGCTriggerLHalf",
+        false
+    ),
+    MAIN_BUTTON_LATCHING_GC_9(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonLatchingGCTriggerRHalf",
         false
     ),
     MAIN_BUTTON_TOGGLE_CLASSIC_0(
@@ -552,208 +582,90 @@ enum class BooleanSetting(
         "ButtonLatchingClassicButtonZR",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_0(
+	    // TaTaCon 专用 Toggle 设置（新增）
+    MAIN_BUTTON_TOGGLE_TATACON_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButtonA",
+        "ButtonToggleTatacon1",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_1(
+    MAIN_BUTTON_TOGGLE_TATACON_1(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButtonB",
+        "ButtonToggleTatacon2",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_2(
+    MAIN_BUTTON_TOGGLE_TATACON_2(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButton1",
+        "ButtonToggleTataconPlus",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_3(
+    MAIN_BUTTON_TOGGLE_TATACON_3(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButton2",
+        "ButtonToggleTataconMinus",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_4(
+    MAIN_BUTTON_TOGGLE_TATACON_4(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButtonPlus",
+        "ButtonToggleTataconHome",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_5(
+    MAIN_BUTTON_TOGGLE_TATACON_5(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButtonMinus",
+        "ButtonToggleTataconRimLeft",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_6(
+    MAIN_BUTTON_TOGGLE_TATACON_6(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteButtonHome",
+        "ButtonToggleTataconRimRight",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_7(
+    MAIN_BUTTON_TOGGLE_TATACON_7(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteDPad",
+        "ButtonToggleTataconCenterLeft",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_8(
+    MAIN_BUTTON_TOGGLE_TATACON_8(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukC",
+        "ButtonToggleTataconCenterRight",
         true
     ),
-    MAIN_BUTTON_TOGGLE_WII_9(
+	    // TaTaCon 专用 Latching 设置
+    MAIN_BUTTON_LATCHING_TATACON_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukZ",
-        true
-    ),
-    MAIN_BUTTON_TOGGLE_WII_10(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukStick",
-        true
-    ),
-    MAIN_BUTTON_TOGGLE_WII_11(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteShakeX",
+        "ButtonLatchingTatacon1",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_12(
+    MAIN_BUTTON_LATCHING_TATACON_1(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteShakeY",
+        "ButtonLatchingTatacon2",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_13(
+    MAIN_BUTTON_LATCHING_TATACON_2(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteShakeZ",
+        "ButtonLatchingTataconPlus",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_14(
+    MAIN_BUTTON_LATCHING_TATACON_3(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteSwing",
+        "ButtonLatchingTataconMinus",
         false
     ),
-    MAIN_BUTTON_TOGGLE_WII_15(
+    MAIN_BUTTON_LATCHING_TATACON_4(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteSwingForward",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_16(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteSwingBackward",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_17(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteTilt",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_18(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukShakeX",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_19(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukShakeY",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_20(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukShakeZ",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_21(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukSwing",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_22(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukSwingForward",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_23(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukSwingBackward",
-        false
-    ),
-    MAIN_BUTTON_TOGGLE_WII_24(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukTilt",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_0(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButtonA",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_1(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButtonB",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_2(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButton1",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_3(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButton2",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_4(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButtonPlus",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_5(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButtonMinus",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_6(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingWiimoteButtonHome",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_8(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingNunchukC",
-        false
-    ),
-    MAIN_BUTTON_LATCHING_WII_9(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonLatchingNunchukZ",
+        "ButtonLatchingTataconHome",
         false
     ),
     SYSCONF_SCREENSAVER(Settings.FILE_SYSCONF, "IPL", "SSV", false),
@@ -1018,8 +930,80 @@ enum class BooleanSetting(
         Settings.SECTION_ACHIEVEMENTS,
         "ProgressEnabled",
         false
-    );
+	),
+    // ==================== 纯 Wiimote 独立设置 (15条) ====================
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_0(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyA", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_1(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyB", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_2(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnly1", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_3(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnly2", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_4(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyPlus", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_5(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyMinus", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_6(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyHome", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_7(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyDPad", true),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_8(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyShakeX", false),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_9(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyShakeY", false),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_10(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyShakeZ", false),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_11(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlySwing", false),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_12(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlySwingForward", false),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_13(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlySwingBackward", false),
+    MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_14(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyTilt", false),
 
+    // ==================== Nunchuk 完整独立设置 (25条) ====================
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_0(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyA", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_1(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyB", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_2(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnly1", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_3(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnly2", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_4(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyPlus", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_5(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyMinus", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_6(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyHome", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_7(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyDPad", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_8(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyC", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_9(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyZ", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_10(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyStick", true),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_11(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyShakeX", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_12(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyShakeY", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_13(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyShakeZ", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_14(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlySwing", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_15(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlySwingForward", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_16(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlySwingBackward", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_17(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyTilt", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_18(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNShakeX", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_19(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNShakeY", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_20(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNShakeZ", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_21(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNSwing", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_22(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNSwingForward", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_23(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNSwingBackward", false),
+    MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_24(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleNunchukOnlyNTilt", false),
+	
+	    // ==================== 纯 Wiimote Latching 独立设置 ====================
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_0(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyA", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_1(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyB", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_2(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnly1", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_3(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnly2", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_4(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyPlus", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_5(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyMinus", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_6(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyHome", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_7(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyShakeX", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_8(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyShakeY", false),
+    MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_9(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingWiimoteOnlyShakeZ", false),
+
+    // ==================== Nunchuk Latching 完整独立设置 (25条) ====================
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_0(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyA", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_1(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyB", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_2(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnly1", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_3(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnly2", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_4(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyPlus", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_5(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyMinus", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_6(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyHome", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_7(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyC", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_8(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyZ", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_9(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyShakeX", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_10(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyShakeY", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_11(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyShakeZ", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_12(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyNShakeX", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_13(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyNShakeY", false),
+    MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_14(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonLatchingNunchukOnlyNShakeZ", false);
+	
     override val isOverridden: Boolean
         get() = NativeConfig.isOverridden(file, section, key)
 

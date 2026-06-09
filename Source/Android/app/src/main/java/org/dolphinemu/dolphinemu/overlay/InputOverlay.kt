@@ -158,15 +158,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                         button.setPressedState(if (button.latching) !button.getPressedState() else true)
                         button.trackId = event.getPointerId(pointerIndex)
                         pressed = true
-                        InputOverrider.setControlState(controllerIndex, button.control, if (button.getPressedState()) 1.0 else 0.0)
-
-                        val analogControl = getAnalogControlForTrigger(button.control)
-                        if (analogControl >= 0)
-                            InputOverrider.setControlState(
-                                controllerIndex,
-                                analogControl,
-                                1.0
-                            )
+                        applyButtonControlState(button)
                     }
                 }
 
@@ -176,15 +168,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     if (button.trackId == event.getPointerId(pointerIndex)) {
                         if (!button.latching)
                             button.setPressedState(false)
-                        InputOverrider.setControlState(controllerIndex, button.control, if (button.getPressedState()) 1.0 else 0.0)
-
-                        val analogControl = getAnalogControlForTrigger(button.control)
-                        if (analogControl >= 0)
-                            InputOverrider.setControlState(
-                                controllerIndex,
-                                analogControl,
-                                0.0
-                            )
+                        applyButtonControlState(button)
 
                         button.trackId = -1
                     }
@@ -275,17 +259,22 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     pressed = true
             }
 
-            InputOverrider.setControlState(
-                controllerIndex,
-                joystick.xControl,
-                joystick.x.toDouble()
-            )
-            InputOverrider.setControlState(
-                controllerIndex,
-                joystick.yControl,
-                -joystick.y.toDouble()
-            )
+            if (!joystick.isAnalogTriggerStick) {
+                InputOverrider.setControlState(
+                    controllerIndex,
+                    joystick.xControl,
+                    joystick.x.toDouble()
+                )
+                InputOverrider.setControlState(
+                    controllerIndex,
+                    joystick.yControl,
+                    -joystick.y.toDouble()
+                )
+            }
         }
+
+        if (controllerType == OVERLAY_GAMECUBE)
+            applyGcTriggerAnalogStates()
 
         // No button/joystick pressed, safe to move pointer
         if (!pressed && overlayPointer != null) {
@@ -456,6 +445,63 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         else -> -1
     }
 
+    private fun applyButtonControlState(button: InputOverlayDrawableButton) {
+        if (button.isAnalogOnly) {
+            // GC L/R analog is merged in applyGcTriggerAnalogStates().
+            return
+        }
+
+        InputOverrider.setControlState(
+            controllerIndex,
+            button.control,
+            if (button.getPressedState()) 1.0 else 0.0
+        )
+
+        // GC L/R analog is merged in applyGcTriggerAnalogStates() so the analog stick cannot
+        // zero it out every frame.
+        if (getAnalogControlForTrigger(button.control) >= 0)
+            return
+    }
+
+    private fun applyGcTriggerAnalogStates() {
+        var lAnalog = 0.0
+        var rAnalog = 0.0
+
+        for (button in overlayButtons) {
+            when {
+                button.control == ControlId.GCPAD_L_DIGITAL && button.getPressedState() ->
+                    lAnalog = 1.0
+
+                button.control == ControlId.GCPAD_R_DIGITAL && button.getPressedState() ->
+                    rAnalog = 1.0
+
+                button.control == ControlId.GCPAD_L_ANALOG &&
+                        button.isAnalogOnly &&
+                        button.getPressedState() ->
+                    lAnalog = maxOf(lAnalog, button.analogPressValue)
+
+                button.control == ControlId.GCPAD_R_ANALOG &&
+                        button.isAnalogOnly &&
+                        button.getPressedState() ->
+                    rAnalog = maxOf(rAnalog, button.analogPressValue)
+            }
+        }
+
+        for (joystick in overlayJoysticks) {
+            if (!joystick.isAnalogTriggerStick || joystick.trackId == -1)
+                continue
+
+            val stickX = joystick.x
+            if (stickX < 0)
+                lAnalog = maxOf(lAnalog, (-stickX).coerceIn(0f, 1f).toDouble())
+            if (stickX > 0)
+                rAnalog = maxOf(rAnalog, stickX.coerceIn(0f, 1f).toDouble())
+        }
+
+        InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_L_ANALOG, lAnalog)
+        InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_R_ANALOG, rAnalog)
+    }
+
     private fun setDpadState(
         dpad: InputOverlayDrawableDpad,
         up: Boolean,
@@ -491,6 +537,9 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun addGameCubeOverlayControls(orientation: String) {
+        val toggleBase = "MAIN_BUTTON_TOGGLE_GC_"
+        val latchingBase = "MAIN_BUTTON_LATCHING_GC_"
+
         if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_0.boolean) {
             overlayButtons.add(
                 initializeOverlayButton(
@@ -639,308 +688,489 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-    }
-
-    private fun addWiimoteOverlayControls(orientation: String) {
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_0.boolean) {
+        if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
-                    R.drawable.wiimote_a,
-                    R.drawable.wiimote_a_pressed,
-                    ButtonType.WIIMOTE_BUTTON_A,
-                    ControlId.WIIMOTE_A_BUTTON,
+                    R.drawable.classic_l,
+                    R.drawable.classic_l_pressed,
+                    ButtonType.TRIGGER_L_HALF,
+                    ControlId.GCPAD_L_ANALOG,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_0.boolean
+                    BooleanSetting.valueOf(latchingBase + "8").boolean,
+                    "LH",
+                    overlayLabelScale = 0.14f,
+                    isAnalogOnly = true,
+                    analogPressValue = TRIGGER_HALF_PRESS_VALUE
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_1.boolean) {
+        if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
-                    R.drawable.wiimote_b,
-                    R.drawable.wiimote_b_pressed,
-                    ButtonType.WIIMOTE_BUTTON_B,
-                    ControlId.WIIMOTE_B_BUTTON,
+                    R.drawable.classic_r,
+                    R.drawable.classic_r_pressed,
+                    ButtonType.TRIGGER_R_HALF,
+                    ControlId.GCPAD_R_ANALOG,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_1.boolean
+                    BooleanSetting.valueOf(latchingBase + "9").boolean,
+                    "RH",
+                    overlayLabelScale = 0.14f,
+                    isAnalogOnly = true,
+                    analogPressValue = TRIGGER_HALF_PRESS_VALUE
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_2.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.wiimote_one,
-                    R.drawable.wiimote_one_pressed,
-                    ButtonType.WIIMOTE_BUTTON_1,
-                    ControlId.WIIMOTE_ONE_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_2.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_3.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.wiimote_two,
-                    R.drawable.wiimote_two_pressed,
-                    ButtonType.WIIMOTE_BUTTON_2,
-                    ControlId.WIIMOTE_TWO_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_3.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_4.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.wiimote_plus,
-                    R.drawable.wiimote_plus_pressed,
-                    ButtonType.WIIMOTE_BUTTON_PLUS,
-                    ControlId.WIIMOTE_PLUS_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_4.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_5.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.wiimote_minus,
-                    R.drawable.wiimote_minus_pressed,
-                    ButtonType.WIIMOTE_BUTTON_MINUS,
-                    ControlId.WIIMOTE_MINUS_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_5.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_6.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.wiimote_home,
-                    R.drawable.wiimote_home_pressed,
-                    ButtonType.WIIMOTE_BUTTON_HOME,
-                    ControlId.WIIMOTE_HOME_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_6.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_7.boolean) {
-            overlayDpads.add(
-                initializeOverlayDpad(
-                    context,
-                    R.drawable.gcwii_dpad,
-                    R.drawable.gcwii_dpad_pressed_one_direction,
-                    R.drawable.gcwii_dpad_pressed_two_directions,
-                    ButtonType.WIIMOTE_UP,
-                    ControlId.WIIMOTE_DPAD_UP,
-                    ControlId.WIIMOTE_DPAD_DOWN,
-                    ControlId.WIIMOTE_DPAD_LEFT,
-                    ControlId.WIIMOTE_DPAD_RIGHT,
-                    orientation
-                )
-            )
-        }
-        // Wiimote motion controls (toggle off by default)
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_11.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X,
-                orientation, false, "WSKX"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_12.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y,
-                orientation, false, "WSKY"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_13.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
-                orientation, false, "WSKZ"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_14.boolean) {
-            overlayJoysticks.add(initializeOverlayJoystick(context,
-                R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
-                R.drawable.gcwii_joystick_pressed,
-                ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y,
-                orientation, "WSW"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_15.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD,
-                orientation, false, "WSF"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_16.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD,
-                orientation, false, "WSB"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_17.boolean) {
-            overlayDpads.add(initializeOverlayDpad(context,
-                R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
-                R.drawable.gcwii_dpad_pressed_two_directions,
-                ButtonType.WIIMOTE_TILT,
-                ControlId.WIIMOTE_TILT_LEFT,    // 上 → Right
-                ControlId.WIIMOTE_TILT_RIGHT,     // 下 → Left
-                ControlId.WIIMOTE_TILT_FORWARD,  // 左 → Forward
-                ControlId.WIIMOTE_TILT_BACKWARD, // 右 → Backward
-                orientation, "WT"))
-        }
-    }
-
-    private fun addNunchukOverlayControls(orientation: String) {
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_8.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.nunchuk_c,
-                    R.drawable.nunchuk_c_pressed,
-                    ButtonType.NUNCHUK_BUTTON_C,
-                    ControlId.NUNCHUK_C_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_8.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_9.boolean) {
-            overlayButtons.add(
-                initializeOverlayButton(
-                    context,
-                    R.drawable.nunchuk_z,
-                    R.drawable.nunchuk_z_pressed,
-                    ButtonType.NUNCHUK_BUTTON_Z,
-                    ControlId.NUNCHUK_Z_BUTTON,
-                    orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_WII_9.boolean
-                )
-            )
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_10.boolean) {
+        if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
             overlayJoysticks.add(
                 initializeOverlayJoystick(
                     context,
                     R.drawable.gcwii_joystick_range,
                     R.drawable.gcwii_joystick,
                     R.drawable.gcwii_joystick_pressed,
-                    ButtonType.NUNCHUK_STICK,
-                    ControlId.NUNCHUK_STICK_X,
-                    ControlId.NUNCHUK_STICK_Y,
-                    orientation
+                    ButtonType.TRIGGER_ANALOG_STICK,
+                    ControlId.GCPAD_MAIN_STICK_X,
+                    ControlId.GCPAD_MAIN_STICK_Y,
+                    orientation,
+                    "L/R",
+                    isAnalogTriggerStick = true
                 )
             )
         }
-        // Nunchuk motion controls (toggle off by default)
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_18.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X,
-                orientation, false, "NSKX"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_19.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y,
-                orientation, false, "NSKY"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_20.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z,
-                orientation, false, "NSKZ"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_21.boolean) {
-            overlayJoysticks.add(initializeOverlayJoystick(context,
-                R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
-                R.drawable.gcwii_joystick_pressed,
-                ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y,
-                orientation, "NSW"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_22.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD,
-                orientation, false, "NSF"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_23.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-                ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD,
-                orientation, false, "NSB"))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_24.boolean) {
-            overlayDpads.add(initializeOverlayDpad(context,
-                R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
-                R.drawable.gcwii_dpad_pressed_two_directions,
-                ButtonType.NUNCHUK_TILT,
-                ControlId.NUNCHUK_TILT_RIGHT,    // 上 → Right
-                ControlId.NUNCHUK_TILT_LEFT,     // 下 → Left
-                ControlId.NUNCHUK_TILT_FORWARD,  // 左 → Forward
-                ControlId.NUNCHUK_TILT_BACKWARD, // 右 → Backward
-                orientation, "NT"))
-        }
     }
+
+    private fun addWiimoteOverlayControls(orientation: String) {
+    val toggleBase = "MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_"
+    val latchingBase = "MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_"   // ← 改成新独立设置
+
+    // ==================== 基础按钮 ====================
+    if (BooleanSetting.valueOf(toggleBase + "0").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_a,
+                R.drawable.wiimote_a_pressed,
+                ButtonType.WIIMOTE_BUTTON_A,
+                ControlId.WIIMOTE_A_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "0").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "1").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_b,
+                R.drawable.wiimote_b_pressed,
+                ButtonType.WIIMOTE_BUTTON_B,
+                ControlId.WIIMOTE_B_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "1").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "2").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_one,
+                R.drawable.wiimote_one_pressed,
+                ButtonType.WIIMOTE_BUTTON_1,
+                ControlId.WIIMOTE_ONE_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "2").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "3").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_two,
+                R.drawable.wiimote_two_pressed,
+                ButtonType.WIIMOTE_BUTTON_2,
+                ControlId.WIIMOTE_TWO_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "3").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "4").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_plus,
+                R.drawable.wiimote_plus_pressed,
+                ButtonType.WIIMOTE_BUTTON_PLUS,
+                ControlId.WIIMOTE_PLUS_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "4").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "5").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_minus,
+                R.drawable.wiimote_minus_pressed,
+                ButtonType.WIIMOTE_BUTTON_MINUS,
+                ControlId.WIIMOTE_MINUS_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "5").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "6").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_home,
+                R.drawable.wiimote_home_pressed,
+                ButtonType.WIIMOTE_BUTTON_HOME,
+                ControlId.WIIMOTE_HOME_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(latchingBase + "6").boolean
+            )
+        )
+    }
+    if (BooleanSetting.valueOf(toggleBase + "7").boolean) {
+        overlayDpads.add(
+            initializeOverlayDpad(
+                context,
+                R.drawable.gcwii_dpad,
+                R.drawable.gcwii_dpad_pressed_one_direction,
+                R.drawable.gcwii_dpad_pressed_two_directions,
+                ButtonType.WIIMOTE_UP,
+                ControlId.WIIMOTE_DPAD_UP,
+                ControlId.WIIMOTE_DPAD_DOWN,
+                ControlId.WIIMOTE_DPAD_LEFT,
+                ControlId.WIIMOTE_DPAD_RIGHT,
+                orientation
+            )
+        )
+    }
+
+    // ==================== Motion Buttons ====================
+    // WSKX、WSKY、WSKZ 改为使用 Latching 设置
+    if (BooleanSetting.valueOf(toggleBase + "8").boolean) {
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X,
+            orientation, BooleanSetting.valueOf(latchingBase + "7").boolean, "WSKX"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "9").boolean) {
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y,
+            orientation, BooleanSetting.valueOf(latchingBase + "8").boolean, "WSKY"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "10").boolean) {
+    overlayButtons.add(initializeOverlayButton(context,
+        R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
+        orientation, BooleanSetting.valueOf(latchingBase + "9").boolean, "WSKZ"))
+	}
+
+    // 其他 Motion 按钮保持普通（false）
+    if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
+        overlayJoysticks.add(initializeOverlayJoystick(context,
+            R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+            R.drawable.gcwii_joystick_pressed,
+            ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y,
+            orientation, "WSW"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD,
+            orientation, false, "WSF"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
+        overlayButtons.add(initializeOverlayButton(context,
+            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD,
+            orientation, false, "WSB"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "14").boolean) {
+        overlayDpads.add(initializeOverlayDpad(context,
+            R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
+            R.drawable.gcwii_dpad_pressed_two_directions,
+            ButtonType.WIIMOTE_TILT,
+            ControlId.WIIMOTE_TILT_LEFT,
+            ControlId.WIIMOTE_TILT_RIGHT,
+            ControlId.WIIMOTE_TILT_BACKWARD,
+            ControlId.WIIMOTE_TILT_FORWARD,
+            orientation, "WT"))
+    }
+}
+
+	private fun addNunchukOverlayControls(orientation: String) {
+    val toggleBase = "MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_"
+    val latchingBase = "MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_"   // 使用独立 Latching 设置
+
+    // ==================== 0-7: Wiimote 基础按钮 ====================
+    if (BooleanSetting.valueOf(toggleBase + "0").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_BUTTON_A, ControlId.WIIMOTE_A_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "0").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "1").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_b, R.drawable.wiimote_b_pressed,
+            ButtonType.WIIMOTE_BUTTON_B, ControlId.WIIMOTE_B_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "1").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "2").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_one, R.drawable.wiimote_one_pressed,
+            ButtonType.WIIMOTE_BUTTON_1, ControlId.WIIMOTE_ONE_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "2").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "3").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_two, R.drawable.wiimote_two_pressed,
+            ButtonType.WIIMOTE_BUTTON_2, ControlId.WIIMOTE_TWO_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "3").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "4").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_plus, R.drawable.wiimote_plus_pressed,
+            ButtonType.WIIMOTE_BUTTON_PLUS, ControlId.WIIMOTE_PLUS_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "4").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "5").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_minus, R.drawable.wiimote_minus_pressed,
+            ButtonType.WIIMOTE_BUTTON_MINUS, ControlId.WIIMOTE_MINUS_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "5").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "6").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_home, R.drawable.wiimote_home_pressed,
+            ButtonType.WIIMOTE_BUTTON_HOME, ControlId.WIIMOTE_HOME_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "6").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "7").boolean) {
+        overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
+            R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
+            ButtonType.WIIMOTE_UP, ControlId.WIIMOTE_DPAD_UP, ControlId.WIIMOTE_DPAD_DOWN,
+            ControlId.WIIMOTE_DPAD_LEFT, ControlId.WIIMOTE_DPAD_RIGHT, orientation))
+    }
+
+    // ==================== 8-10: Nunchuk 特有按钮 ====================
+    if (BooleanSetting.valueOf(toggleBase + "8").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.nunchuk_c, R.drawable.nunchuk_c_pressed,
+            ButtonType.NUNCHUK_BUTTON_C, ControlId.NUNCHUK_C_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "7").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "9").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.nunchuk_z, R.drawable.nunchuk_z_pressed,
+            ButtonType.NUNCHUK_BUTTON_Z, ControlId.NUNCHUK_Z_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "8").boolean))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "10").boolean) {
+        overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
+            R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
+            ButtonType.NUNCHUK_STICK, ControlId.NUNCHUK_STICK_X, ControlId.NUNCHUK_STICK_Y, orientation))
+    }
+
+    // ==================== 11-17: Wiimote Motion 按钮（Nunchuk 模式下） ====================
+    if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X, orientation,
+            BooleanSetting.valueOf(latchingBase + "9").boolean, "WSKX"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y, orientation,
+            BooleanSetting.valueOf(latchingBase + "10").boolean, "WSKY"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z, orientation,
+            BooleanSetting.valueOf(latchingBase + "11").boolean, "WSKZ"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "14").boolean) {
+        overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
+            R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
+            ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y, orientation, "WSW"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "15").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD, orientation, false, "WSF"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "16").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD, orientation, false, "WSB"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "17").boolean) {
+        overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
+            R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
+            ButtonType.WIIMOTE_TILT, ControlId.WIIMOTE_TILT_LEFT, ControlId.WIIMOTE_TILT_RIGHT,
+            ControlId.WIIMOTE_TILT_BACKWARD, ControlId.WIIMOTE_TILT_FORWARD, orientation, "WT"))
+    }
+
+    // ==================== 18-24: Nunchuk 自己的 Motion 按钮 ====================
+    if (BooleanSetting.valueOf(toggleBase + "18").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X, orientation,
+            BooleanSetting.valueOf(latchingBase + "12").boolean, "NSKX"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "19").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y, orientation,
+            BooleanSetting.valueOf(latchingBase + "13").boolean, "NSKY"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "20").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z, orientation,
+            BooleanSetting.valueOf(latchingBase + "14").boolean, "NSKZ"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "21").boolean) {
+        overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
+            R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
+            ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y, orientation, "NSW"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "22").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD, orientation, false, "NSF"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "23").boolean) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD, orientation, false, "NSB"))
+    }
+    if (BooleanSetting.valueOf(toggleBase + "24").boolean) {
+        overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
+            R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
+            ButtonType.NUNCHUK_TILT, ControlId.NUNCHUK_TILT_LEFT, ControlId.NUNCHUK_TILT_RIGHT,
+            ControlId.NUNCHUK_TILT_BACKWARD, ControlId.NUNCHUK_TILT_FORWARD, orientation, "NT"))
+    }
+}
 
     private fun addTaTaConOverlayControls(orientation: String) {
-        // Basic Wiimote buttons (minus, plus, 1, 2, home)
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_4.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_plus, R.drawable.wiimote_plus_pressed,
-                ButtonType.WIIMOTE_BUTTON_PLUS, ControlId.WIIMOTE_PLUS_BUTTON, orientation, false))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_3.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_minus, R.drawable.wiimote_minus_pressed,
-                ButtonType.WIIMOTE_BUTTON_MINUS, ControlId.WIIMOTE_MINUS_BUTTON, orientation, false))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_2.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_two, R.drawable.wiimote_two_pressed,
-                ButtonType.WIIMOTE_BUTTON_2, ControlId.WIIMOTE_TWO_BUTTON, orientation, false))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_1.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_one, R.drawable.wiimote_one_pressed,
-                ButtonType.WIIMOTE_BUTTON_1, ControlId.WIIMOTE_ONE_BUTTON, orientation, false))
-        }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_WII_5.boolean) {
-            overlayButtons.add(initializeOverlayButton(context,
-                R.drawable.wiimote_home, R.drawable.wiimote_home_pressed,
-                ButtonType.WIIMOTE_BUTTON_HOME, ControlId.WIIMOTE_HOME_BUTTON, orientation, false))
-        }
+    val tataconToggleBase = "MAIN_BUTTON_TOGGLE_TATACON_"
+    val tataconLatchBase = "MAIN_BUTTON_LATCHING_TATACON_"
 
-        // TaTaCon drum pads - use initializeOverlayButton for proper scale/position/orientation
-        overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.tatacon_rim_left, R.drawable.tatacon_rim_left_pressed,
-            ButtonType.TATACON_RIM_LEFT, ControlId.TATACON_RIM_LEFT,
-            orientation, false).also { it.useAlphaHitTest = true })
-
-        overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.tatacon_rim_right, R.drawable.tatacon_rim_right_pressed,
-            ButtonType.TATACON_RIM_RIGHT, ControlId.TATACON_RIM_RIGHT,
-            orientation, false).also { it.useAlphaHitTest = true })
-
-        overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.tatacon_center_left, R.drawable.tatacon_center_left_pressed,
-            ButtonType.TATACON_CENTER_LEFT, ControlId.TATACON_CENTER_LEFT,
-            orientation, false).also { it.useAlphaHitTest = true })
-
-        overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.tatacon_center_right, R.drawable.tatacon_center_right_pressed,
-            ButtonType.TATACON_CENTER_RIGHT, ControlId.TATACON_CENTER_RIGHT,
-            orientation, false).also { it.useAlphaHitTest = true })
+    // 1
+    if (BooleanSetting.valueOf(tataconToggleBase + "0").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_one,
+                R.drawable.wiimote_one_pressed,
+                ButtonType.WIIMOTE_BUTTON_1,
+                ControlId.WIIMOTE_ONE_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(tataconLatchBase + "0").boolean
+            )
+        )
     }
+
+    // 2
+    if (BooleanSetting.valueOf(tataconToggleBase + "1").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_two,
+                R.drawable.wiimote_two_pressed,
+                ButtonType.WIIMOTE_BUTTON_2,
+                ControlId.WIIMOTE_TWO_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(tataconLatchBase + "1").boolean
+            )
+        )
+    }
+
+    // +
+    if (BooleanSetting.valueOf(tataconToggleBase + "2").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_plus,
+                R.drawable.wiimote_plus_pressed,
+                ButtonType.WIIMOTE_BUTTON_PLUS,
+                ControlId.WIIMOTE_PLUS_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(tataconLatchBase + "2").boolean
+            )
+        )
+    }
+
+    // -
+    if (BooleanSetting.valueOf(tataconToggleBase + "3").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_minus,
+                R.drawable.wiimote_minus_pressed,
+                ButtonType.WIIMOTE_BUTTON_MINUS,
+                ControlId.WIIMOTE_MINUS_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(tataconLatchBase + "3").boolean
+            )
+        )
+    }
+
+    // Home
+    if (BooleanSetting.valueOf(tataconToggleBase + "4").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.wiimote_home,
+                R.drawable.wiimote_home_pressed,
+                ButtonType.WIIMOTE_BUTTON_HOME,
+                ControlId.WIIMOTE_HOME_BUTTON,
+                orientation,
+                BooleanSetting.valueOf(tataconLatchBase + "4").boolean
+            )
+        )
+    }
+
+    // 四个鼓面（保持你原来的图片和 ControlId）
+    if (BooleanSetting.valueOf(tataconToggleBase + "5").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.tatacon_rim_left,
+                R.drawable.tatacon_rim_left_pressed,
+                ButtonType.TATACON_RIM_LEFT,
+                ControlId.TATACON_RIM_LEFT,
+                orientation,
+                false
+            ).also { it.useAlphaHitTest = true }
+        )
+    }
+
+    if (BooleanSetting.valueOf(tataconToggleBase + "6").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.tatacon_rim_right,
+                R.drawable.tatacon_rim_right_pressed,
+                ButtonType.TATACON_RIM_RIGHT,
+                ControlId.TATACON_RIM_RIGHT,
+                orientation,
+                false
+            ).also { it.useAlphaHitTest = true }
+        )
+    }
+
+    if (BooleanSetting.valueOf(tataconToggleBase + "7").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.tatacon_center_left,
+                R.drawable.tatacon_center_left_pressed,
+                ButtonType.TATACON_CENTER_LEFT,
+                ControlId.TATACON_CENTER_LEFT,
+                orientation,
+                false
+            ).also { it.useAlphaHitTest = true }
+        )
+    }
+
+    if (BooleanSetting.valueOf(tataconToggleBase + "8").boolean) {
+        overlayButtons.add(
+            initializeOverlayButton(
+                context,
+                R.drawable.tatacon_center_right,
+                R.drawable.tatacon_center_right_pressed,
+                ButtonType.TATACON_CENTER_RIGHT,
+                ControlId.TATACON_CENTER_RIGHT,
+                orientation,
+                false
+            ).also { it.useAlphaHitTest = true }
+        )
+    }
+}
 
     private fun addClassicOverlayControls(orientation: String) {
         if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_0.boolean) {
@@ -1182,7 +1412,6 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     InputOverrider.registerWii(this.controllerIndex)
                     wiimoteRegistered[this.controllerIndex] = true
 
-                    addWiimoteOverlayControls(orientation)
                     addNunchukOverlayControls(orientation)
                 }
 
@@ -1291,7 +1520,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         control: Int,
         orientation: String,
         latching: Boolean,
-        overlayLabel: String? = null
+        overlayLabel: String? = null,
+        overlayLabelScale: Float = 0.28f,
+        isAnalogOnly: Boolean = false,
+        analogPressValue: Double = 1.0
     ): InputOverlayDrawableButton {
         // Decide scale based on button ID and user preference
         var scale = when (legacyId) {
@@ -1317,6 +1549,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.CLASSIC_BUTTON_MINUS,
             ButtonType.CLASSIC_BUTTON_HOME -> 0.0625f
 
+            ButtonType.TRIGGER_L_HALF,
+            ButtonType.TRIGGER_R_HALF,
             ButtonType.CLASSIC_TRIGGER_L,
             ButtonType.CLASSIC_TRIGGER_R,
             ButtonType.CLASSIC_BUTTON_ZL,
@@ -1348,7 +1582,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             legacyId,
             control,
             latching,
-            overlayLabel
+            overlayLabel,
+            overlayLabelScale,
+            isAnalogOnly,
+            analogPressValue
         )
 
         // The X and Y coordinates of the InputOverlayDrawableButton on the InputOverlay.
@@ -1477,7 +1714,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         xControl: Int,
         yControl: Int,
         orientation: String,
-        overlayLabel: String? = null
+        overlayLabel: String? = null,
+        isAnalogTriggerStick: Boolean = false
     ): InputOverlayDrawableJoystick {
         // Decide scale based on user preference
         var scale = 0.275f
@@ -1519,7 +1757,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             xControl,
             yControl,
             controllerIndex,
-            overlayLabel
+            overlayLabel,
+            isAnalogTriggerStick
         )
 
         // Need to set the image's position
@@ -1666,6 +1905,22 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 resources.getInteger(R.integer.TRIGGER_R_Y).toFloat() / 1000 * maxY
             )
             .putFloat(
+                ButtonType.TRIGGER_L_HALF.toString() + "-X",
+                resources.getInteger(R.integer.TRIGGER_L_HALF_X).toFloat() / 1000 * maxX
+            )
+            .putFloat(
+                ButtonType.TRIGGER_L_HALF.toString() + "-Y",
+                resources.getInteger(R.integer.TRIGGER_L_HALF_Y).toFloat() / 1000 * maxY
+            )
+            .putFloat(
+                ButtonType.TRIGGER_R_HALF.toString() + "-X",
+                resources.getInteger(R.integer.TRIGGER_R_HALF_X).toFloat() / 1000 * maxX
+            )
+            .putFloat(
+                ButtonType.TRIGGER_R_HALF.toString() + "-Y",
+                resources.getInteger(R.integer.TRIGGER_R_HALF_Y).toFloat() / 1000 * maxY
+            )
+            .putFloat(
                 ButtonType.BUTTON_START.toString() + "-X",
                 resources.getInteger(R.integer.BUTTON_START_X).toFloat() / 1000 * maxX
             )
@@ -1688,6 +1943,14 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             .putFloat(
                 ButtonType.STICK_MAIN.toString() + "-Y",
                 resources.getInteger(R.integer.STICK_MAIN_Y).toFloat() / 1000 * maxY
+            )
+            .putFloat(
+                ButtonType.TRIGGER_ANALOG_STICK.toString() + "-X",
+                resources.getInteger(R.integer.TRIGGER_ANALOG_STICK_X).toFloat() / 1000 * maxX
+            )
+            .putFloat(
+                ButtonType.TRIGGER_ANALOG_STICK.toString() + "-Y",
+                resources.getInteger(R.integer.TRIGGER_ANALOG_STICK_Y).toFloat() / 1000 * maxY
             )
             .apply()
     }
@@ -1775,6 +2038,22 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 resources.getInteger(R.integer.TRIGGER_R_PORTRAIT_Y).toFloat() / 1000 * maxY
             )
             .putFloat(
+                ButtonType.TRIGGER_L_HALF.toString() + portrait + "-X",
+                resources.getInteger(R.integer.TRIGGER_L_HALF_PORTRAIT_X).toFloat() / 1000 * maxX
+            )
+            .putFloat(
+                ButtonType.TRIGGER_L_HALF.toString() + portrait + "-Y",
+                resources.getInteger(R.integer.TRIGGER_L_HALF_PORTRAIT_Y).toFloat() / 1000 * maxY
+            )
+            .putFloat(
+                ButtonType.TRIGGER_R_HALF.toString() + portrait + "-X",
+                resources.getInteger(R.integer.TRIGGER_R_HALF_PORTRAIT_X).toFloat() / 1000 * maxX
+            )
+            .putFloat(
+                ButtonType.TRIGGER_R_HALF.toString() + portrait + "-Y",
+                resources.getInteger(R.integer.TRIGGER_R_HALF_PORTRAIT_Y).toFloat() / 1000 * maxY
+            )
+            .putFloat(
                 ButtonType.BUTTON_START.toString() + portrait + "-X",
                 resources.getInteger(R.integer.BUTTON_START_PORTRAIT_X).toFloat() / 1000 * maxX
             )
@@ -1797,6 +2076,14 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             .putFloat(
                 ButtonType.STICK_MAIN.toString() + portrait + "-Y",
                 resources.getInteger(R.integer.STICK_MAIN_PORTRAIT_Y).toFloat() / 1000 * maxY
+            )
+            .putFloat(
+                ButtonType.TRIGGER_ANALOG_STICK.toString() + portrait + "-X",
+                resources.getInteger(R.integer.TRIGGER_ANALOG_STICK_PORTRAIT_X).toFloat() / 1000 * maxX
+            )
+            .putFloat(
+                ButtonType.TRIGGER_ANALOG_STICK.toString() + portrait + "-Y",
+                resources.getInteger(R.integer.TRIGGER_ANALOG_STICK_PORTRAIT_Y).toFloat() / 1000 * maxY
             )
             .apply()
     }
@@ -2454,6 +2741,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         const val OVERLAY_WIIMOTE_CLASSIC = 4
         const val OVERLAY_NONE = 5
         const val OVERLAY_WIIMOTE_TATACON = 6
+
+        // Analog trigger half-press (below default 90% digital threshold).
+        private const val TRIGGER_HALF_PRESS_VALUE = 0.5
+
         private const val DISABLED_GAMECUBE_CONTROLLER = 0
         private const val EMULATED_GAMECUBE_CONTROLLER = 6
         private const val EMULATED_AM_BASEBOARD = 11
@@ -2535,20 +2826,32 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 return OVERLAY_NONE
             }
 
-        private fun getKey(
+            private fun getKey(
             sharedPrefsId: Int,
             controller: Int,
             orientation: String,
             suffix: String
-        ): String =
-            if (controller == OVERLAY_WIIMOTE_SIDEWAYS && WIIMOTE_H_BUTTONS.contains(sharedPrefsId)) {
-                sharedPrefsId.toString() + "_H" + orientation + suffix
-            } else if (controller == OVERLAY_WIIMOTE && WIIMOTE_O_BUTTONS.contains(sharedPrefsId)) {
-                sharedPrefsId.toString() + "_O" + orientation + suffix
-            } else {
-                sharedPrefsId.toString() + orientation + suffix
+        ): String {
+            val gameId = NativeLibrary.GetCurrentGameID() ?: "Global"
+
+            var key = "${sharedPrefsId}_${gameId}${orientation}"
+
+            // ==================== 控制器类型后缀 ====================
+            when (controller) {
+                OVERLAY_WIIMOTE_NUNCHUK -> key += "_N"
+                OVERLAY_WIIMOTE_TATACON -> key += "_T"
+                else -> key += "_W"                    // 纯 Wiimote 和 Sideways
             }
-    }
+
+            // 保留原有的特殊处理（Horizontal 和 O 按钮）
+            if (controller == OVERLAY_WIIMOTE_SIDEWAYS && WIIMOTE_H_BUTTONS.contains(sharedPrefsId)) {
+                key = "${sharedPrefsId}_${gameId}_H${orientation}"
+            } else if (controller == OVERLAY_WIIMOTE && WIIMOTE_O_BUTTONS.contains(sharedPrefsId)) {
+                key = "${sharedPrefsId}_${gameId}_O${orientation}"
+            }
+
+            return key + suffix
+        }
 
     private fun getXKey(sharedPrefsId: Int, controller: Int, orientation: String): String =
         getKey(sharedPrefsId, controller, orientation, "-X")
@@ -2576,28 +2879,39 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.TATACON_RIM_RIGHT     -> 400f
         ButtonType.TATACON_CENTER_LEFT   -> 20f
         ButtonType.TATACON_CENTER_RIGHT  -> 400f
+        ButtonType.TRIGGER_ANALOG_STICK  -> 380f
         else -> 0f
     }
 
-    private fun getMotionButtonDefaultY(legacyId: Int): Float = when (legacyId) {
+        private fun getMotionButtonDefaultY(legacyId: Int): Float = when (legacyId) {
         ButtonType.WIIMOTE_SHAKE_X,
         ButtonType.WIIMOTE_SHAKE_Y,
-        ButtonType.WIIMOTE_SHAKE_Z        -> 20f
-        ButtonType.WIIMOTE_SWING          -> 300f   // WSW joystick
-        ButtonType.WIIMOTE_TILT           -> 500f   // WT dpad
+        ButtonType.WIIMOTE_SHAKE_Z -> 20f
+
+        ButtonType.WIIMOTE_SWING -> 300f           // WSW joystick
+        ButtonType.WIIMOTE_TILT -> 500f            // WT dpad
+
         ButtonType.WIIMOTE_SWING_FORWARD,
         ButtonType.WIIMOTE_SWING_BACKWARD -> 140f
+
         ButtonType.NUNCHUK_SHAKE_X,
         ButtonType.NUNCHUK_SHAKE_Y,
-        ButtonType.NUNCHUK_SHAKE_Z        -> 280f
-        ButtonType.NUNCHUK_SWING          -> 500f   // NSW joystick
-        ButtonType.NUNCHUK_TILT           -> 700f   // NT dpad
+        ButtonType.NUNCHUK_SHAKE_Z -> 280f
+
+        ButtonType.NUNCHUK_SWING -> 500f           // NSW joystick
+        ButtonType.NUNCHUK_TILT -> 700f            // NT dpad
+
         ButtonType.NUNCHUK_SWING_FORWARD,
         ButtonType.NUNCHUK_SWING_BACKWARD -> 400f
-        ButtonType.TATACON_RIM_LEFT,
-        ButtonType.TATACON_RIM_RIGHT      -> 800f
-        ButtonType.TATACON_CENTER_LEFT,
-        ButtonType.TATACON_CENTER_RIGHT   -> 300f
+
+        ButtonType.TATACON_RIM_LEFT -> 400f
+        ButtonType.TATACON_RIM_RIGHT -> 800f
+        ButtonType.TATACON_CENTER_LEFT -> 100f
+        ButtonType.TATACON_CENTER_RIGHT -> 300f
+
+        ButtonType.TRIGGER_ANALOG_STICK -> 520f
+
         else -> 0f
     }
+}
 }

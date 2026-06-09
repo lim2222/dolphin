@@ -49,6 +49,9 @@ object NativeLibrary {
         const val STICK_C_RIGHT = 19
         const val TRIGGER_L = 20
         const val TRIGGER_R = 21
+        const val TRIGGER_L_HALF = 22
+        const val TRIGGER_R_HALF = 23
+        const val TRIGGER_ANALOG_STICK = 24
         const val WIIMOTE_BUTTON_A = 100
         const val WIIMOTE_BUTTON_B = 101
         const val WIIMOTE_BUTTON_MINUS = 102

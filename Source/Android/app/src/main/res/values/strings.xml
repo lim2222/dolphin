@@ -843,6 +843,9 @@ It can efficiently compress both junk data and encrypted Wii data.
     <string name="gamepad_d_pad">D-Pad</string>
     <string name="gamepad_main_stick">Main Stick</string>
     <string name="gamepad_c_stick">C Stick</string>
+    <string name="gamepad_trigger_l_half">L (half)</string>
+    <string name="gamepad_trigger_r_half">R (half)</string>
+    <string name="gamepad_trigger_analog_stick">L/R (analog stick)</string>
     <string name="gamepad_home">Home</string>
     <string name="gamepad_nunchuk_stick">Nunchuk Stick</string>
     <string name="gamepad_left_stick">Left Stick</string>
