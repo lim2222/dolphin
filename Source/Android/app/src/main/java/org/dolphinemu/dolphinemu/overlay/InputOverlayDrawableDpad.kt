@@ -131,9 +131,9 @@ class InputOverlayDrawableDpad(
 
     private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
+            color = if (trackId != -1) Color.parseColor("#E6FFFFFF") else Color.BLACK
             textSize = bounds.width() * 0.22f
-            typeface = Typeface.DEFAULT_BOLD
+            typeface = Typeface.create("sans-serif-black", Typeface.BOLD)
             textAlign = Paint.Align.CENTER
             setShadowLayer(4f, 0f, 0f, Color.BLACK)
         }
