@@ -87,20 +87,20 @@ class InputOverlayDrawableButton(
     }
 
     private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
-            textSize = bounds.width() * overlayLabelScale
-            typeface = Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-            setShadowLayer(4f, 0f, 0f, Color.BLACK)
-        }
-        canvas.drawText(
-            label,
-            bounds.exactCenterX(),
-            bounds.exactCenterY() + paint.textSize / 3f,
-            paint
-        )
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (pressedState) Color.parseColor("#E6FFFFFF") else Color.BLACK
+        textSize = bounds.width() * 0.30f
+        typeface = Typeface.create("sans-serif-black", Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+        setShadowLayer(4f, 0f, 0f, Color.BLACK)
     }
+    canvas.drawText(
+        label,
+        bounds.exactCenterX(),
+        bounds.exactCenterY() + paint.textSize / 3f,
+        paint
+    )
+}
 
     private val currentStateBitmapDrawable: BitmapDrawable
         get() = if (pressedState) pressedStateBitmap else defaultStateBitmap

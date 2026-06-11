@@ -857,19 +857,19 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     // WSKX、WSKY、WSKZ 改为使用 Latching 设置
     if (BooleanSetting.valueOf(toggleBase + "8").boolean) {
         overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X,
             orientation, BooleanSetting.valueOf(latchingBase + "7").boolean, "WSKX"))
     }
     if (BooleanSetting.valueOf(toggleBase + "9").boolean) {
         overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y,
             orientation, BooleanSetting.valueOf(latchingBase + "8").boolean, "WSKY"))
     }
     if (BooleanSetting.valueOf(toggleBase + "10").boolean) {
     overlayButtons.add(initializeOverlayButton(context,
-        R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
         ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
         orientation, BooleanSetting.valueOf(latchingBase + "9").boolean, "WSKZ"))
 	}
@@ -884,13 +884,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
     if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
         overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD,
             orientation, false, "WSF"))
     }
     if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
         overlayButtons.add(initializeOverlayButton(context,
-            R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+            R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD,
             orientation, false, "WSB"))
     }
@@ -964,17 +964,17 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
     // ==================== 11-17: Wiimote Motion 按钮（Nunchuk 模式下） ====================
     if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X, orientation,
             BooleanSetting.valueOf(latchingBase + "9").boolean, "WSKX"))
     }
     if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y, orientation,
             BooleanSetting.valueOf(latchingBase + "10").boolean, "WSKY"))
     }
     if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z, orientation,
             BooleanSetting.valueOf(latchingBase + "11").boolean, "WSKZ"))
     }
@@ -984,11 +984,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y, orientation, "WSW"))
     }
     if (BooleanSetting.valueOf(toggleBase + "15").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD, orientation, false, "WSF"))
     }
     if (BooleanSetting.valueOf(toggleBase + "16").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD, orientation, false, "WSB"))
     }
     if (BooleanSetting.valueOf(toggleBase + "17").boolean) {
@@ -1000,17 +1000,17 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
     // ==================== 18-24: Nunchuk 自己的 Motion 按钮 ====================
     if (BooleanSetting.valueOf(toggleBase + "18").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X, orientation,
             BooleanSetting.valueOf(latchingBase + "12").boolean, "NSKX"))
     }
     if (BooleanSetting.valueOf(toggleBase + "19").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y, orientation,
             BooleanSetting.valueOf(latchingBase + "13").boolean, "NSKY"))
     }
     if (BooleanSetting.valueOf(toggleBase + "20").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z, orientation,
             BooleanSetting.valueOf(latchingBase + "14").boolean, "NSKZ"))
     }
@@ -1020,11 +1020,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y, orientation, "NSW"))
     }
     if (BooleanSetting.valueOf(toggleBase + "22").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD, orientation, false, "NSF"))
     }
     if (BooleanSetting.valueOf(toggleBase + "23").boolean) {
-        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD, orientation, false, "NSB"))
     }
     if (BooleanSetting.valueOf(toggleBase + "24").boolean) {
