@@ -549,12 +549,14 @@
     </string-array>
 
     <string-array name="doubleTap">
+		<item>@string/tap_button_none</item>
         <item>@string/double_tap_a</item>
         <item>@string/double_tap_b</item>
         <item>@string/double_tap_2</item>
     </string-array>
 
     <string-array name="doubleTapWithClassic">
+		<item>@string/tap_button_none</item>
         <item>@string/double_tap_a</item>
         <item>@string/double_tap_b</item>
         <item>@string/double_tap_2</item>

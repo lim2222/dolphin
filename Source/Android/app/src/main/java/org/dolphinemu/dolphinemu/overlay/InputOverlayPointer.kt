@@ -12,6 +12,7 @@ import org.dolphinemu.dolphinemu.features.input.model.InputOverrider
 class InputOverlayPointer(
     surfacePosition: Rect,
     private val doubleTapControl: Int,
+	private val singleTapControl: Int,
     private var mode: Int,
     private var recenter: Boolean,
     private val controllerIndex: Int
@@ -95,20 +96,28 @@ class InputOverlayPointer(
 
     private fun touchPress() {
         if (mode != MODE_DISABLED) {
-            if (doubleTap) {
-                InputOverrider.setControlState(controllerIndex, doubleTapControl, 1.0)
-                Handler(Looper.myLooper()!!).postDelayed(
-                    {
-                        InputOverrider.setControlState(controllerIndex, doubleTapControl, 0.0)
-                    },
-                    50
-                )
-            } else {
-                doubleTap = true
-                Handler(Looper.myLooper()!!).postDelayed({ doubleTap = false }, 300)
-            }
-        }
-    }
+            // single tap：每次按下直接触发
+			if (singleTapControl != SINGLE_TAP_NONE) {
+				InputOverrider.setControlState(controllerIndex, singleTapControl, 1.0)
+				Handler(Looper.myLooper()!!).postDelayed({
+					InputOverrider.setControlState(controllerIndex, singleTapControl, 0.0)
+				}, 50)
+			}
+			
+			// double tap：两次才触发
+			if (doubleTap) {
+				if (doubleTapControl != SINGLE_TAP_NONE) {
+					InputOverrider.setControlState(controllerIndex, doubleTapControl, 1.0)
+					Handler(Looper.myLooper()!!).postDelayed({
+						InputOverrider.setControlState(controllerIndex, doubleTapControl, 0.0)
+					}, 50)
+				}
+			} else {
+				doubleTap = true
+				Handler(Looper.myLooper()!!).postDelayed({ doubleTap = false }, 300)
+			}
+		}
+	}
 
     private fun updateOldAxes() {
         oldX = x
@@ -136,9 +145,20 @@ class InputOverlayPointer(
         const val MODE_DISABLED = 0
         const val MODE_FOLLOW = 1
         const val MODE_DRAG = 2
-
+		const val SINGLE_TAP_NONE = -1
+		
+		@JvmField
+		var SINGLE_TAP_OPTIONS = arrayListOf(
+			-1,  // None
+			NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
+			NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
+			NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
+			NativeLibrary.ButtonType.CLASSIC_BUTTON_A
+		)
+		
         @JvmField
         var DOUBLE_TAP_OPTIONS = arrayListOf(
+			-1,  // None
             NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
             NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
             NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
