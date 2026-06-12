@@ -99,16 +99,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             doubleTapButton = ButtonType.WIIMOTE_BUTTON_A
         }
 
-        var doubleTapControl = ControlId.WIIMOTE_A_BUTTON
+        var doubleTapControl = InputOverlayPointer.SINGLE_TAP_NONE  // 默认 -1
         when (doubleTapButton) {
             ButtonType.WIIMOTE_BUTTON_A -> doubleTapControl = ControlId.WIIMOTE_A_BUTTON
             ButtonType.WIIMOTE_BUTTON_B -> doubleTapControl = ControlId.WIIMOTE_B_BUTTON
             ButtonType.WIIMOTE_BUTTON_2 -> doubleTapControl = ControlId.WIIMOTE_TWO_BUTTON
         }
-
+		
+		var singleTapButton = IntSetting.MAIN_SINGLE_TAP_BUTTON.int  // 新 IntSetting
+		var singleTapControl = InputOverlayPointer.SINGLE_TAP_NONE
+		when (singleTapButton) {
+			ButtonType.WIIMOTE_BUTTON_A -> singleTapControl = ControlId.WIIMOTE_A_BUTTON
+			ButtonType.WIIMOTE_BUTTON_B -> singleTapControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> singleTapControl = ControlId.WIIMOTE_TWO_BUTTON
+		}
         overlayPointer = InputOverlayPointer(
             surfacePosition!!,
             doubleTapControl,
+			singleTapControl,
             IntSetting.MAIN_IR_MODE.int,
             BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean,
             controllerIndex
@@ -540,7 +548,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         val toggleBase = "MAIN_BUTTON_TOGGLE_GC_"
         val latchingBase = "MAIN_BUTTON_LATCHING_GC_"
 
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_0.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_0")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -549,11 +557,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.BUTTON_A,
                     ControlId.GCPAD_A_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_0.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_0")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_1.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_1")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -562,11 +570,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.BUTTON_B,
                     ControlId.GCPAD_B_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_1.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_1")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_2.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_2")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -575,11 +583,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.BUTTON_X,
                     ControlId.GCPAD_X_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_2.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_2")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_3.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_3")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -588,11 +596,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.BUTTON_Y,
                     ControlId.GCPAD_Y_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_3.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_3")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_4.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_4")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -601,11 +609,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.BUTTON_Z,
                     ControlId.GCPAD_Z_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_4.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_4")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_5.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_5")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -614,11 +622,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.BUTTON_START,
                     ControlId.GCPAD_START_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_5.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_5")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_6.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_6")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -627,11 +635,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.TRIGGER_L,
                     ControlId.GCPAD_L_DIGITAL,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_6.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_6")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_7.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_7")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -640,11 +648,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.TRIGGER_R,
                     ControlId.GCPAD_R_DIGITAL,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_GC_7.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_GC_7")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_8.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_8")) {
             overlayDpads.add(
                 initializeOverlayDpad(
                     context,
@@ -660,7 +668,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_9.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_9")) {
             overlayJoysticks.add(
                 initializeOverlayJoystick(
                     context,
@@ -674,7 +682,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_GC_10.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_GC_10")) {
             overlayJoysticks.add(
                 initializeOverlayJoystick(
                     context,
@@ -688,7 +696,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
+        if (getEffectiveToggle(toggleBase + "11")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -697,7 +705,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.TRIGGER_L_HALF,
                     ControlId.GCPAD_L_ANALOG,
                     orientation,
-                    BooleanSetting.valueOf(latchingBase + "8").boolean,
+                    getEffectiveLatching(latchingBase + "8"),
                     "LH",
                     overlayLabelScale = 0.14f,
                     isAnalogOnly = true,
@@ -705,7 +713,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
+        if (getEffectiveToggle(toggleBase + "12")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -714,7 +722,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.TRIGGER_R_HALF,
                     ControlId.GCPAD_R_ANALOG,
                     orientation,
-                    BooleanSetting.valueOf(latchingBase + "9").boolean,
+                    getEffectiveLatching(latchingBase + "9"),
                     "RH",
                     overlayLabelScale = 0.14f,
                     isAnalogOnly = true,
@@ -722,7 +730,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
+        if (getEffectiveToggle(toggleBase + "13")) {
             overlayJoysticks.add(
                 initializeOverlayJoystick(
                     context,
@@ -745,7 +753,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     val latchingBase = "MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_"   // ← 改成新独立设置
 
     // ==================== 基础按钮 ====================
-    if (BooleanSetting.valueOf(toggleBase + "0").boolean) {
+    if (getEffectiveToggle(toggleBase + "0")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -754,11 +762,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_A,
                 ControlId.WIIMOTE_A_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "0").boolean
+                getEffectiveLatching(latchingBase + "0")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "1").boolean) {
+    if (getEffectiveToggle(toggleBase + "1")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -767,11 +775,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_B,
                 ControlId.WIIMOTE_B_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "1").boolean
+                getEffectiveLatching(latchingBase + "1")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "2").boolean) {
+    if (getEffectiveToggle(toggleBase + "2")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -780,11 +788,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_1,
                 ControlId.WIIMOTE_ONE_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "2").boolean
+                getEffectiveLatching(latchingBase + "2")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "3").boolean) {
+    if (getEffectiveToggle(toggleBase + "3")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -793,11 +801,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_2,
                 ControlId.WIIMOTE_TWO_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "3").boolean
+                getEffectiveLatching(latchingBase + "3")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "4").boolean) {
+    if (getEffectiveToggle(toggleBase + "4")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -806,11 +814,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_PLUS,
                 ControlId.WIIMOTE_PLUS_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "4").boolean
+                getEffectiveLatching(latchingBase + "4")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "5").boolean) {
+    if (getEffectiveToggle(toggleBase + "5")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -819,11 +827,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_MINUS,
                 ControlId.WIIMOTE_MINUS_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "5").boolean
+                getEffectiveLatching(latchingBase + "5")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "6").boolean) {
+    if (getEffectiveToggle(toggleBase + "6")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -832,11 +840,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_HOME,
                 ControlId.WIIMOTE_HOME_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(latchingBase + "6").boolean
+                getEffectiveLatching(latchingBase + "6")
             )
         )
     }
-    if (BooleanSetting.valueOf(toggleBase + "7").boolean) {
+    if (getEffectiveToggle(toggleBase + "7")) {
         overlayDpads.add(
             initializeOverlayDpad(
                 context,
@@ -855,46 +863,46 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
     // ==================== Motion Buttons ====================
     // WSKX、WSKY、WSKZ 改为使用 Latching 设置
-    if (BooleanSetting.valueOf(toggleBase + "8").boolean) {
+    if (getEffectiveToggle(toggleBase + "8")) {
         overlayButtons.add(initializeOverlayButton(context,
             R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X,
-            orientation, BooleanSetting.valueOf(latchingBase + "7").boolean, "WSKX"))
+            orientation, getEffectiveLatching(latchingBase + "7"), "WSKX"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "9").boolean) {
+    if (getEffectiveToggle(toggleBase + "9")) {
         overlayButtons.add(initializeOverlayButton(context,
             R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y,
-            orientation, BooleanSetting.valueOf(latchingBase + "8").boolean, "WSKY"))
+            orientation, getEffectiveLatching(latchingBase + "8"), "WSKY"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "10").boolean) {
+    if (getEffectiveToggle(toggleBase + "10")) {
     overlayButtons.add(initializeOverlayButton(context,
         R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
         ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
-        orientation, BooleanSetting.valueOf(latchingBase + "9").boolean, "WSKZ"))
+        orientation, getEffectiveLatching(latchingBase + "9"), "WSKZ"))
 	}
 
     // 其他 Motion 按钮保持普通（false）
-    if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
+    if (getEffectiveToggle(toggleBase + "11")) {
         overlayJoysticks.add(initializeOverlayJoystick(context,
             R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
             R.drawable.gcwii_joystick_pressed,
             ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y,
             orientation, "WSW"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
+    if (getEffectiveToggle(toggleBase + "12")) {
         overlayButtons.add(initializeOverlayButton(context,
             R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD,
             orientation, false, "WSF"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
+    if (getEffectiveToggle(toggleBase + "13")) {
         overlayButtons.add(initializeOverlayButton(context,
             R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD,
             orientation, false, "WSB"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "14").boolean) {
+    if (getEffectiveToggle(toggleBase + "14")) {
         overlayDpads.add(initializeOverlayDpad(context,
             R.drawable.gcwii_dpad, R.drawable.gcwii_dpad_pressed_one_direction,
             R.drawable.gcwii_dpad_pressed_two_directions,
@@ -912,35 +920,35 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     val latchingBase = "MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_"   // 使用独立 Latching 设置
 
     // ==================== 0-7: Wiimote 基础按钮 ====================
-    if (BooleanSetting.valueOf(toggleBase + "0").boolean) {
+    if (getEffectiveToggle(toggleBase + "0")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_a, R.drawable.wiimote_a_pressed,
-            ButtonType.WIIMOTE_BUTTON_A, ControlId.WIIMOTE_A_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "0").boolean))
+            ButtonType.WIIMOTE_BUTTON_A, ControlId.WIIMOTE_A_BUTTON, orientation, getEffectiveLatching(latchingBase + "0")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "1").boolean) {
+    if (getEffectiveToggle(toggleBase + "1")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_b, R.drawable.wiimote_b_pressed,
-            ButtonType.WIIMOTE_BUTTON_B, ControlId.WIIMOTE_B_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "1").boolean))
+            ButtonType.WIIMOTE_BUTTON_B, ControlId.WIIMOTE_B_BUTTON, orientation, getEffectiveLatching(latchingBase + "1")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "2").boolean) {
+    if (getEffectiveToggle(toggleBase + "2")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_one, R.drawable.wiimote_one_pressed,
-            ButtonType.WIIMOTE_BUTTON_1, ControlId.WIIMOTE_ONE_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "2").boolean))
+            ButtonType.WIIMOTE_BUTTON_1, ControlId.WIIMOTE_ONE_BUTTON, orientation, getEffectiveLatching(latchingBase + "2")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "3").boolean) {
+    if (getEffectiveToggle(toggleBase + "3")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_two, R.drawable.wiimote_two_pressed,
-            ButtonType.WIIMOTE_BUTTON_2, ControlId.WIIMOTE_TWO_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "3").boolean))
+            ButtonType.WIIMOTE_BUTTON_2, ControlId.WIIMOTE_TWO_BUTTON, orientation, getEffectiveLatching(latchingBase + "3")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "4").boolean) {
+    if (getEffectiveToggle(toggleBase + "4")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_plus, R.drawable.wiimote_plus_pressed,
-            ButtonType.WIIMOTE_BUTTON_PLUS, ControlId.WIIMOTE_PLUS_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "4").boolean))
+            ButtonType.WIIMOTE_BUTTON_PLUS, ControlId.WIIMOTE_PLUS_BUTTON, orientation, getEffectiveLatching(latchingBase + "4")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "5").boolean) {
+    if (getEffectiveToggle(toggleBase + "5")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_minus, R.drawable.wiimote_minus_pressed,
-            ButtonType.WIIMOTE_BUTTON_MINUS, ControlId.WIIMOTE_MINUS_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "5").boolean))
+            ButtonType.WIIMOTE_BUTTON_MINUS, ControlId.WIIMOTE_MINUS_BUTTON, orientation, getEffectiveLatching(latchingBase + "5")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "6").boolean) {
+    if (getEffectiveToggle(toggleBase + "6")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_home, R.drawable.wiimote_home_pressed,
-            ButtonType.WIIMOTE_BUTTON_HOME, ControlId.WIIMOTE_HOME_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "6").boolean))
+            ButtonType.WIIMOTE_BUTTON_HOME, ControlId.WIIMOTE_HOME_BUTTON, orientation, getEffectiveLatching(latchingBase + "6")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "7").boolean) {
+    if (getEffectiveToggle(toggleBase + "7")) {
         overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
             R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
             ButtonType.WIIMOTE_UP, ControlId.WIIMOTE_DPAD_UP, ControlId.WIIMOTE_DPAD_DOWN,
@@ -948,50 +956,50 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     // ==================== 8-10: Nunchuk 特有按钮 ====================
-    if (BooleanSetting.valueOf(toggleBase + "8").boolean) {
+    if (getEffectiveToggle(toggleBase + "8")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.nunchuk_c, R.drawable.nunchuk_c_pressed,
-            ButtonType.NUNCHUK_BUTTON_C, ControlId.NUNCHUK_C_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "7").boolean))
+            ButtonType.NUNCHUK_BUTTON_C, ControlId.NUNCHUK_C_BUTTON, orientation, getEffectiveLatching(latchingBase + "7")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "9").boolean) {
+    if (getEffectiveToggle(toggleBase + "9")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.nunchuk_z, R.drawable.nunchuk_z_pressed,
-            ButtonType.NUNCHUK_BUTTON_Z, ControlId.NUNCHUK_Z_BUTTON, orientation, BooleanSetting.valueOf(latchingBase + "8").boolean))
+            ButtonType.NUNCHUK_BUTTON_Z, ControlId.NUNCHUK_Z_BUTTON, orientation, getEffectiveLatching(latchingBase + "8")))
     }
-    if (BooleanSetting.valueOf(toggleBase + "10").boolean) {
+    if (getEffectiveToggle(toggleBase + "10")) {
         overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
             R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
             ButtonType.NUNCHUK_STICK, ControlId.NUNCHUK_STICK_X, ControlId.NUNCHUK_STICK_Y, orientation))
     }
 
     // ==================== 11-17: Wiimote Motion 按钮（Nunchuk 模式下） ====================
-    if (BooleanSetting.valueOf(toggleBase + "11").boolean) {
+    if (getEffectiveToggle(toggleBase + "11")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X, orientation,
-            BooleanSetting.valueOf(latchingBase + "9").boolean, "WSKX"))
+            getEffectiveLatching(latchingBase + "9"), "WSKX"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "12").boolean) {
+    if (getEffectiveToggle(toggleBase + "12")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_Y, ControlId.WIIMOTE_SHAKE_Y, orientation,
-            BooleanSetting.valueOf(latchingBase + "10").boolean, "WSKY"))
+            getEffectiveLatching(latchingBase + "10"), "WSKY"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "13").boolean) {
+    if (getEffectiveToggle(toggleBase + "13")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z, orientation,
-            BooleanSetting.valueOf(latchingBase + "11").boolean, "WSKZ"))
+            getEffectiveLatching(latchingBase + "11"), "WSKZ"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "14").boolean) {
+    if (getEffectiveToggle(toggleBase + "14")) {
         overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
             R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
             ButtonType.WIIMOTE_SWING, ControlId.WIIMOTE_SWING_X, ControlId.WIIMOTE_SWING_Y, orientation, "WSW"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "15").boolean) {
+    if (getEffectiveToggle(toggleBase + "15")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_FORWARD, ControlId.WIIMOTE_SWING_FORWARD, orientation, false, "WSF"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "16").boolean) {
+    if (getEffectiveToggle(toggleBase + "16")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SWING_BACKWARD, ControlId.WIIMOTE_SWING_BACKWARD, orientation, false, "WSB"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "17").boolean) {
+    if (getEffectiveToggle(toggleBase + "17")) {
         overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
             R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
             ButtonType.WIIMOTE_TILT, ControlId.WIIMOTE_TILT_LEFT, ControlId.WIIMOTE_TILT_RIGHT,
@@ -999,35 +1007,35 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     // ==================== 18-24: Nunchuk 自己的 Motion 按钮 ====================
-    if (BooleanSetting.valueOf(toggleBase + "18").boolean) {
+    if (getEffectiveToggle(toggleBase + "18")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X, orientation,
-            BooleanSetting.valueOf(latchingBase + "12").boolean, "NSKX"))
+            getEffectiveLatching(latchingBase + "12"), "NSKX"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "19").boolean) {
+    if (getEffectiveToggle(toggleBase + "19")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y, orientation,
-            BooleanSetting.valueOf(latchingBase + "13").boolean, "NSKY"))
+            getEffectiveLatching(latchingBase + "13"), "NSKY"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "20").boolean) {
+    if (getEffectiveToggle(toggleBase + "20")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z, orientation,
-            BooleanSetting.valueOf(latchingBase + "14").boolean, "NSKZ"))
+            getEffectiveLatching(latchingBase + "14"), "NSKZ"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "21").boolean) {
+    if (getEffectiveToggle(toggleBase + "21")) {
         overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
             R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
             ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y, orientation, "NSW"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "22").boolean) {
+    if (getEffectiveToggle(toggleBase + "22")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD, orientation, false, "NSF"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "23").boolean) {
+    if (getEffectiveToggle(toggleBase + "23")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD, orientation, false, "NSB"))
     }
-    if (BooleanSetting.valueOf(toggleBase + "24").boolean) {
+    if (getEffectiveToggle(toggleBase + "24")) {
         overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
             R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
             ButtonType.NUNCHUK_TILT, ControlId.NUNCHUK_TILT_LEFT, ControlId.NUNCHUK_TILT_RIGHT,
@@ -1040,7 +1048,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     val tataconLatchBase = "MAIN_BUTTON_LATCHING_TATACON_"
 
     // 1
-    if (BooleanSetting.valueOf(tataconToggleBase + "0").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "0")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1049,13 +1057,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_1,
                 ControlId.WIIMOTE_ONE_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(tataconLatchBase + "0").boolean
+                getEffectiveLatching(tataconLatchBase + "0")
             )
         )
     }
 
     // 2
-    if (BooleanSetting.valueOf(tataconToggleBase + "1").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "1")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1064,13 +1072,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_2,
                 ControlId.WIIMOTE_TWO_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(tataconLatchBase + "1").boolean
+                getEffectiveLatching(tataconLatchBase + "1")
             )
         )
     }
 
     // +
-    if (BooleanSetting.valueOf(tataconToggleBase + "2").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "2")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1079,13 +1087,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_PLUS,
                 ControlId.WIIMOTE_PLUS_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(tataconLatchBase + "2").boolean
+                getEffectiveLatching(tataconLatchBase + "2")
             )
         )
     }
 
     // -
-    if (BooleanSetting.valueOf(tataconToggleBase + "3").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "3")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1094,13 +1102,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_MINUS,
                 ControlId.WIIMOTE_MINUS_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(tataconLatchBase + "3").boolean
+                getEffectiveLatching(tataconLatchBase + "3")
             )
         )
     }
 
     // Home
-    if (BooleanSetting.valueOf(tataconToggleBase + "4").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "4")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1109,13 +1117,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ButtonType.WIIMOTE_BUTTON_HOME,
                 ControlId.WIIMOTE_HOME_BUTTON,
                 orientation,
-                BooleanSetting.valueOf(tataconLatchBase + "4").boolean
+                getEffectiveLatching(tataconLatchBase + "4")
             )
         )
     }
 
     // 四个鼓面（保持你原来的图片和 ControlId）
-    if (BooleanSetting.valueOf(tataconToggleBase + "5").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "5")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1129,7 +1137,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         )
     }
 
-    if (BooleanSetting.valueOf(tataconToggleBase + "6").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "6")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1143,7 +1151,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         )
     }
 
-    if (BooleanSetting.valueOf(tataconToggleBase + "7").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "7")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1157,7 +1165,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         )
     }
 
-    if (BooleanSetting.valueOf(tataconToggleBase + "8").boolean) {
+    if (getEffectiveToggle(tataconToggleBase + "8")) {
         overlayButtons.add(
             initializeOverlayButton(
                 context,
@@ -1173,7 +1181,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 }
 
     private fun addClassicOverlayControls(orientation: String) {
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_0.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_0")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1182,11 +1190,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_A,
                     ControlId.CLASSIC_A_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_0.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_0")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_1.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_1")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1195,11 +1203,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_B,
                     ControlId.CLASSIC_B_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_1.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_1")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_2.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_2")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1208,11 +1216,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_X,
                     ControlId.CLASSIC_X_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_2.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_2")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_3.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_3")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1221,11 +1229,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_Y,
                     ControlId.CLASSIC_Y_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_3.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_3")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_4.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_4")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1234,11 +1242,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_PLUS,
                     ControlId.CLASSIC_PLUS_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_4.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_4")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_5.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_5")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1247,11 +1255,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_MINUS,
                     ControlId.CLASSIC_MINUS_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_5.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_5")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_6.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_6")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1260,11 +1268,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_HOME,
                     ControlId.CLASSIC_HOME_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_6.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_6")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_7.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_7")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1273,11 +1281,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_TRIGGER_L,
                     ControlId.CLASSIC_L_DIGITAL,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_7.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_7")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_8.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_8")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1286,11 +1294,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_TRIGGER_R,
                     ControlId.CLASSIC_R_DIGITAL,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_8.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_8")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_9.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_9")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1299,11 +1307,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_ZL,
                     ControlId.CLASSIC_ZL_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_9.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_9")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_10.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_10")) {
             overlayButtons.add(
                 initializeOverlayButton(
                     context,
@@ -1312,11 +1320,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ButtonType.CLASSIC_BUTTON_ZR,
                     ControlId.CLASSIC_ZR_BUTTON,
                     orientation,
-                    BooleanSetting.MAIN_BUTTON_LATCHING_CLASSIC_10.boolean
+                    getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_10")
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_11.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_11")) {
             overlayDpads.add(
                 initializeOverlayDpad(
                     context,
@@ -1332,7 +1340,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_12.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_12")) {
             overlayJoysticks.add(
                 initializeOverlayJoystick(
                     context,
@@ -1346,7 +1354,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
-        if (BooleanSetting.MAIN_BUTTON_TOGGLE_CLASSIC_13.boolean) {
+        if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_13")) {
             overlayJoysticks.add(
                 initializeOverlayJoystick(
                     context,
@@ -1512,6 +1520,41 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
      * @param latching     Whether the button is latching.
      * @return An [InputOverlayDrawableButton] with the correct drawing bounds set.
      */
+	// Per game overlay scale and opacity
+	private fun getEffectiveScale(): Int {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        return if (gameId != null)
+            preferences.getInt("OverlayScale_$gameId", IntSetting.MAIN_CONTROL_SCALE.int)
+        else
+            IntSetting.MAIN_CONTROL_SCALE.int
+    }
+
+    private fun getEffectiveOpacity(): Int {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        return if (gameId != null)
+            preferences.getInt("OverlayOpacity_$gameId", IntSetting.MAIN_CONTROL_OPACITY.int)
+        else
+            IntSetting.MAIN_CONTROL_OPACITY.int
+    }
+	// Fall back to BooleanSetting if no gameID
+    private fun getEffectiveToggle(settingName: String): Boolean {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        return if (gameId != null)
+            preferences.getBoolean("Toggle_${gameId}_$settingName",
+                BooleanSetting.valueOf(settingName).boolean)
+        else
+            BooleanSetting.valueOf(settingName).boolean
+    }
+
+    private fun getEffectiveLatching(settingName: String): Boolean {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        return if (gameId != null)
+            preferences.getBoolean("Latching_${gameId}_$settingName",
+                BooleanSetting.valueOf(settingName).boolean)
+        else
+            BooleanSetting.valueOf(settingName).boolean
+    }
+
     private fun initializeOverlayButton(
         context: Context,
         defaultResId: Int,
@@ -1559,7 +1602,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             else -> 0.125f
         }
 
-        scale *= (IntSetting.MAIN_CONTROL_SCALE.int + 50).toFloat()
+        scale *= (getEffectiveScale() + 50).toFloat()
         scale /= 100f
 		// TaTaCon buttons extra scale
 		when (legacyId) {
@@ -1604,7 +1647,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         // Need to set the image's position
         overlayDrawable.setPosition(drawableX, drawableY)
-        overlayDrawable.setOpacity(IntSetting.MAIN_CONTROL_OPACITY.int * 255 / 100)
+        overlayDrawable.setOpacity(getEffectiveOpacity() * 255 / 100)
 
         return overlayDrawable
     }
@@ -1643,7 +1686,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             else -> if (controllerType == OVERLAY_WIIMOTE_SIDEWAYS || controllerType == OVERLAY_WIIMOTE) 0.275f else 0.2125f
         }
 
-        scale *= (IntSetting.MAIN_CONTROL_SCALE.int + 50).toFloat()
+        scale *= (getEffectiveScale() + 50).toFloat()
         scale /= 100f
 
         // Initialize the InputOverlayDrawableDpad.
@@ -1688,7 +1731,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         // Need to set the image's position
         overlayDrawable.setPosition(drawableX, drawableY)
-        overlayDrawable.setOpacity(IntSetting.MAIN_CONTROL_OPACITY.int * 255 / 100)
+        overlayDrawable.setOpacity(getEffectiveOpacity() * 255 / 100)
 
         return overlayDrawable
     }
@@ -1719,7 +1762,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     ): InputOverlayDrawableJoystick {
         // Decide scale based on user preference
         var scale = 0.275f
-        scale *= (IntSetting.MAIN_CONTROL_SCALE.int + 50).toFloat()
+        scale *= (getEffectiveScale() + 50).toFloat()
         scale /= 100f
 
         // Initialize the InputOverlayDrawableJoystick.
@@ -1763,7 +1806,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         // Need to set the image's position
         overlayDrawable.setPosition(drawableX, drawableY)
-        overlayDrawable.setOpacity(IntSetting.MAIN_CONTROL_OPACITY.int * 255 / 100)
+        overlayDrawable.setOpacity(getEffectiveOpacity() * 255 / 100)
         return overlayDrawable
     }
 
