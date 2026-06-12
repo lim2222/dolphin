@@ -19,6 +19,7 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.preference.PreferenceManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.ViewCompat
@@ -349,11 +350,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         settings.close()
     }
 
-    override fun onBackPressed() {
-        if (!closeSubmenu()) {
-            toggleMenu()
-        }
-    }
+    @Suppress("MissingSuperCall")
+		override fun onBackPressed() {
+		if (!closeSubmenu()) {
+        toggleMenu()
+		}
+	}
 
     override fun onKeyLongPress(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -520,6 +522,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
             MENU_SET_IR_MODE -> setIRMode()
             MENU_ACTION_CHOOSE_DOUBLETAP -> chooseDoubleTapButton()
+			MENU_ACTION_CHOOSE_SINGLETAP -> chooseSingleTapButton()
             MENU_ACTION_SETTINGS -> SettingsActivity.launch(this, MenuTag.SETTINGS)
             MENU_ACTION_SKYLANDERS -> showSkylanderPortalSettings()
             MENU_ACTION_INFINITY_BASE -> showInfinityBaseSettings()
@@ -557,157 +560,129 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
     }
 
     private fun latchingControls() {
-    val builder = MaterialAlertDialogBuilder(this)
-        .setTitle(R.string.emulation_latching_controls)
+        val builder = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.emulation_latching_controls)
 
-    val currentController = InputOverlay.configuredControllerType
+        val currentController = InputOverlay.configuredControllerType
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
-    when (currentController) {
-        InputOverlay.OVERLAY_GAMECUBE -> {
-            val gcLatchingButtons = BooleanArray(10)
-            val gcSettingBase = "MAIN_BUTTON_LATCHING_GC_"
-            for (i in gcLatchingButtons.indices) {
-                gcLatchingButtons[i] = BooleanSetting.valueOf(gcSettingBase + i).boolean
+        fun readLatching(base: String, size: Int): BooleanArray =
+            BooleanArray(size) { i ->
+                if (gameId != null)
+                    prefs.getBoolean("Latching_${gameId}_${base}$i",
+                        BooleanSetting.valueOf(base + i).boolean)
+                else
+                    BooleanSetting.valueOf(base + i).boolean
             }
-            builder.setMultiChoiceItems(
-                R.array.gcpadLatchableButtons, gcLatchingButtons
-            ) { _, indexSelected, isChecked ->
-                BooleanSetting.valueOf(gcSettingBase + indexSelected)
-                    .setBoolean(settings, isChecked)
-                emulationFragment?.refreshInputOverlay()
+
+        fun saveLatching(base: String, index: Int, checked: Boolean) {
+            if (gameId != null)
+                prefs.edit().putBoolean("Latching_${gameId}_${base}$index", checked).apply()
+            else
+                BooleanSetting.valueOf(base + index).setBoolean(settings, checked)
+            emulationFragment?.refreshInputOverlay()
+        }
+
+        when (currentController) {
+            InputOverlay.OVERLAY_GAMECUBE -> {
+                val gcSettingBase = "MAIN_BUTTON_LATCHING_GC_"
+                builder.setMultiChoiceItems(
+                    R.array.gcpadLatchableButtons, readLatching(gcSettingBase, 10)
+                ) { _, i, c -> saveLatching(gcSettingBase, i, c) }
+            }
+
+            InputOverlay.OVERLAY_WIIMOTE_CLASSIC -> {
+                val classicSettingBase = "MAIN_BUTTON_LATCHING_CLASSIC_"
+                builder.setMultiChoiceItems(
+                    R.array.classicLatchableButtons, readLatching(classicSettingBase, 11)
+                ) { _, i, c -> saveLatching(classicSettingBase, i, c) }
+            }
+
+            InputOverlay.OVERLAY_WIIMOTE_TATACON -> {
+                val tataconSettingBase = "MAIN_BUTTON_LATCHING_TATACON_"
+                builder.setMultiChoiceItems(
+                    R.array.tataconLatchableButtons, readLatching(tataconSettingBase, 5)
+                ) { _, i, c -> saveLatching(tataconSettingBase, i, c) }
+            }
+
+            InputOverlay.OVERLAY_WIIMOTE_NUNCHUK -> {
+                val base = "MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_"
+                builder.setMultiChoiceItems(
+                    R.array.nunchukLatchableButtons, readLatching(base, 15)
+                ) { _, i, c -> saveLatching(base, i, c) }
+            }
+
+            else -> {
+                val base = "MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_"
+                builder.setMultiChoiceItems(
+                    R.array.wiimoteLatchableButtons, readLatching(base, 10)
+                ) { _, i, c -> saveLatching(base, i, c) }
             }
         }
 
-        InputOverlay.OVERLAY_WIIMOTE_CLASSIC -> {
-            val wiiClassicLatchingButtons = BooleanArray(11)
-            val classicSettingBase = "MAIN_BUTTON_LATCHING_CLASSIC_"
-            for (i in wiiClassicLatchingButtons.indices) {
-                wiiClassicLatchingButtons[i] = BooleanSetting.valueOf(classicSettingBase + i).boolean
-            }
-            builder.setMultiChoiceItems(
-                R.array.classicLatchableButtons, wiiClassicLatchingButtons
-            ) { _, indexSelected, isChecked ->
-                BooleanSetting.valueOf(classicSettingBase + indexSelected)
-                    .setBoolean(settings, isChecked)
-                emulationFragment?.refreshInputOverlay()
-            }
-        }
-
-        InputOverlay.OVERLAY_WIIMOTE_TATACON -> {
-            // TaTaCon Latching
-            val tataconLatchingButtons = BooleanArray(5)
-            val tataconSettingBase = "MAIN_BUTTON_LATCHING_TATACON_"
-            for (i in tataconLatchingButtons.indices) {
-                tataconLatchingButtons[i] = BooleanSetting.valueOf(tataconSettingBase + i).boolean
-            }
-            builder.setMultiChoiceItems(
-                R.array.tataconLatchableButtons, tataconLatchingButtons
-            ) { _, indexSelected, isChecked ->
-                BooleanSetting.valueOf(tataconSettingBase + indexSelected)
-                    .setBoolean(settings, isChecked)
-                emulationFragment?.refreshInputOverlay()
-            }
-        }
-
-        InputOverlay.OVERLAY_WIIMOTE_NUNCHUK -> {
-            // Nunchuk 使用独立 Latching 设置
-            val arr = BooleanArray(15)
-            val base = "MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_"
-            for (i in arr.indices) {
-                arr[i] = BooleanSetting.valueOf(base + i).boolean
-            }
-            builder.setMultiChoiceItems(
-                R.array.nunchukLatchableButtons, arr
-            ) { _, indexSelected, isChecked ->
-                BooleanSetting.valueOf(base + indexSelected)
-                    .setBoolean(settings, isChecked)
-                emulationFragment?.refreshInputOverlay()
-            }
-        }
-
-        else -> {
-            // 纯 Wiimote 使用独立 Latching 设置
-            val arr = BooleanArray(10)
-            val base = "MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_"
-            for (i in arr.indices) {
-                arr[i] = BooleanSetting.valueOf(base + i).boolean
-            }
-            builder.setMultiChoiceItems(
-                R.array.wiimoteLatchableButtons, arr
-            ) { _, indexSelected, isChecked ->
-                BooleanSetting.valueOf(base + indexSelected)
-                    .setBoolean(settings, isChecked)
-                emulationFragment?.refreshInputOverlay()
-            }
-        }
+        builder.setPositiveButton(R.string.ok, null).show()
     }
-
-    builder.setPositiveButton(R.string.ok, null).show()
-}
 
     private fun toggleControls() {
-    val builder = MaterialAlertDialogBuilder(this)
-        .setTitle(R.string.emulation_toggle_controls)
+        val builder = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.emulation_toggle_controls)
 
-    val currentController = InputOverlay.configuredControllerType
+        val currentController = InputOverlay.configuredControllerType
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
-    if (currentController == InputOverlay.OVERLAY_GAMECUBE) {
-        val gcEnabledButtons = BooleanArray(14)
-        val gcSettingBase = "MAIN_BUTTON_TOGGLE_GC_"
-        for (i in gcEnabledButtons.indices) {
-            gcEnabledButtons[i] = BooleanSetting.valueOf(gcSettingBase + i).boolean
-        }
-        builder.setMultiChoiceItems(R.array.gcpadButtons, gcEnabledButtons) { _, i, c ->
-            BooleanSetting.valueOf(gcSettingBase + i).setBoolean(settings, c)
+        fun readToggle(base: String, size: Int): BooleanArray =
+            BooleanArray(size) { i ->
+                if (gameId != null)
+                    prefs.getBoolean("Toggle_${gameId}_${base}$i",
+                        BooleanSetting.valueOf(base + i).boolean)
+                else
+                    BooleanSetting.valueOf(base + i).boolean
+            }
+
+        fun saveToggle(base: String, index: Int, checked: Boolean) {
+            if (gameId != null)
+                prefs.edit().putBoolean("Toggle_${gameId}_${base}$index", checked).apply()
+            else
+                BooleanSetting.valueOf(base + index).setBoolean(settings, checked)
             emulationFragment?.refreshInputOverlay()
         }
 
-    } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_TATACON) {
-        val arr = BooleanArray(9)
-        val base = "MAIN_BUTTON_TOGGLE_TATACON_"
-        for (i in arr.indices) arr[i] = BooleanSetting.valueOf(base + i).boolean
-        builder.setMultiChoiceItems(R.array.tataconButtons, arr) { _, i, c ->
-            BooleanSetting.valueOf(base + i).setBoolean(settings, c)
-            emulationFragment?.refreshInputOverlay()
+        if (currentController == InputOverlay.OVERLAY_GAMECUBE) {
+            val base = "MAIN_BUTTON_TOGGLE_GC_"
+            builder.setMultiChoiceItems(R.array.gcpadButtons, readToggle(base, 14)) { _, i, c ->
+                saveToggle(base, i, c)
+            }
+        } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_TATACON) {
+            val base = "MAIN_BUTTON_TOGGLE_TATACON_"
+            builder.setMultiChoiceItems(R.array.tataconButtons, readToggle(base, 9)) { _, i, c ->
+                saveToggle(base, i, c)
+            }
+        } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_CLASSIC) {
+            val base = "MAIN_BUTTON_TOGGLE_CLASSIC_"
+            builder.setMultiChoiceItems(R.array.classicButtons, readToggle(base, 14)) { _, i, c ->
+                saveToggle(base, i, c)
+            }
+        } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
+            val base = "MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_"
+            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 25)) { _, i, c ->
+                saveToggle(base, i, c)
+            }
+        } else {
+            val base = "MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_"
+            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 15)) { _, i, c ->
+                saveToggle(base, i, c)
+            }
         }
 
-    } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_CLASSIC) {
-        val arr = BooleanArray(14)
-        val base = "MAIN_BUTTON_TOGGLE_CLASSIC_"
-        for (i in arr.indices) arr[i] = BooleanSetting.valueOf(base + i).boolean
-        builder.setMultiChoiceItems(R.array.classicButtons, arr) { _, i, c ->
-            BooleanSetting.valueOf(base + i).setBoolean(settings, c)
-            emulationFragment?.refreshInputOverlay()
-        }
-
-    } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
-        // Nunchuk 完整独立
-        val arr = BooleanArray(25)
-        val base = "MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_"
-        for (i in arr.indices) arr[i] = BooleanSetting.valueOf(base + i).boolean
-        builder.setMultiChoiceItems(R.array.nunchukButtons, arr) { _, i, c ->
-            BooleanSetting.valueOf(base + i).setBoolean(settings, c)
-            emulationFragment?.refreshInputOverlay()
-        }
-
-    } else {
-        // 纯 Wiimote 完整独立
-        val arr = BooleanArray(15)
-        val base = "MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_"
-        for (i in arr.indices) arr[i] = BooleanSetting.valueOf(base + i).boolean
-        builder.setMultiChoiceItems(R.array.wiimoteButtons, arr) { _, i, c ->
-            BooleanSetting.valueOf(base + i).setBoolean(settings, c)
-            emulationFragment?.refreshInputOverlay()
-        }
+        builder
+            .setNeutralButton(R.string.emulation_toggle_all) { _, _ ->
+                emulationFragment!!.toggleInputOverlayVisibility(settings)
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
     }
-
-    builder
-        .setNeutralButton(R.string.emulation_toggle_all) { _, _ ->
-            emulationFragment!!.toggleInputOverlayVisibility(settings)
-        }
-        .setPositiveButton(R.string.ok, null)
-        .show()
-}
 
     private fun chooseDoubleTapButton() {
         val currentValue = IntSetting.MAIN_DOUBLE_TAP_BUTTON.int
@@ -735,34 +710,81 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             .setPositiveButton(R.string.ok, null)
             .show()
     }
+	
+	private fun chooseSingleTapButton() {
+		val currentValue = IntSetting.MAIN_SINGLE_TAP_BUTTON.int
+
+		val buttonList =
+			if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+            R.array.doubleTapWithClassic else R.array.doubleTap
+
+		var checkedItem = -1
+		val itemCount = resources.getStringArray(buttonList).size
+		for (i in 0 until itemCount) {
+			if (InputOverlayPointer.SINGLE_TAP_OPTIONS[i] == currentValue) {
+				checkedItem = i
+				break
+			}
+		}
+
+		MaterialAlertDialogBuilder(this)
+			.setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
+				IntSetting.MAIN_SINGLE_TAP_BUTTON.setInt(
+					settings,
+					InputOverlayPointer.SINGLE_TAP_OPTIONS[which]
+				)
+				emulationFragment?.initInputPointer()
+			}
+			.setPositiveButton(R.string.ok, null)
+			.show()
+	}
 
     private fun adjustScale() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+
+        // 读初始值：有 per-game 就用，否则用全局
+        val initScale = if (gameId != null)
+            prefs.getInt("OverlayScale_$gameId", IntSetting.MAIN_CONTROL_SCALE.int)
+        else
+            IntSetting.MAIN_CONTROL_SCALE.int
+
+        val initOpacity = if (gameId != null)
+            prefs.getInt("OverlayOpacity_$gameId", IntSetting.MAIN_CONTROL_OPACITY.int)
+        else
+            IntSetting.MAIN_CONTROL_OPACITY.int
+
         val dialogBinding = DialogInputAdjustBinding.inflate(layoutInflater)
         dialogBinding.apply {
             inputScaleSlider.apply {
                 valueTo = 150f
-                value = IntSetting.MAIN_CONTROL_SCALE.int.toFloat()
+                value = initScale.toFloat()
                 stepSize = 1f
                 addOnChangeListener { _: Slider?, value: Float, _: Boolean ->
                     dialogBinding.inputScaleValue.text = "${(value.toInt() + 50)}%"
-                    IntSetting.MAIN_CONTROL_SCALE.setInt(settings, value.toInt())
+                    if (gameId != null)
+                        prefs.edit().putInt("OverlayScale_$gameId", value.toInt()).apply()
+                    else
+                        IntSetting.MAIN_CONTROL_SCALE.setInt(settings, value.toInt())
                     refreshInputOverlayRateLimiter.run()
                 }
             }
-            inputScaleValue.text =
-                "${(dialogBinding.inputScaleSlider.value.toInt() + 50)}%"
+            inputScaleValue.text = "${(initScale + 50)}%"
 
             inputOpacitySlider.apply {
                 valueTo = 100f
-                value = IntSetting.MAIN_CONTROL_OPACITY.int.toFloat()
+                value = initOpacity.toFloat()
                 stepSize = 1f
                 addOnChangeListener { _: Slider?, value: Float, _: Boolean ->
                     inputOpacityValue.text = value.toInt().toString() + "%"
-                    IntSetting.MAIN_CONTROL_OPACITY.setInt(settings, value.toInt())
+                    if (gameId != null)
+                        prefs.edit().putInt("OverlayOpacity_$gameId", value.toInt()).apply()
+                    else
+                        IntSetting.MAIN_CONTROL_OPACITY.setInt(settings, value.toInt())
                     refreshInputOverlayRateLimiter.run()
                 }
             }
-            inputOpacityValue.text = inputOpacitySlider.value.toInt().toString() + "%"
+            inputOpacityValue.text = "$initOpacity%"
         }
 
         MaterialAlertDialogBuilder(this)
@@ -770,13 +792,19 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             .setView(dialogBinding.root)
             .setPositiveButton(R.string.ok, null)
             .setNeutralButton(R.string.default_values) { _: DialogInterface?, _: Int ->
-                IntSetting.MAIN_CONTROL_SCALE.delete(settings)
-                IntSetting.MAIN_CONTROL_OPACITY.delete(settings)
+                if (gameId != null) {
+                    prefs.edit()
+                        .remove("OverlayScale_$gameId")
+                        .remove("OverlayOpacity_$gameId")
+                        .apply()
+                } else {
+                    IntSetting.MAIN_CONTROL_SCALE.delete(settings)
+                    IntSetting.MAIN_CONTROL_OPACITY.delete(settings)
+                }
                 emulationFragment?.refreshInputOverlay()
             }
-            .show()
+        .show()
     }
-
     private fun addControllerIfNotNone(
         entries: MutableList<CharSequence>,
         values: MutableList<Int>,
@@ -1080,6 +1108,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         const val MENU_SET_IR_RECENTER = 27
         const val MENU_SET_IR_MODE = 28
         const val MENU_ACTION_CHOOSE_DOUBLETAP = 30
+		const val MENU_ACTION_CHOOSE_SINGLETAP = 31
         const val MENU_ACTION_PAUSE_EMULATION = 32
         const val MENU_ACTION_UNPAUSE_EMULATION = 33
         const val MENU_ACTION_OVERLAY_CONTROLS = 34
@@ -1100,6 +1129,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 append(R.id.menu_emulation_ir_recenter, MENU_SET_IR_RECENTER)
                 append(R.id.menu_emulation_set_ir_mode, MENU_SET_IR_MODE)
                 append(R.id.menu_emulation_choose_doubletap, MENU_ACTION_CHOOSE_DOUBLETAP)
+				append(R.id.menu_emulation_choose_singletap, MENU_ACTION_CHOOSE_SINGLETAP)
             }
         }
 

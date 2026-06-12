@@ -105,7 +105,7 @@ class InputOverlayDrawableJoystick(
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = if (trackId != -1) Color.parseColor("#E6FFFFFF") else Color.BLACK
             textSize = bounds.width() * 0.20f
-            typeface = Typeface.create("sans-serif-black", Typeface.BOLD)
+            typeface = Typeface.create("sans-serif", Typeface.BOLD)
             textAlign = Paint.Align.CENTER
             setShadowLayer(4f, 0f, 0f, Color.BLACK)
         }
