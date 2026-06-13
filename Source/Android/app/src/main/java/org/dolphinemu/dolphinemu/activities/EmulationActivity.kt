@@ -532,6 +532,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             MENU_SET_IR_MODE -> setIRMode()
             MENU_ACTION_CHOOSE_DOUBLETAP -> chooseDoubleTapButton()
 			MENU_ACTION_CHOOSE_SINGLETAP -> chooseSingleTapButton()
+			MENU_ACTION_CHOOSE_SINGLETAPHOLD -> chooseSingleTapHoldButton()
             MENU_ACTION_SETTINGS -> SettingsActivity.launch(this, MenuTag.SETTINGS)
             MENU_ACTION_SKYLANDERS -> showSkylanderPortalSettings()
             MENU_ACTION_INFINITY_BASE -> showInfinityBaseSettings()
@@ -760,6 +761,40 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     prefs.edit().putInt("SingleTap_$gameId", value).apply()
                 else
                     IntSetting.MAIN_SINGLE_TAP_BUTTON.setInt(settings, value)
+                emulationFragment?.initInputPointer()
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
+    private fun chooseSingleTapHoldButton() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentValue = if (gameId != null)
+            prefs.getInt("SingleTapHold_$gameId", IntSetting.MAIN_SINGLE_TAP_HOLD_BUTTON.int)
+        else
+            IntSetting.MAIN_SINGLE_TAP_HOLD_BUTTON.int
+
+        val buttonList =
+            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+                R.array.doubleTapWithClassic else R.array.doubleTap
+
+        var checkedItem = -1
+        val itemCount = resources.getStringArray(buttonList).size
+        for (i in 0 until itemCount) {
+            if (InputOverlayPointer.SINGLE_TAP_HOLD_OPTIONS[i] == currentValue) {
+                checkedItem = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
+                val value = InputOverlayPointer.SINGLE_TAP_HOLD_OPTIONS[which]
+                if (gameId != null)
+                    prefs.edit().putInt("SingleTapHold_$gameId", value).apply()
+                else
+                    IntSetting.MAIN_SINGLE_TAP_HOLD_BUTTON.setInt(settings, value)
                 emulationFragment?.initInputPointer()
             }
             .setPositiveButton(R.string.ok, null)
@@ -1163,6 +1198,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         const val MENU_ACTION_SKYLANDERS = 36
         const val MENU_ACTION_INFINITY_BASE = 37
         const val MENU_ACTION_LATCHING_CONTROLS = 38
+		const val MENU_ACTION_CHOOSE_SINGLETAPHOLD = 39
 
         init {
             buttonsActionsMap.apply {
@@ -1177,6 +1213,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 append(R.id.menu_emulation_set_ir_mode, MENU_SET_IR_MODE)
                 append(R.id.menu_emulation_choose_doubletap, MENU_ACTION_CHOOSE_DOUBLETAP)
 				append(R.id.menu_emulation_choose_singletap, MENU_ACTION_CHOOSE_SINGLETAP)
+				append(R.id.menu_emulation_choose_singletaphold, MENU_ACTION_CHOOSE_SINGLETAPHOLD)
             }
         }
 
