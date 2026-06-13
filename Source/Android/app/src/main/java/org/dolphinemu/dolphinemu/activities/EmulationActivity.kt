@@ -441,6 +441,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         val popup = PopupMenu(this, anchor)
         val menu = popup.menu
         val wii = NativeLibrary.IsEmulatingWii()
+		val gameId = NativeLibrary.GetCurrentGameID()
+		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val id = if (wii) R.menu.menu_overlay_controls_wii else R.menu.menu_overlay_controls_gc
         popup.menuInflater.inflate(id, menu)
 
@@ -448,8 +450,15 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         menu.findItem(R.id.menu_emulation_joystick_rel_center).isChecked =
             BooleanSetting.MAIN_JOYSTICK_REL_CENTER.boolean
         if (wii) {
+
             menu.findItem(R.id.menu_emulation_ir_recenter).isChecked =
-                BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean
+                if (gameId != null)
+                    prefs.getBoolean(
+                        "IRRecenter_$gameId",
+                        BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean
+                    )
+                else
+                    BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean
         }
         popup.setOnMenuItemClickListener { item: MenuItem -> onOptionsItemSelected(item) }
         popup.show()
@@ -535,7 +544,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
     }
 
     private fun toggleRecenter(state: Boolean) {
-        BooleanSetting.MAIN_IR_ALWAYS_RECENTER.setBoolean(settings, state)
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        if (gameId != null)
+            prefs.edit().putBoolean("IRRecenter_$gameId", state).apply()
+        else
+            BooleanSetting.MAIN_IR_ALWAYS_RECENTER.setBoolean(settings, state)
         emulationFragment?.refreshOverlayPointer()
     }
 
@@ -685,10 +699,16 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
     }
 
     private fun chooseDoubleTapButton() {
-        val currentValue = IntSetting.MAIN_DOUBLE_TAP_BUTTON.int
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentValue = if (gameId != null)
+            prefs.getInt("DoubleTap_$gameId", IntSetting.MAIN_DOUBLE_TAP_BUTTON.int)
+        else
+            IntSetting.MAIN_DOUBLE_TAP_BUTTON.int
 
         val buttonList =
-            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC) R.array.doubleTapWithClassic else R.array.doubleTap
+            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+                R.array.doubleTapWithClassic else R.array.doubleTap
 
         var checkedItem = -1
         val itemCount = resources.getStringArray(buttonList).size
@@ -701,56 +721,71 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
         MaterialAlertDialogBuilder(this)
             .setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
-                IntSetting.MAIN_DOUBLE_TAP_BUTTON.setInt(
-                    settings,
-                    InputOverlayPointer.DOUBLE_TAP_OPTIONS[which]
-                )
+                val value = InputOverlayPointer.DOUBLE_TAP_OPTIONS[which]
+                if (gameId != null)
+                    prefs.edit().putInt("DoubleTap_$gameId", value).apply()
+                else
+                    IntSetting.MAIN_DOUBLE_TAP_BUTTON.setInt(settings, value)
                 emulationFragment?.initInputPointer()
             }
             .setPositiveButton(R.string.ok, null)
             .show()
     }
-	
-	private fun chooseSingleTapButton() {
-		val currentValue = IntSetting.MAIN_SINGLE_TAP_BUTTON.int
 
-		val buttonList =
-			if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
-            R.array.doubleTapWithClassic else R.array.doubleTap
+    private fun chooseSingleTapButton() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentValue = if (gameId != null)
+            prefs.getInt("SingleTap_$gameId", IntSetting.MAIN_SINGLE_TAP_BUTTON.int)
+        else
+            IntSetting.MAIN_SINGLE_TAP_BUTTON.int
 
-		var checkedItem = -1
-		val itemCount = resources.getStringArray(buttonList).size
-		for (i in 0 until itemCount) {
-			if (InputOverlayPointer.SINGLE_TAP_OPTIONS[i] == currentValue) {
-				checkedItem = i
-				break
-			}
-		}
+        val buttonList =
+            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+                R.array.doubleTapWithClassic else R.array.doubleTap
 
-		MaterialAlertDialogBuilder(this)
-			.setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
-				IntSetting.MAIN_SINGLE_TAP_BUTTON.setInt(
-					settings,
-					InputOverlayPointer.SINGLE_TAP_OPTIONS[which]
-				)
-				emulationFragment?.initInputPointer()
-			}
-			.setPositiveButton(R.string.ok, null)
-			.show()
-	}
+        var checkedItem = -1
+        val itemCount = resources.getStringArray(buttonList).size
+        for (i in 0 until itemCount) {
+            if (InputOverlayPointer.SINGLE_TAP_OPTIONS[i] == currentValue) {
+                checkedItem = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
+                val value = InputOverlayPointer.SINGLE_TAP_OPTIONS[which]
+                if (gameId != null)
+                    prefs.edit().putInt("SingleTap_$gameId", value).apply()
+                else
+                    IntSetting.MAIN_SINGLE_TAP_BUTTON.setInt(settings, value)
+                emulationFragment?.initInputPointer()
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
 
     private fun adjustScale() {
         val gameId = NativeLibrary.GetCurrentGameID()
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val orientation = if (resources.configuration.orientation ==
+            android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        ) "land" else "port"
 
-        // 读初始值：有 per-game 就用，否则用全局
         val initScale = if (gameId != null)
-            prefs.getInt("OverlayScale_$gameId", IntSetting.MAIN_CONTROL_SCALE.int)
+            prefs.getInt(
+                "OverlayScale_${gameId}_$orientation",
+                IntSetting.MAIN_CONTROL_SCALE.int
+            )
         else
             IntSetting.MAIN_CONTROL_SCALE.int
 
         val initOpacity = if (gameId != null)
-            prefs.getInt("OverlayOpacity_$gameId", IntSetting.MAIN_CONTROL_OPACITY.int)
+            prefs.getInt(
+                "OverlayOpacity_${gameId}_$orientation",
+                IntSetting.MAIN_CONTROL_OPACITY.int
+            )
         else
             IntSetting.MAIN_CONTROL_OPACITY.int
 
@@ -763,7 +798,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 addOnChangeListener { _: Slider?, value: Float, _: Boolean ->
                     dialogBinding.inputScaleValue.text = "${(value.toInt() + 50)}%"
                     if (gameId != null)
-                        prefs.edit().putInt("OverlayScale_$gameId", value.toInt()).apply()
+                        prefs.edit().putInt("OverlayScale_${gameId}_$orientation", value.toInt())
+                            .apply()
                     else
                         IntSetting.MAIN_CONTROL_SCALE.setInt(settings, value.toInt())
                     refreshInputOverlayRateLimiter.run()
@@ -778,7 +814,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 addOnChangeListener { _: Slider?, value: Float, _: Boolean ->
                     inputOpacityValue.text = value.toInt().toString() + "%"
                     if (gameId != null)
-                        prefs.edit().putInt("OverlayOpacity_$gameId", value.toInt()).apply()
+                        prefs.edit().putInt("OverlayOpacity_${gameId}_$orientation", value.toInt())
+                            .apply()
                     else
                         IntSetting.MAIN_CONTROL_OPACITY.setInt(settings, value.toInt())
                     refreshInputOverlayRateLimiter.run()
@@ -794,8 +831,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             .setNeutralButton(R.string.default_values) { _: DialogInterface?, _: Int ->
                 if (gameId != null) {
                     prefs.edit()
-                        .remove("OverlayScale_$gameId")
-                        .remove("OverlayOpacity_$gameId")
+                        .remove("OverlayScale_${gameId}_$orientation")
+                        .remove("OverlayOpacity_${gameId}_$orientation")
                         .apply()
                 } else {
                     IntSetting.MAIN_CONTROL_SCALE.delete(settings)
@@ -803,7 +840,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 }
                 emulationFragment?.refreshInputOverlay()
             }
-        .show()
+            .show()
     }
     private fun addControllerIfNotNone(
         entries: MutableList<CharSequence>,
@@ -912,13 +949,23 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
     }
 
     private fun setIRMode() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentMode = if (gameId != null)
+            prefs.getInt("IRMode_$gameId", IntSetting.MAIN_IR_MODE.int)
+        else
+            IntSetting.MAIN_IR_MODE.int
+
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.emulation_ir_mode)
             .setSingleChoiceItems(
                 R.array.irModeEntries,
-                IntSetting.MAIN_IR_MODE.int
+                currentMode
             ) { _: DialogInterface?, indexSelected: Int ->
-                IntSetting.MAIN_IR_MODE.setInt(settings, indexSelected)
+                if (gameId != null)
+                    prefs.edit().putInt("IRMode_$gameId", indexSelected).apply()
+                else
+                    IntSetting.MAIN_IR_MODE.setInt(settings, indexSelected)
                 emulationFragment?.refreshOverlayPointer()
             }
             .setPositiveButton(R.string.ok, null)

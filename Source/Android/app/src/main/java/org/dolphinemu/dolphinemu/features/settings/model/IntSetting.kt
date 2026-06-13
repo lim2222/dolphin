@@ -82,11 +82,11 @@ enum class IntSetting(
         "DoubleTapButton",
         NativeLibrary.ButtonType.WIIMOTE_BUTTON_A
     ),
-	MAIN_SINGLE_TAP_BUTTON(    // ← 加这里
+	MAIN_SINGLE_TAP_BUTTON(
     Settings.FILE_DOLPHIN,
     Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
     "SingleTapButton",
-    -1  // -1 = 禁用，对应 SINGLE_TAP_NONE
+    -1
 	),
     SYSCONF_LANGUAGE(Settings.FILE_SYSCONF, "IPL", "LNG", 0x01),
     SYSCONF_SOUND_MODE(Settings.FILE_SYSCONF, "IPL", "SND", 0x01),

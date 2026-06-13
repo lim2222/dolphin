@@ -799,7 +799,7 @@
         <item>2</item>
     </integer-array>
 	
-	<!-- TaTaCon 专用按钮列表（用于 Toggle Controls） -->
+	<!-- TaTaCon -->
     <string-array name="tataconButtons">
         <item>1</item>
         <item>2</item>
@@ -812,7 +812,7 @@
         <item>tatacon_center_right</item>
     </string-array>
 	
-	<!-- TaTaCon Latching Buttons（只保留基础按钮） -->
+	<!-- TaTaCon Latching Buttons -->
     <string-array name="tataconLatchableButtons">
         <item>1</item>
         <item>2</item>
