@@ -83,10 +83,16 @@ enum class IntSetting(
         NativeLibrary.ButtonType.WIIMOTE_BUTTON_A
     ),
 	MAIN_SINGLE_TAP_BUTTON(
-    Settings.FILE_DOLPHIN,
-    Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-    "SingleTapButton",
-    -1
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"SingleTapButton",
+		-1
+	),
+	MAIN_SINGLE_TAP_HOLD_BUTTON(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"SingleTapHoldButton",
+		-1
 	),
     SYSCONF_LANGUAGE(Settings.FILE_SYSCONF, "IPL", "LNG", 0x01),
     SYSCONF_SOUND_MODE(Settings.FILE_SYSCONF, "IPL", "SND", 0x01),

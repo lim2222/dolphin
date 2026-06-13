@@ -122,6 +122,18 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.WIIMOTE_BUTTON_2 -> singleTapControl = ControlId.WIIMOTE_TWO_BUTTON
         }
 
+		// Single tap hold
+        var singleTapHoldButton = if (gameId != null)
+            prefs.getInt("SingleTapHold_$gameId", IntSetting.MAIN_SINGLE_TAP_HOLD_BUTTON.int)
+        else
+            IntSetting.MAIN_SINGLE_TAP_HOLD_BUTTON.int
+        var singleTapHoldControl = InputOverlayPointer.SINGLE_TAP_NONE
+        when (singleTapHoldButton) {
+            ButtonType.WIIMOTE_BUTTON_A -> singleTapHoldControl = ControlId.WIIMOTE_A_BUTTON
+            ButtonType.WIIMOTE_BUTTON_B -> singleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
+            ButtonType.WIIMOTE_BUTTON_2 -> singleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
+        }
+
         // IR mode
         val irMode = if (gameId != null)
             prefs.getInt("IRMode_$gameId", IntSetting.MAIN_IR_MODE.int)
@@ -138,6 +150,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             surfacePosition!!,
             doubleTapControl,
             singleTapControl,
+			singleTapHoldControl,
             irMode,
             recenter,
             controllerIndex

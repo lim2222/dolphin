@@ -13,6 +13,7 @@ class InputOverlayPointer(
     surfacePosition: Rect,
     private val doubleTapControl: Int,
 	private val singleTapControl: Int,
+	private val singleTapHoldControl: Int,
     private var mode: Int,
     private var recenter: Boolean,
     private val controllerIndex: Int
@@ -74,9 +75,9 @@ class InputOverlayPointer(
             MotionEvent.ACTION_POINTER_UP -> {
                 if (trackId == event.getPointerId(pointerIndex)) {
                     trackId = -1
-                    // single tap hold：release only after lifting finger
-                    if (singleTapControl != SINGLE_TAP_NONE) {
-                        InputOverrider.setControlState(controllerIndex, singleTapControl, 0.0)
+                    // single tap hold 松开
+                    if (singleTapHoldControl != SINGLE_TAP_NONE) {
+                        InputOverrider.setControlState(controllerIndex, singleTapHoldControl, 0.0)
                     }
                 }
                 if (mode == MODE_DRAG)
@@ -101,10 +102,20 @@ class InputOverlayPointer(
 
     private fun touchPress() {
         if (mode != MODE_DISABLED) {
+            // single tap：press 50ms auto release
             if (singleTapControl != SINGLE_TAP_NONE) {
                 InputOverrider.setControlState(controllerIndex, singleTapControl, 1.0)
+                Handler(Looper.myLooper()!!).postDelayed({
+                    InputOverrider.setControlState(controllerIndex, singleTapControl, 0.0)
+                }, 50)
             }
 
+            // single tap hold：hold,ACTION_UP release
+            if (singleTapHoldControl != SINGLE_TAP_NONE) {
+                InputOverrider.setControlState(controllerIndex, singleTapHoldControl, 1.0)
+            }
+
+            // double tap
             if (doubleTap) {
                 if (doubleTapControl != SINGLE_TAP_NONE) {
                     InputOverrider.setControlState(controllerIndex, doubleTapControl, 1.0)
@@ -149,6 +160,15 @@ class InputOverlayPointer(
 
 		@JvmField
 		var SINGLE_TAP_OPTIONS = arrayListOf(
+			-1,  // None
+			NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
+			NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
+			NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
+			NativeLibrary.ButtonType.CLASSIC_BUTTON_A
+		)
+
+		@JvmField
+		var SINGLE_TAP_HOLD_OPTIONS = arrayListOf(
 			-1,  // None
 			NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
 			NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
