@@ -45,7 +45,10 @@
                 android:title="@string/emulation_choose_doubletap"/>
 			<item
                 android:id="@+id/menu_emulation_choose_singletap"
-                android:title="@string/emulation_choose_singletap"/>	
+                android:title="@string/emulation_choose_singletap"/>
+			<item
+				android:id="@+id/menu_emulation_choose_singletaphold"
+				android:title="@string/emulation_choose_singletaphold"/>
         </menu>
     </item>
     <item
