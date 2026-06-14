@@ -531,8 +531,11 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
             MENU_SET_IR_MODE -> setIRMode()
             MENU_ACTION_CHOOSE_DOUBLETAP -> chooseDoubleTapButton()
+			MENU_ACTION_CHOOSE_DOUBLETAPHOLD -> chooseDoubleTapHoldButton()
 			MENU_ACTION_CHOOSE_SINGLETAP -> chooseSingleTapButton()
 			MENU_ACTION_CHOOSE_SINGLETAPHOLD -> chooseSingleTapHoldButton()
+			MENU_ACTION_CHOOSE_SECOND_FINGER_TAP -> chooseSecondFingerTapButton()
+			MENU_ACTION_CHOOSE_SECOND_FINGER_HOLD -> chooseSecondFingerHoldButton()
             MENU_ACTION_SETTINGS -> SettingsActivity.launch(this, MenuTag.SETTINGS)
             MENU_ACTION_SKYLANDERS -> showSkylanderPortalSettings()
             MENU_ACTION_INFINITY_BASE -> showInfinityBaseSettings()
@@ -681,12 +684,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             }
         } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
             val base = "MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_"
-            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 25)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 26)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         } else {
             val base = "MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_"
-            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 15)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 16)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         }
@@ -727,6 +730,39 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     prefs.edit().putInt("DoubleTap_$gameId", value).apply()
                 else
                     IntSetting.MAIN_DOUBLE_TAP_BUTTON.setInt(settings, value)
+                emulationFragment?.initInputPointer()
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+    private fun chooseDoubleTapHoldButton() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentValue = if (gameId != null)
+            prefs.getInt("DoubleTapHold_$gameId", IntSetting.MAIN_DOUBLE_TAP_HOLD_BUTTON.int)
+        else
+            IntSetting.MAIN_DOUBLE_TAP_HOLD_BUTTON.int
+
+        val buttonList =
+            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+                R.array.doubleTapWithClassic else R.array.doubleTap
+
+        var checkedItem = -1
+        val itemCount = resources.getStringArray(buttonList).size
+        for (i in 0 until itemCount) {
+            if (InputOverlayPointer.DOUBLE_TAP_HOLD_OPTIONS[i] == currentValue) {
+                checkedItem = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
+                val value = InputOverlayPointer.DOUBLE_TAP_HOLD_OPTIONS[which]
+                if (gameId != null)
+                    prefs.edit().putInt("DoubleTapHold_$gameId", value).apply()
+                else
+                    IntSetting.MAIN_DOUBLE_TAP_HOLD_BUTTON.setInt(settings, value)
                 emulationFragment?.initInputPointer()
             }
             .setPositiveButton(R.string.ok, null)
@@ -795,6 +831,74 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     prefs.edit().putInt("SingleTapHold_$gameId", value).apply()
                 else
                     IntSetting.MAIN_SINGLE_TAP_HOLD_BUTTON.setInt(settings, value)
+                emulationFragment?.initInputPointer()
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
+    private fun chooseSecondFingerTapButton() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentValue = if (gameId != null)
+            prefs.getInt("SecondFingerTap_$gameId", IntSetting.MAIN_SECOND_FINGER_TAP_BUTTON.int)
+        else
+            IntSetting.MAIN_SECOND_FINGER_TAP_BUTTON.int
+
+        val buttonList =
+            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+                R.array.doubleTapWithClassic else R.array.doubleTap
+
+        var checkedItem = -1
+        val itemCount = resources.getStringArray(buttonList).size
+        for (i in 0 until itemCount) {
+            if (InputOverlayPointer.SECOND_FINGER_TAP_OPTIONS[i] == currentValue) {
+                checkedItem = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
+                val value = InputOverlayPointer.SECOND_FINGER_TAP_OPTIONS[which]
+                if (gameId != null)
+                    prefs.edit().putInt("SecondFingerTap_$gameId", value).apply()
+                else
+                    IntSetting.MAIN_SECOND_FINGER_TAP_BUTTON.setInt(settings, value)
+                emulationFragment?.initInputPointer()
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
+    private fun chooseSecondFingerHoldButton() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val currentValue = if (gameId != null)
+            prefs.getInt("SecondFingerHold_$gameId", IntSetting.MAIN_SECOND_FINGER_HOLD_BUTTON.int)
+        else
+            IntSetting.MAIN_SECOND_FINGER_HOLD_BUTTON.int
+
+        val buttonList =
+            if (InputOverlay.configuredControllerType == InputOverlay.OVERLAY_WIIMOTE_CLASSIC)
+                R.array.doubleTapWithClassic else R.array.doubleTap
+
+        var checkedItem = -1
+        val itemCount = resources.getStringArray(buttonList).size
+        for (i in 0 until itemCount) {
+            if (InputOverlayPointer.SECOND_FINGER_HOLD_OPTIONS[i] == currentValue) {
+                checkedItem = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setSingleChoiceItems(buttonList, checkedItem) { _: DialogInterface?, which: Int ->
+                val value = InputOverlayPointer.SECOND_FINGER_HOLD_OPTIONS[which]
+                if (gameId != null)
+                    prefs.edit().putInt("SecondFingerHold_$gameId", value).apply()
+                else
+                    IntSetting.MAIN_SECOND_FINGER_HOLD_BUTTON.setInt(settings, value)
                 emulationFragment?.initInputPointer()
             }
             .setPositiveButton(R.string.ok, null)
@@ -1199,6 +1303,9 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         const val MENU_ACTION_INFINITY_BASE = 37
         const val MENU_ACTION_LATCHING_CONTROLS = 38
 		const val MENU_ACTION_CHOOSE_SINGLETAPHOLD = 39
+		const val MENU_ACTION_CHOOSE_DOUBLETAPHOLD = 40
+		const val MENU_ACTION_CHOOSE_SECOND_FINGER_TAP = 41
+		const val MENU_ACTION_CHOOSE_SECOND_FINGER_HOLD = 42
 
         init {
             buttonsActionsMap.apply {
@@ -1212,8 +1319,11 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 append(R.id.menu_emulation_ir_recenter, MENU_SET_IR_RECENTER)
                 append(R.id.menu_emulation_set_ir_mode, MENU_SET_IR_MODE)
                 append(R.id.menu_emulation_choose_doubletap, MENU_ACTION_CHOOSE_DOUBLETAP)
+				append(R.id.menu_emulation_choose_doubletaphold, MENU_ACTION_CHOOSE_DOUBLETAPHOLD)
 				append(R.id.menu_emulation_choose_singletap, MENU_ACTION_CHOOSE_SINGLETAP)
 				append(R.id.menu_emulation_choose_singletaphold, MENU_ACTION_CHOOSE_SINGLETAPHOLD)
+				append(R.id.menu_emulation_choose_second_finger_tap, MENU_ACTION_CHOOSE_SECOND_FINGER_TAP)
+				append(R.id.menu_emulation_choose_second_finger_hold, MENU_ACTION_CHOOSE_SECOND_FINGER_HOLD)
             }
         }
 

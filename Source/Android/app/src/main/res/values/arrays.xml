@@ -450,6 +450,7 @@
         <item>WSF</item>
         <item>WSB</item>
         <item>WT</item>
+		<item>IR</item>
     </string-array>
 
     <string-array name="wiimoteLatchableButtons">
@@ -491,6 +492,7 @@
         <item>NSF</item>
         <item>NSB</item>
         <item>NT</item>
+		<item>IR</item>
     </string-array>
 
     <string-array name="nunchukLatchableButtons">

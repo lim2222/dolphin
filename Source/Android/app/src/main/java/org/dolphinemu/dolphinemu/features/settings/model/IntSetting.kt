@@ -94,6 +94,24 @@ enum class IntSetting(
 		"SingleTapHoldButton",
 		-1
 	),
+	MAIN_DOUBLE_TAP_HOLD_BUTTON(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"DoubleTapHoldButton",
+		-1
+	),
+	MAIN_SECOND_FINGER_TAP_BUTTON(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"SecondFingerTapButton",
+		-1
+	),
+	MAIN_SECOND_FINGER_HOLD_BUTTON(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"SecondFingerHoldButton",
+		-1
+	),
     SYSCONF_LANGUAGE(Settings.FILE_SYSCONF, "IPL", "LNG", 0x01),
     SYSCONF_SOUND_MODE(Settings.FILE_SYSCONF, "IPL", "SND", 0x01),
     SYSCONF_SENSOR_BAR_POSITION(Settings.FILE_SYSCONF, "BT", "BAR", 0x01),
