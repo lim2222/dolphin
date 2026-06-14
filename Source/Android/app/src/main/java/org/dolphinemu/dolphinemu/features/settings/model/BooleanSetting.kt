@@ -942,7 +942,6 @@ enum class BooleanSetting(
         Settings.SECTION_ACHIEVEMENTS,
         "ProgressEnabled",
         false
-<<<<<<< HEAD
     ),
     NETPLAY_USE_UPNP(Settings.FILE_DOLPHIN, Settings.SECTION_INI_NETPLAY, "UseUPNP", false),
 
@@ -962,8 +961,7 @@ enum class BooleanSetting(
     MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_12(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlySwingForward", false),
     MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_13(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlySwingBackward", false),
     MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_14(Settings.FILE_DOLPHIN, Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS, "ButtonToggleWiimoteOnlyTilt", false),
-=======
-	),
+
     // ==================== Wiimote toggle lists (15 lines) ====================
     MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_0(
         Settings.FILE_DOLPHIN,
@@ -1055,7 +1053,12 @@ enum class BooleanSetting(
         "ButtonToggleWiimoteOnlyTilt",
         false
     ),
->>>>>>> ac2a4fac62 (IR single tap hold,Add per-orientation scale and opacity,Cleanup)
+	MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_15(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonToggleWiimoteOnlyIRJoystick",
+        false
+    ),
 
     // ==================== Nunchuk toggle lists (25lines) ====================
     MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_0(
@@ -1208,7 +1211,13 @@ enum class BooleanSetting(
         "ButtonToggleNunchukOnlyNTilt",
         false
     ),
-
+	MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_25(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonToggleNunchukOnlyIRJoystick",
+        false
+    ),
+	
 	// ==================== Wiimote Latching (10lines) ====================
     MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_0(
         Settings.FILE_DOLPHIN,

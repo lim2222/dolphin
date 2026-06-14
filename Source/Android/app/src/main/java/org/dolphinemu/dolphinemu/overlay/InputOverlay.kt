@@ -110,6 +110,18 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.WIIMOTE_BUTTON_2 -> doubleTapControl = ControlId.WIIMOTE_TWO_BUTTON
         }
 
+		// Double tap hold
+		var doubleTapHoldButton = if (gameId != null)
+			prefs.getInt("DoubleTapHold_$gameId", IntSetting.MAIN_DOUBLE_TAP_HOLD_BUTTON.int)
+		else
+			IntSetting.MAIN_DOUBLE_TAP_HOLD_BUTTON.int
+		var doubleTapHoldControl = InputOverlayPointer.SINGLE_TAP_NONE
+		when (doubleTapHoldButton) {
+			ButtonType.WIIMOTE_BUTTON_A -> doubleTapHoldControl = ControlId.WIIMOTE_A_BUTTON
+			ButtonType.WIIMOTE_BUTTON_B -> doubleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> doubleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
+		}
+
         // Single tap
         var singleTapButton = if (gameId != null)
             prefs.getInt("SingleTap_$gameId", IntSetting.MAIN_SINGLE_TAP_BUTTON.int)
@@ -133,6 +145,30 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.WIIMOTE_BUTTON_B -> singleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
             ButtonType.WIIMOTE_BUTTON_2 -> singleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
         }
+		
+		// Second finger tap
+        var secondFingerTapButton = if (gameId != null)
+            prefs.getInt("SecondFingerTap_$gameId", IntSetting.MAIN_SECOND_FINGER_TAP_BUTTON.int)
+        else
+            IntSetting.MAIN_SECOND_FINGER_TAP_BUTTON.int
+        var secondFingerTapControl = InputOverlayPointer.SINGLE_TAP_NONE
+        when (secondFingerTapButton) {
+            ButtonType.WIIMOTE_BUTTON_A -> secondFingerTapControl = ControlId.WIIMOTE_A_BUTTON
+            ButtonType.WIIMOTE_BUTTON_B -> secondFingerTapControl = ControlId.WIIMOTE_B_BUTTON
+            ButtonType.WIIMOTE_BUTTON_2 -> secondFingerTapControl = ControlId.WIIMOTE_TWO_BUTTON
+        }
+		
+		// Second finger hold
+        var secondFingerHoldButton = if (gameId != null)
+            prefs.getInt("SecondFingerHold_$gameId", IntSetting.MAIN_SECOND_FINGER_HOLD_BUTTON.int)
+        else
+            IntSetting.MAIN_SECOND_FINGER_HOLD_BUTTON.int
+        var secondFingerHoldControl = InputOverlayPointer.SINGLE_TAP_NONE
+        when (secondFingerHoldButton) {
+            ButtonType.WIIMOTE_BUTTON_A -> secondFingerHoldControl = ControlId.WIIMOTE_A_BUTTON
+            ButtonType.WIIMOTE_BUTTON_B -> secondFingerHoldControl = ControlId.WIIMOTE_B_BUTTON
+            ButtonType.WIIMOTE_BUTTON_2 -> secondFingerHoldControl = ControlId.WIIMOTE_TWO_BUTTON
+        }
 
         // IR mode
         val irMode = if (gameId != null)
@@ -149,8 +185,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         overlayPointer = InputOverlayPointer(
             surfacePosition!!,
             doubleTapControl,
+			doubleTapHoldControl,
             singleTapControl,
 			singleTapHoldControl,
+			secondFingerTapControl,
+			secondFingerHoldControl,
             irMode,
             recenter,
             controllerIndex
@@ -319,19 +358,26 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             applyGcTriggerAnalogStates()
 
         // No button/joystick pressed, safe to move pointer
-        if (!pressed && overlayPointer != null) {
-            overlayPointer!!.onTouch(event)
-            InputOverrider.setControlState(
-                controllerIndex,
-                ControlId.WIIMOTE_IR_X,
-                overlayPointer!!.x.toDouble()
-            )
-            InputOverrider.setControlState(
-                controllerIndex,
-                ControlId.WIIMOTE_IR_Y,
-                -overlayPointer!!.y.toDouble()
-            )
+        val irJoystickActive = overlayJoysticks.any {
+            it.legacyId == ButtonType.WIIMOTE_IR && it.trackId != -1
         }
+
+        if (!pressed && overlayPointer != null) {
+			overlayPointer!!.onTouch(event)
+
+			if (!irJoystickActive) {
+				InputOverrider.setControlState(
+					controllerIndex,
+					ControlId.WIIMOTE_IR_X,
+					overlayPointer!!.x.toDouble()
+				)
+				InputOverrider.setControlState(
+					controllerIndex,
+					ControlId.WIIMOTE_IR_Y,
+					-overlayPointer!!.y.toDouble()
+				)
+			}
+		}
 
         invalidate()
 
@@ -945,6 +991,15 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ControlId.WIIMOTE_TILT_FORWARD,
             orientation, "WT"))
     }
+	if (getEffectiveToggle(toggleBase + "15")) {
+		overlayJoysticks.add(initializeOverlayJoystick(context,
+			R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+			R.drawable.gcwii_joystick_pressed,
+			ButtonType.WIIMOTE_IR,
+			ControlId.WIIMOTE_IR_X,
+			ControlId.WIIMOTE_IR_Y,
+			orientation, "IR"))
+	}
 }
 
 	private fun addNunchukOverlayControls(orientation: String) {
@@ -1073,6 +1128,15 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.NUNCHUK_TILT, ControlId.NUNCHUK_TILT_LEFT, ControlId.NUNCHUK_TILT_RIGHT,
             ControlId.NUNCHUK_TILT_BACKWARD, ControlId.NUNCHUK_TILT_FORWARD, orientation, "NT"))
     }
+	if (getEffectiveToggle(toggleBase + "25")) {
+		overlayJoysticks.add(initializeOverlayJoystick(context,
+			R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+			R.drawable.gcwii_joystick_pressed,
+			ButtonType.WIIMOTE_IR,
+			ControlId.WIIMOTE_IR_X,
+			ControlId.WIIMOTE_IR_Y,
+			orientation, "IR"))
+	}
 }
 
     private fun addTaTaConOverlayControls(orientation: String) {
@@ -2963,6 +3027,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.TATACON_CENTER_LEFT -> 20f
         ButtonType.TATACON_CENTER_RIGHT -> 400f
         ButtonType.TRIGGER_ANALOG_STICK -> 380f
+		ButtonType.WIIMOTE_IR -> 200f
         else -> 0f
     }
 
@@ -2993,6 +3058,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.TATACON_CENTER_RIGHT -> 300f
 
             ButtonType.TRIGGER_ANALOG_STICK -> 520f
+			ButtonType.WIIMOTE_IR -> 400f
 
             else -> 0f
         }

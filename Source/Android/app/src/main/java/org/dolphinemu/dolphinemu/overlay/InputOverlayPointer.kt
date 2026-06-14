@@ -12,8 +12,11 @@ import org.dolphinemu.dolphinemu.features.input.model.InputOverrider
 class InputOverlayPointer(
     surfacePosition: Rect,
     private val doubleTapControl: Int,
+	private val doubleTapHoldControl: Int,
 	private val singleTapControl: Int,
 	private val singleTapHoldControl: Int,
+	private val secondFingerTapControl: Int,
+    private val secondFingerHoldControl: Int,
     private var mode: Int,
     private var recenter: Boolean,
     private val controllerIndex: Int
@@ -32,7 +35,9 @@ class InputOverlayPointer(
     private var touchStartY = 0f
 
     private var doubleTap = false
+	private var doubleTapHolding = false
     private var trackId = -1
+	private var secondTrackId = -1
 
     init {
         gameCenterX = (surfacePosition.left + surfacePosition.right) / 2f
@@ -63,27 +68,41 @@ class InputOverlayPointer(
         val pointerIndex = if (firstPointer) 0 else event.actionIndex
 
         when (action) {
-            MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_POINTER_DOWN -> {
-                trackId = event.getPointerId(pointerIndex)
-                touchStartX = event.getX(pointerIndex)
-                touchStartY = event.getY(pointerIndex)
-                touchPress()
-            }
+			MotionEvent.ACTION_DOWN,
+			MotionEvent.ACTION_POINTER_DOWN -> {
+				if (trackId == -1) {
+					trackId = event.getPointerId(pointerIndex)
+					touchStartX = event.getX(pointerIndex)
+					touchStartY = event.getY(pointerIndex)
+					touchPress()
+				} else if (secondTrackId == -1) {
+					// second finger
+					secondTrackId = event.getPointerId(pointerIndex)
+					secondFingerPress()
+				}
+			}
 
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP -> {
-                if (trackId == event.getPointerId(pointerIndex)) {
+                val pointerId = event.getPointerId(pointerIndex)
+                if (trackId == pointerId) {
                     trackId = -1
-                    // single tap hold 松开
                     if (singleTapHoldControl != SINGLE_TAP_NONE) {
                         InputOverrider.setControlState(controllerIndex, singleTapHoldControl, 0.0)
                     }
+                    if (doubleTapHolding && doubleTapHoldControl != SINGLE_TAP_NONE) {
+                        doubleTapHolding = false
+                        InputOverrider.setControlState(controllerIndex, doubleTapHoldControl, 0.0)
+                    }
+                    if (mode == MODE_DRAG)
+                        updateOldAxes()
+                    if (recenter)
+                        reset()
+                } else if (secondTrackId == pointerId) {
+                    // second finger release
+                    secondTrackId = -1
+                    secondFingerRelease()
                 }
-                if (mode == MODE_DRAG)
-                    updateOldAxes()
-                if (recenter)
-                    reset()
             }
         }
 
@@ -102,7 +121,6 @@ class InputOverlayPointer(
 
     private fun touchPress() {
         if (mode != MODE_DISABLED) {
-            // single tap：press 50ms auto release
             if (singleTapControl != SINGLE_TAP_NONE) {
                 InputOverrider.setControlState(controllerIndex, singleTapControl, 1.0)
                 Handler(Looper.myLooper()!!).postDelayed({
@@ -110,18 +128,20 @@ class InputOverlayPointer(
                 }, 50)
             }
 
-            // single tap hold：hold,ACTION_UP release
             if (singleTapHoldControl != SINGLE_TAP_NONE) {
                 InputOverrider.setControlState(controllerIndex, singleTapHoldControl, 1.0)
             }
 
-            // double tap
             if (doubleTap) {
-                if (doubleTapControl != SINGLE_TAP_NONE) {
+				if (doubleTapControl != SINGLE_TAP_NONE) {
                     InputOverrider.setControlState(controllerIndex, doubleTapControl, 1.0)
                     Handler(Looper.myLooper()!!).postDelayed({
                         InputOverrider.setControlState(controllerIndex, doubleTapControl, 0.0)
                     }, 50)
+                }
+                if (doubleTapHoldControl != SINGLE_TAP_NONE) {
+                    doubleTapHolding = true
+                    InputOverrider.setControlState(controllerIndex, doubleTapHoldControl, 1.0)
                 }
             } else {
                 doubleTap = true
@@ -129,7 +149,23 @@ class InputOverlayPointer(
             }
         }
     }
+    private fun secondFingerPress() {
+        if (secondFingerTapControl != SINGLE_TAP_NONE) {
+            InputOverrider.setControlState(controllerIndex, secondFingerTapControl, 1.0)
+            Handler(Looper.myLooper()!!).postDelayed({
+                InputOverrider.setControlState(controllerIndex, secondFingerTapControl, 0.0)
+            }, 50)
+        }
+        if (secondFingerHoldControl != SINGLE_TAP_NONE) {
+            InputOverrider.setControlState(controllerIndex, secondFingerHoldControl, 1.0)
+        }
+    }
 
+    private fun secondFingerRelease() {
+        if (secondFingerHoldControl != SINGLE_TAP_NONE) {
+            InputOverrider.setControlState(controllerIndex, secondFingerHoldControl, 0.0)
+        }
+    }
     private fun updateOldAxes() {
         oldX = x
         oldY = y
@@ -179,6 +215,33 @@ class InputOverlayPointer(
         @JvmField
         var DOUBLE_TAP_OPTIONS = arrayListOf(
 			-1,  // None
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
+        )
+
+		@JvmField
+        var DOUBLE_TAP_HOLD_OPTIONS = arrayListOf(
+            -1,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
+        )
+
+        @JvmField
+        var SECOND_FINGER_TAP_OPTIONS = arrayListOf(
+            -1,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
+        )
+
+        @JvmField
+        var SECOND_FINGER_HOLD_OPTIONS = arrayListOf(
+            -1,
             NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
             NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
             NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,

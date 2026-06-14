@@ -333,6 +333,9 @@ double GetGateRadiusAtAngle(int controller_index, ControlID stick, double angle)
   case ControlID::NUNCHUK_SWING_X:
   case ControlID::NUNCHUK_SWING_Y:
     return 1.0;
+  case ControlID::WIIMOTE_IR_X:
+  case ControlID::WIIMOTE_IR_Y:
+    return 1.0;
   case ControlID::CLASSIC_LEFT_STICK_X:
   case ControlID::CLASSIC_LEFT_STICK_Y:
     group = Wiimote::GetClassicGroup(controller_index, WiimoteEmu::ClassicGroup::LeftStick);
