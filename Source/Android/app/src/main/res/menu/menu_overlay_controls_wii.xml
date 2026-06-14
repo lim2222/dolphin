@@ -49,6 +49,15 @@
 			<item
 				android:id="@+id/menu_emulation_choose_singletaphold"
 				android:title="@string/emulation_choose_singletaphold"/>
+			<item
+				android:id="@+id/menu_emulation_choose_doubletaphold"
+				android:title="@string/emulation_choose_doubletaphold"/>
+			<item
+				android:id="@+id/menu_emulation_choose_second_finger_tap"
+				android:title="@string/emulation_choose_second_finger_tap"/>
+			<item
+				android:id="@+id/menu_emulation_choose_second_finger_hold"
+				android:title="@string/emulation_choose_second_finger_hold"/>	
         </menu>
     </item>
     <item
