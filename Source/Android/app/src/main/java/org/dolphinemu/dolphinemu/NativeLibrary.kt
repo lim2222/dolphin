@@ -206,6 +206,15 @@ object NativeLibrary {
         const val TATACON_CENTER_RIGHT = 701
         const val TATACON_RIM_LEFT = 702
         const val TATACON_RIM_RIGHT = 703
+		
+		// Gamecube,Classic L/R extra button
+		const val CLASSIC_TRIGGER_L_HALF = 800
+		const val CLASSIC_TRIGGER_R_HALF = 801
+		const val GC_L_ANALOG_STICK = 802
+		const val GC_R_ANALOG_STICK = 803
+		const val CLASSIC_L_ANALOG_STICK = 804
+		const val CLASSIC_R_ANALOG_STICK = 805
+		const val CLASSIC_TRIGGER_ANALOG_STICK = 806
     }
 
     object ButtonState {

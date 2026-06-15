@@ -44,7 +44,8 @@ class InputOverlayDrawableJoystick(
     val yControl: Int,
     private val controllerIndex: Int,
     val overlayLabel: String? = null,
-    val isAnalogTriggerStick: Boolean = false
+    val isAnalogTriggerStick: Boolean = false,
+	val isVerticalTriggerStick: Boolean = false
 ) {
     var x = 0.0f
         private set
@@ -102,20 +103,26 @@ class InputOverlayDrawableJoystick(
     }
 
     private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = if (trackId != -1) Color.parseColor("#E6FFFFFF") else Color.BLACK
-            textSize = bounds.width() * 0.20f
-            typeface = Typeface.create("sans-serif", Typeface.BOLD)
-            textAlign = Paint.Align.CENTER
-            setShadowLayer(4f, 0f, 0f, Color.BLACK)
-        }
-        canvas.drawText(
-            label,
-            bounds.exactCenterX(),
-            bounds.exactCenterY() + paint.textSize / 3f,
-            paint
-        )
-    }
+		val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+			color = if (trackId != -1) Color.parseColor("#E6FFFFFF") else Color.BLACK
+			textSize = bounds.width() * 0.20f
+			typeface = Typeface.create("sans-serif", Typeface.BOLD)
+			textAlign = Paint.Align.CENTER
+			setShadowLayer(4f, 0f, 0f, Color.BLACK)
+		}
+
+		val lines = label.split("\n")
+		if (lines.size == 1) {
+			canvas.drawText(label, bounds.exactCenterX(), bounds.exactCenterY() + paint.textSize / 3f, paint)
+		} else {
+			val lineHeight = paint.textSize * 1.2f
+			val totalHeight = lineHeight * lines.size
+			val startY = bounds.exactCenterY() - totalHeight / 2f + paint.textSize
+			lines.forEachIndexed { i, line ->
+				canvas.drawText(line, bounds.exactCenterX(), startY + i * lineHeight, paint)
+			}
+		}
+	}
 
     fun trackEvent(event: MotionEvent): Boolean {
         val reCenter = BooleanSetting.MAIN_JOYSTICK_REL_CENTER.boolean
@@ -180,11 +187,14 @@ class InputOverlayDrawableJoystick(
                 maxX -= virtBounds.centerX().toFloat()
                 touchY -= virtBounds.centerY().toFloat()
                 maxY -= virtBounds.centerY().toFloat()
-                x = touchX / maxX
-                y = if (isAnalogTriggerStick) 0f else touchY / maxY
-
-                setInnerBounds()
-            }
+                x = if (isAnalogTriggerStick || isVerticalTriggerStick) 0f else touchX / maxX
+				y = when {
+					isAnalogTriggerStick -> touchY / maxY  // GC L/R stick
+					isVerticalTriggerStick -> maxOf(0f, touchY / maxY)  // LA/RA stick
+					else -> touchY / maxY
+				}
+				setInnerBounds()
+			}
         }
         return pressed
     }
@@ -234,8 +244,8 @@ class InputOverlayDrawableJoystick(
 
         val angle = atan2(y, x) + Math.PI + Math.PI
         val radius = hypot(y, x)
-        val maxRadius = if (isAnalogTriggerStick) {
-            1.0
+        val maxRadius = if (isAnalogTriggerStick || isVerticalTriggerStick) {
+			1.0
         } else {
             InputOverrider.getGateRadiusAtAngle(controllerIndex, xControl, angle)
         }
@@ -283,3 +293,4 @@ class InputOverlayDrawableJoystick(
         }
     }
 }
+
