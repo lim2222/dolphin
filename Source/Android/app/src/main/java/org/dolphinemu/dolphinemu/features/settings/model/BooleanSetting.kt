@@ -372,6 +372,18 @@ enum class BooleanSetting(
         "ButtonToggleGCTriggerAnalogStick",
         false
     ),
+	MAIN_BUTTON_TOGGLE_GC_14(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleGCLAnalogStick",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_GC_15(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleGCRAnalogStick",
+		false
+	),
     MAIN_BUTTON_LATCHING_GC_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
@@ -516,6 +528,36 @@ enum class BooleanSetting(
         "ButtonToggleClassicStickRight",
         true
     ),
+	MAIN_BUTTON_TOGGLE_CLASSIC_14(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleClassicTriggerLHalf",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_CLASSIC_15(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleClassicTriggerRHalf",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_CLASSIC_16(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleClassicLAnalogStick",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_CLASSIC_17(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleClassicRAnalogStick",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_CLASSIC_18(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+        "ButtonToggleGCTriggerAnalogStick",
+        false
+    ),
     MAIN_BUTTON_LATCHING_CLASSIC_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
@@ -582,6 +624,18 @@ enum class BooleanSetting(
         "ButtonLatchingClassicButtonZR",
         false
     ),
+	MAIN_BUTTON_LATCHING_CLASSIC_11(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonLatchingClassicTriggerLHalf",
+		false
+	),
+	MAIN_BUTTON_LATCHING_CLASSIC_12(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonLatchingClassicTriggerRHalf",
+		false
+	),
 	    // TaTaCon Toggle
     MAIN_BUTTON_TOGGLE_TATACON_0(
         Settings.FILE_DOLPHIN,

@@ -613,7 +613,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             InputOverlay.OVERLAY_WIIMOTE_CLASSIC -> {
                 val classicSettingBase = "MAIN_BUTTON_LATCHING_CLASSIC_"
                 builder.setMultiChoiceItems(
-                    R.array.classicLatchableButtons, readLatching(classicSettingBase, 11)
+                    R.array.classicLatchableButtons, readLatching(classicSettingBase, 13)
                 ) { _, i, c -> saveLatching(classicSettingBase, i, c) }
             }
 
@@ -669,7 +669,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
         if (currentController == InputOverlay.OVERLAY_GAMECUBE) {
             val base = "MAIN_BUTTON_TOGGLE_GC_"
-            builder.setMultiChoiceItems(R.array.gcpadButtons, readToggle(base, 14)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.gcpadButtons, readToggle(base, 16)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_TATACON) {
@@ -679,7 +679,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             }
         } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_CLASSIC) {
             val base = "MAIN_BUTTON_TOGGLE_CLASSIC_"
-            builder.setMultiChoiceItems(R.array.classicButtons, readToggle(base, 14)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.classicButtons, readToggle(base, 19)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
