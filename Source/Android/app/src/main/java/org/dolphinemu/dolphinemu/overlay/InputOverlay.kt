@@ -340,7 +340,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     pressed = true
             }
 
-            if (!joystick.isAnalogTriggerStick) {
+            if (!joystick.isAnalogTriggerStick && !joystick.isVerticalTriggerStick) {
                 InputOverrider.setControlState(
                     controllerIndex,
                     joystick.xControl,
@@ -356,7 +356,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         if (controllerType == OVERLAY_GAMECUBE)
             applyGcTriggerAnalogStates()
-
+		if (controllerType == OVERLAY_WIIMOTE_CLASSIC)
+			applyClassicTriggerAnalogStates()
         // No button/joystick pressed, safe to move pointer
         val irJoystickActive = overlayJoysticks.any {
             it.legacyId == ButtonType.WIIMOTE_IR && it.trackId != -1
@@ -534,22 +535,31 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun applyButtonControlState(button: InputOverlayDrawableButton) {
-        if (button.isAnalogOnly) {
-            // GC L/R analog is merged in applyGcTriggerAnalogStates().
-            return
-        }
+		if (button.isAnalogOnly) {
+			if (button.control == ControlId.GCPAD_L_ANALOG ||
+				button.control == ControlId.GCPAD_R_ANALOG) {
+				return
+			}
+			// Classic LH/RH
+			InputOverrider.setControlState(
+				controllerIndex,
+				button.control,
+				if (button.getPressedState()) button.analogPressValue else 0.0
+			)
+			return
+		}
 
-        InputOverrider.setControlState(
-            controllerIndex,
-            button.control,
-            if (button.getPressedState()) 1.0 else 0.0
-        )
+		InputOverrider.setControlState(
+			controllerIndex,
+			button.control,
+			if (button.getPressedState()) 1.0 else 0.0
+		)
 
-        // GC L/R analog is merged in applyGcTriggerAnalogStates() so the analog stick cannot
-        // zero it out every frame.
-        if (getAnalogControlForTrigger(button.control) >= 0)
-            return
-    }
+		// GC L/R analog is merged in applyGcTriggerAnalogStates() so the analog stick cannot
+		// zero it out every frame.
+		if (getAnalogControlForTrigger(button.control) >= 0)
+			return
+	}
 
     private fun applyGcTriggerAnalogStates() {
         var lAnalog = 0.0
@@ -576,19 +586,55 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         }
 
         for (joystick in overlayJoysticks) {
-            if (!joystick.isAnalogTriggerStick || joystick.trackId == -1)
-                continue
+		// L/R joystick：Y axis，y- = L，y+ = R
+		if (joystick.isAnalogTriggerStick && joystick.trackId != -1) {
+			val stickY = joystick.y
+			if (stickY < 0)  // up
+				lAnalog = maxOf(lAnalog, (-stickY).coerceIn(0f, 1f).toDouble())
+			if (stickY > 0)  // down
+				rAnalog = maxOf(rAnalog, stickY.coerceIn(0f, 1f).toDouble())
+		}
 
-            val stickX = joystick.x
-            if (stickX < 0)
-                lAnalog = maxOf(lAnalog, (-stickX).coerceIn(0f, 1f).toDouble())
-            if (stickX > 0)
-                rAnalog = maxOf(rAnalog, stickX.coerceIn(0f, 1f).toDouble())
-        }
+		// LA/RA joystick：Y axis，y+ only
+		if (joystick.isVerticalTriggerStick && joystick.trackId != -1) {
+			val stickY = joystick.y
+			if (joystick.xControl == ControlId.GCPAD_L_ANALOG)
+            lAnalog = maxOf(lAnalog, stickY.coerceIn(0f, 1f).toDouble())
+			if (joystick.xControl == ControlId.GCPAD_R_ANALOG)
+            rAnalog = maxOf(rAnalog, stickY.coerceIn(0f, 1f).toDouble())
+		}
+	}
 
         InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_L_ANALOG, lAnalog)
         InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_R_ANALOG, rAnalog)
     }
+
+	private fun applyClassicTriggerAnalogStates() {
+		var lAnalog = 0.0
+		var rAnalog = 0.0
+
+		for (joystick in overlayJoysticks) {
+			// Classic L/R
+			if (joystick.isAnalogTriggerStick && joystick.trackId != -1) {
+				val stickY = joystick.y
+				if (stickY < 0)  // up = L
+					lAnalog = maxOf(lAnalog, (-stickY).coerceIn(0f, 1f).toDouble())
+				if (stickY > 0)  // down = R
+					rAnalog = maxOf(rAnalog, stickY.coerceIn(0f, 1f).toDouble())
+			}
+		
+			if (joystick.isVerticalTriggerStick && joystick.trackId != -1) {
+				val stickY = joystick.y
+				if (joystick.xControl == ControlId.CLASSIC_L_ANALOG)
+					lAnalog = maxOf(lAnalog, stickY.coerceIn(0f, 1f).toDouble())
+				if (joystick.xControl == ControlId.CLASSIC_R_ANALOG)
+					rAnalog = maxOf(rAnalog, stickY.coerceIn(0f, 1f).toDouble())
+			}
+		}
+
+		InputOverrider.setControlState(controllerIndex, ControlId.CLASSIC_L_ANALOG, lAnalog)
+		InputOverrider.setControlState(controllerIndex, ControlId.CLASSIC_R_ANALOG, rAnalog)
+	}
 
     private fun setDpadState(
         dpad: InputOverlayDrawableDpad,
@@ -821,11 +867,43 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ControlId.GCPAD_MAIN_STICK_X,
                     ControlId.GCPAD_MAIN_STICK_Y,
                     orientation,
-                    "L/R",
+                    "L\n\n\nR",
                     isAnalogTriggerStick = true
                 )
             )
         }
+		if (getEffectiveToggle(toggleBase + "14")) {
+			overlayJoysticks.add(
+				initializeOverlayJoystick(
+					context,
+					R.drawable.gcwii_joystick_range,
+					R.drawable.gcwii_joystick,
+					R.drawable.gcwii_joystick_pressed,
+					ButtonType.GC_L_ANALOG_STICK,
+					ControlId.GCPAD_L_ANALOG,
+					ControlId.GCPAD_L_ANALOG,
+					orientation,
+					"LA",
+					isVerticalTriggerStick = true
+				)
+			)
+		}
+		if (getEffectiveToggle(toggleBase + "15")) {
+			overlayJoysticks.add(
+				initializeOverlayJoystick(
+					context,
+					R.drawable.gcwii_joystick_range,
+					R.drawable.gcwii_joystick,
+					R.drawable.gcwii_joystick_pressed,
+					ButtonType.GC_R_ANALOG_STICK,
+					ControlId.GCPAD_R_ANALOG,
+					ControlId.GCPAD_R_ANALOG,
+					orientation,
+					"RA",
+					isVerticalTriggerStick = true
+				)
+			)
+		}
     }
 
     private fun addWiimoteOverlayControls(orientation: String) {
@@ -1464,6 +1542,88 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+		if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_14")) {
+			overlayButtons.add(
+				initializeOverlayButton(
+					context,
+					R.drawable.classic_l,
+					R.drawable.classic_l_pressed,
+					ButtonType.CLASSIC_TRIGGER_L_HALF,
+					ControlId.CLASSIC_L_ANALOG,
+					orientation,
+					getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_11"),
+					"LH",
+					overlayLabelScale = 0.14f,
+					isAnalogOnly = true,
+					analogPressValue = TRIGGER_HALF_PRESS_VALUE
+				)
+			)
+		}
+		if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_15")) {
+			overlayButtons.add(
+				initializeOverlayButton(
+					context,
+					R.drawable.classic_r,
+					R.drawable.classic_r_pressed,
+					ButtonType.CLASSIC_TRIGGER_R_HALF,
+					ControlId.CLASSIC_R_ANALOG,
+					orientation,
+					getEffectiveLatching("MAIN_BUTTON_LATCHING_CLASSIC_12"),
+					"RH",
+					overlayLabelScale = 0.14f,
+					isAnalogOnly = true,
+					analogPressValue = TRIGGER_HALF_PRESS_VALUE
+				)
+			)
+		}
+		if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_16")) {
+			overlayJoysticks.add(
+				initializeOverlayJoystick(
+					context,
+					R.drawable.gcwii_joystick_range,
+					R.drawable.gcwii_joystick,
+					R.drawable.gcwii_joystick_pressed,
+					ButtonType.CLASSIC_L_ANALOG_STICK,
+					ControlId.CLASSIC_L_ANALOG,
+					ControlId.CLASSIC_L_ANALOG,
+					orientation,
+					"LA",
+					isVerticalTriggerStick = true
+				)
+			)
+		}
+		if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_17")) {
+			overlayJoysticks.add(
+				initializeOverlayJoystick(
+					context,
+					R.drawable.gcwii_joystick_range,
+					R.drawable.gcwii_joystick,
+					R.drawable.gcwii_joystick_pressed,
+					ButtonType.CLASSIC_R_ANALOG_STICK,
+					ControlId.CLASSIC_R_ANALOG,
+					ControlId.CLASSIC_R_ANALOG,
+					orientation,
+					"RA",
+					isVerticalTriggerStick = true
+				)
+			)
+		}
+		if (getEffectiveToggle("MAIN_BUTTON_TOGGLE_CLASSIC_18")) {
+            overlayJoysticks.add(
+                initializeOverlayJoystick(
+                    context,
+                    R.drawable.gcwii_joystick_range,
+                    R.drawable.gcwii_joystick,
+                    R.drawable.gcwii_joystick_pressed,
+                    ButtonType.CLASSIC_TRIGGER_ANALOG_STICK,
+                    ControlId.CLASSIC_L_ANALOG,
+                    ControlId.CLASSIC_L_ANALOG,
+                    orientation,
+                    "L\n\n\nR",
+                    isAnalogTriggerStick = true
+                )
+            )
+        }
     }
 
     fun refreshControls() {
@@ -1698,6 +1858,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
             ButtonType.TRIGGER_L_HALF,
             ButtonType.TRIGGER_R_HALF,
+			ButtonType.CLASSIC_TRIGGER_L_HALF,
+			ButtonType.CLASSIC_TRIGGER_R_HALF,
             ButtonType.CLASSIC_TRIGGER_L,
             ButtonType.CLASSIC_TRIGGER_R,
             ButtonType.CLASSIC_BUTTON_ZL,
@@ -1862,7 +2024,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         yControl: Int,
         orientation: String,
         overlayLabel: String? = null,
-        isAnalogTriggerStick: Boolean = false
+        isAnalogTriggerStick: Boolean = false,
+		isVerticalTriggerStick: Boolean = false // LA/RA
     ): InputOverlayDrawableJoystick {
         // Decide scale based on user preference
         var scale = 0.275f
@@ -1905,7 +2068,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             yControl,
             controllerIndex,
             overlayLabel,
-            isAnalogTriggerStick
+            isAnalogTriggerStick,
+			isVerticalTriggerStick
         )
 
         // Need to set the image's position
@@ -3028,6 +3192,13 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.TATACON_CENTER_RIGHT -> 400f
         ButtonType.TRIGGER_ANALOG_STICK -> 380f
 		ButtonType.WIIMOTE_IR -> 200f
+		ButtonType.CLASSIC_TRIGGER_L_HALF -> 20f
+		ButtonType.CLASSIC_TRIGGER_R_HALF -> 400f
+		ButtonType.GC_L_ANALOG_STICK -> 20f
+		ButtonType.GC_R_ANALOG_STICK -> 400f
+		ButtonType.CLASSIC_L_ANALOG_STICK -> 20f
+		ButtonType.CLASSIC_R_ANALOG_STICK -> 400f
+
         else -> 0f
     }
 
@@ -3059,6 +3230,12 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
             ButtonType.TRIGGER_ANALOG_STICK -> 520f
 			ButtonType.WIIMOTE_IR -> 400f
+			ButtonType.CLASSIC_TRIGGER_L_HALF -> 150f
+			ButtonType.CLASSIC_TRIGGER_R_HALF -> 150f
+			ButtonType.GC_L_ANALOG_STICK -> 400f
+			ButtonType.GC_R_ANALOG_STICK -> 400f
+			ButtonType.CLASSIC_L_ANALOG_STICK -> 400f
+			ButtonType.CLASSIC_R_ANALOG_STICK -> 400f
 
             else -> 0f
         }

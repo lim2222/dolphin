@@ -419,6 +419,8 @@
         <item>@string/gamepad_trigger_l_half</item>
         <item>@string/gamepad_trigger_r_half</item>
         <item>@string/gamepad_trigger_analog_stick</item>
+		<item>LA</item>
+		<item>RA</item>
     </string-array>
 
     <string-array name="gcpadLatchableButtons">
@@ -528,6 +530,11 @@
         <item>@string/gamepad_d_pad</item>
         <item>@string/gamepad_left_stick</item>
         <item>@string/gamepad_right_stick</item>
+		<item>LH</item>
+		<item>RH</item>
+		<item>LA</item>
+		<item>RA</item>
+		<item>@string/gamepad_trigger_analog_stick</item>
     </string-array>
 
     <string-array name="classicLatchableButtons">
@@ -542,6 +549,8 @@
         <item>R</item>
         <item>ZL</item>
         <item>ZR</item>
+		<item>LH</item>
+		<item>RH</item>
     </string-array>
 
     <string-array name="irModeEntries">
