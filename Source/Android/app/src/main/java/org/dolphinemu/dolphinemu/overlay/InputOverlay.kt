@@ -607,6 +607,9 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_L_ANALOG, lAnalog)
         InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_R_ANALOG, rAnalog)
+		
+		InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_L_DIGITAL, if (lAnalog > 0.9) 1.0 else 0.0)
+		InputOverrider.setControlState(controllerIndex, ControlId.GCPAD_R_DIGITAL, if (rAnalog > 0.9) 1.0 else 0.0)
     }
 
 	private fun applyClassicTriggerAnalogStates() {
@@ -867,7 +870,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ControlId.GCPAD_MAIN_STICK_X,
                     ControlId.GCPAD_MAIN_STICK_Y,
                     orientation,
-                    "L\n\n\nR",
+                    "L\nR",
                     isAnalogTriggerStick = true
                 )
             )
@@ -1619,7 +1622,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ControlId.CLASSIC_L_ANALOG,
                     ControlId.CLASSIC_L_ANALOG,
                     orientation,
-                    "L\n\n\nR",
+                    "L\nR",
                     isAnalogTriggerStick = true
                 )
             )
