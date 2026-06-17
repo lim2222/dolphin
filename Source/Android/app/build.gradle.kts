@@ -40,7 +40,7 @@ android {
 
         versionCode = getBuildVersionCode()
 
-        versionName = getGitVersion() + "-motion 1.5"
+        versionName = getGitVersion() + "-motion 1.6"
 
         buildConfigField("String", "GIT_HASH", "\"${getGitHash()}\"")
         buildConfigField("String", "BRANCH", "\"${getBranch()}\"")
