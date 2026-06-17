@@ -419,8 +419,8 @@
         <item>@string/gamepad_trigger_l_half</item>
         <item>@string/gamepad_trigger_r_half</item>
         <item>@string/gamepad_trigger_analog_stick</item>
-		<item>LA</item>
-		<item>RA</item>
+		<item>LA (L Analog Trigger)</item>
+		<item>RA (R Analog Trigger)</item>
     </string-array>
 
     <string-array name="gcpadLatchableButtons">
@@ -445,14 +445,18 @@
         <item>-</item>
         <item>@string/gamepad_home</item>
         <item>@string/gamepad_d_pad</item>
-        <item>WSKX</item>
-        <item>WSKY</item>
-        <item>WSKZ</item>
-        <item>WSW</item>
-        <item>WSF</item>
-        <item>WSB</item>
-        <item>WT</item>
-		<item>IR</item>
+        <item>WSKX (Wii Remote Shake X)</item>
+        <item>WSKX (Wii Remote Shake Y)</item>
+        <item>WSKZ (Wii Remote Shake Z)</item>
+        <item>WSW (Wii Remote Swing)</item>
+        <item>WSF (Wii Remote Swing Forward)</item>
+        <item>WSB (Wii Remote Swing Backward)</item>
+        <item>WT (Wii Remote Tilt)</item>
+		<item>WTF (Wii Remote Tilt Forward)</item>
+		<item>WTB (Wii Remote Tilt Backward)</item>
+		<item>WTL (Wii Remote Tilt Left)</item>
+		<item>WTR (Wii Remote Tilt Right)</item>
+		<item>IR (Wii Remote Pointer Joystick)</item>
     </string-array>
 
     <string-array name="wiimoteLatchableButtons">
@@ -463,9 +467,13 @@
         <item>+</item>
         <item>-</item>
         <item>@string/gamepad_home</item>
-        <item>WSKX</item>
-        <item>WSKY</item>
-        <item>WSKZ</item>
+        <item>WSKX (Wii Remote Shake X)</item>
+        <item>WSKX (Wii Remote Shake Y)</item>
+        <item>WSKZ (Wii Remote Shake Z)</item>
+		<item>WTF (Wii Remote Tilt Forward)</item>
+		<item>WTB (Wii Remote Tilt Backward)</item>
+		<item>WTL (Wii Remote Tilt Left)</item>
+		<item>WTR (Wii Remote Tilt Right)</item>
     </string-array>
 
     <string-array name="nunchukButtons">
@@ -480,21 +488,29 @@
         <item>C</item>
         <item>Z</item>
         <item>@string/gamepad_nunchuk_stick</item>
-        <item>WSKX</item>
-        <item>WSKY</item>
-        <item>WSKZ</item>
-        <item>WSW</item>
-        <item>WSF</item>
-        <item>WSB</item>
-        <item>WT</item>
-        <item>NSKX</item>
-        <item>NSKY</item>
-        <item>NSKZ</item>
-        <item>NSW</item>
-        <item>NSF</item>
-        <item>NSB</item>
-        <item>NT</item>
-		<item>IR</item>
+        <item>WSKX (Wii Remote Shake X)</item>
+        <item>WSKX (Wii Remote Shake Y)</item>
+        <item>WSKZ (Wii Remote Shake Z)</item>
+        <item>WSW (Wii Remote Swing)</item>
+        <item>WSF (Wii Remote Swing Forward)</item>
+        <item>WSB (Wii Remote Swing Backward)</item>
+        <item>WT (Wii Remote Tilt)</item>
+		<item>WTF (Wii Remote Tilt Forward)</item>
+		<item>WTB (Wii Remote Tilt Backward)</item>
+		<item>WTL (Wii Remote Tilt Left)</item>
+		<item>WTR (Wii Remote Tilt Right)</item>
+        <item>NSKX (Nunchuk Shake X)</item>
+		<item>NSKY (Nunchuk Shake Y)</item>
+        <item>NSKZ (Nunchuk Shake Z)</item>
+        <item>NSW (Nunchuk Swing)</item>
+        <item>NSF (Nunchuk Swing Forward)</item>
+        <item>NSB (Nunchuk Swing Backward)</item>
+        <item>NT (Nunchuk Tilt)</item>
+		<item>NTF (Nunchuk Tilt Forward)</item>
+		<item>NTB (Nunchuk Tilt Backward)</item>
+		<item>NTL (Nunchuk Tilt Left)</item>
+		<item>NTR (Nunchuk Tilt Right)</item>
+		<item>IR (Wii Remote Pointer Joystick)</item>
     </string-array>
 
     <string-array name="nunchukLatchableButtons">
@@ -507,12 +523,20 @@
         <item>@string/gamepad_home</item>
         <item>C</item>
         <item>Z</item>
-        <item>WSKX</item>
-        <item>WSKY</item>
-        <item>WSKZ</item>
-        <item>NSKX</item>
-        <item>NSKY</item>
-        <item>NSKZ</item>
+        <item>WSKX (Wii Remote Shake X)</item>
+        <item>WSKX (Wii Remote Shake Y)</item>
+        <item>WSKZ (Wii Remote Shake Z)</item>
+		<item>WTF (Wii Remote Tilt Forward)</item>
+		<item>WTB (Wii Remote Tilt Backward)</item>
+		<item>WTL (Wii Remote Tilt Left)</item>
+		<item>WTR (Wii Remote Tilt Right)</item>
+        <item>NSKX (Nunchuk Shake X)</item>
+		<item>NSKY (Nunchuk Shake Y)</item>
+        <item>NSKZ (Nunchuk Shake Z)</item>
+		<item>NTF (Nunchuk Tilt Forward)</item>
+		<item>NTB (Nunchuk Tilt Backward)</item>
+		<item>NTL (Nunchuk Tilt Left)</item>
+		<item>NTR (Nunchuk Tilt Right)</item>
     </string-array>
 
     <string-array name="classicButtons">
@@ -530,11 +554,11 @@
         <item>@string/gamepad_d_pad</item>
         <item>@string/gamepad_left_stick</item>
         <item>@string/gamepad_right_stick</item>
-		<item>LH</item>
-		<item>RH</item>
-		<item>LA</item>
-		<item>RA</item>
-		<item>@string/gamepad_trigger_analog_stick</item>
+		<item>LH (L half press)</item>
+		<item>RH (R half press)</item>
+		<item>LA (L Analog Trigger)</item>
+		<item>RA (R Analog Trigger)</item>
+		<item>L/R (Analog Stick)</item>
     </string-array>
 
     <string-array name="classicLatchableButtons">
@@ -549,8 +573,8 @@
         <item>R</item>
         <item>ZL</item>
         <item>ZR</item>
-		<item>LH</item>
-		<item>RH</item>
+		<item>LH (L half press)</item>
+		<item>RH (R half press)</item>
     </string-array>
 
     <string-array name="irModeEntries">

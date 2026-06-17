@@ -215,6 +215,7 @@ object NativeLibrary {
 		const val CLASSIC_L_ANALOG_STICK = 804
 		const val CLASSIC_R_ANALOG_STICK = 805
 		const val CLASSIC_TRIGGER_ANALOG_STICK = 806
+		
     }
 
     object ButtonState {
