@@ -627,14 +627,14 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             InputOverlay.OVERLAY_WIIMOTE_NUNCHUK -> {
                 val base = "MAIN_BUTTON_LATCHING_NUNCHUK_ONLY_"
                 builder.setMultiChoiceItems(
-                    R.array.nunchukLatchableButtons, readLatching(base, 15)
+                    R.array.nunchukLatchableButtons, readLatching(base, 23)
                 ) { _, i, c -> saveLatching(base, i, c) }
             }
 
             else -> {
                 val base = "MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_"
                 builder.setMultiChoiceItems(
-                    R.array.wiimoteLatchableButtons, readLatching(base, 10)
+                    R.array.wiimoteLatchableButtons, readLatching(base, 14)
                 ) { _, i, c -> saveLatching(base, i, c) }
             }
         }
@@ -684,12 +684,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             }
         } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
             val base = "MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_"
-            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 26)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 34)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         } else {
             val base = "MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_"
-            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 16)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 20)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         }

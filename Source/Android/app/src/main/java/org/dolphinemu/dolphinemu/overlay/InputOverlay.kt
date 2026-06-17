@@ -637,6 +637,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
 		InputOverrider.setControlState(controllerIndex, ControlId.CLASSIC_L_ANALOG, lAnalog)
 		InputOverrider.setControlState(controllerIndex, ControlId.CLASSIC_R_ANALOG, rAnalog)
+		InputOverrider.setControlState(controllerIndex, ControlId.CLASSIC_L_DIGITAL, if (lAnalog > 0.9) 1.0 else 0.0)
+		InputOverrider.setControlState(controllerIndex, ControlId.CLASSIC_R_DIGITAL, if (rAnalog > 0.9) 1.0 else 0.0)
 	}
 
     private fun setDpadState(
@@ -1036,10 +1038,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             orientation, getEffectiveLatching(latchingBase + "8"), "WSKY"))
     }
     if (getEffectiveToggle(toggleBase + "10")) {
-    overlayButtons.add(initializeOverlayButton(context,
-        R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
-        ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
-        orientation, getEffectiveLatching(latchingBase + "9"), "WSKZ"))
+		overlayButtons.add(initializeOverlayButton(context,
+			R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+			ButtonType.WIIMOTE_SHAKE_Z, ControlId.WIIMOTE_SHAKE_Z,
+			orientation, getEffectiveLatching(latchingBase + "9"), "WSKZ"))
 	}
 
     if (getEffectiveToggle(toggleBase + "11")) {
@@ -1073,6 +1075,30 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             orientation, "WT"))
     }
 	if (getEffectiveToggle(toggleBase + "15")) {
+		overlayButtons.add(initializeOverlayButton(context,
+			R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+			ButtonType.WIIMOTE_TILT_FORWARD, ControlId.WIIMOTE_TILT_LEFT,
+			orientation, getEffectiveLatching(latchingBase + "10"), "WTF"))
+	}
+	if (getEffectiveToggle(toggleBase + "16")) {
+		overlayButtons.add(initializeOverlayButton(context,
+			R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+			ButtonType.WIIMOTE_TILT_BACKWARD, ControlId.WIIMOTE_TILT_RIGHT,
+			orientation, getEffectiveLatching(latchingBase + "11"), "WTB"))
+	}
+	if (getEffectiveToggle(toggleBase + "17")) {
+		overlayButtons.add(initializeOverlayButton(context,
+			R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+			ButtonType.WIIMOTE_TILT_LEFT, ControlId.WIIMOTE_TILT_BACKWARD,
+			orientation, getEffectiveLatching(latchingBase + "12"), "WTL"))
+	}
+	if (getEffectiveToggle(toggleBase + "18")) {
+		overlayButtons.add(initializeOverlayButton(context,
+			R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+			ButtonType.WIIMOTE_TILT_RIGHT, ControlId.WIIMOTE_TILT_FORWARD,
+			orientation, getEffectiveLatching(latchingBase + "13"), "WTR"))
+	}
+	if (getEffectiveToggle(toggleBase + "19")) {
 		overlayJoysticks.add(initializeOverlayJoystick(context,
 			R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
 			R.drawable.gcwii_joystick_pressed,
@@ -1138,7 +1164,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.NUNCHUK_STICK, ControlId.NUNCHUK_STICK_X, ControlId.NUNCHUK_STICK_Y, orientation))
     }
 
-    // ==================== 11-17: Wiimote Motion buttons（Nunchuk mode） ====================
+    // ==================== 11-21: Wiimote Motion buttons（Nunchuk mode） ====================
     if (getEffectiveToggle(toggleBase + "11")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.WIIMOTE_SHAKE_X, ControlId.WIIMOTE_SHAKE_X, orientation,
@@ -1173,43 +1199,83 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.WIIMOTE_TILT, ControlId.WIIMOTE_TILT_LEFT, ControlId.WIIMOTE_TILT_RIGHT,
             ControlId.WIIMOTE_TILT_BACKWARD, ControlId.WIIMOTE_TILT_FORWARD, orientation, "WT"))
     }
+	if (getEffectiveToggle(toggleBase + "18")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.WIIMOTE_TILT_FORWARD, ControlId.WIIMOTE_TILT_LEFT, orientation,
+            getEffectiveLatching(latchingBase + "12"), "WTF"))
+    }
+	if (getEffectiveToggle(toggleBase + "19")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.WIIMOTE_TILT_BACKWARD, ControlId.WIIMOTE_TILT_RIGHT, orientation,
+            getEffectiveLatching(latchingBase + "13"), "WTB"))
+    }
+	if (getEffectiveToggle(toggleBase + "20")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.WIIMOTE_TILT_LEFT, ControlId.WIIMOTE_TILT_BACKWARD, orientation,
+            getEffectiveLatching(latchingBase + "14"), "WTL"))
+    }
+	if (getEffectiveToggle(toggleBase + "21")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.WIIMOTE_TILT_RIGHT, ControlId.WIIMOTE_TILT_FORWARD, orientation,
+            getEffectiveLatching(latchingBase + "15"), "WTR"))
+    }
 
-    // ==================== 18-24: Nunchuk Motion buttons ====================
-    if (getEffectiveToggle(toggleBase + "18")) {
+    // ==================== 22-33: Nunchuk Motion buttons ====================
+    if (getEffectiveToggle(toggleBase + "22")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_X, ControlId.NUNCHUK_SHAKE_X, orientation,
-            getEffectiveLatching(latchingBase + "12"), "NSKX"))
+            getEffectiveLatching(latchingBase + "16"), "NSKX"))
     }
-    if (getEffectiveToggle(toggleBase + "19")) {
+    if (getEffectiveToggle(toggleBase + "23")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_Y, ControlId.NUNCHUK_SHAKE_Y, orientation,
-            getEffectiveLatching(latchingBase + "13"), "NSKY"))
+            getEffectiveLatching(latchingBase + "17"), "NSKY"))
     }
-    if (getEffectiveToggle(toggleBase + "20")) {
+    if (getEffectiveToggle(toggleBase + "24")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SHAKE_Z, ControlId.NUNCHUK_SHAKE_Z, orientation,
-            getEffectiveLatching(latchingBase + "14"), "NSKZ"))
+            getEffectiveLatching(latchingBase + "18"), "NSKZ"))
     }
-    if (getEffectiveToggle(toggleBase + "21")) {
+    if (getEffectiveToggle(toggleBase + "25")) {
         overlayJoysticks.add(initializeOverlayJoystick(context, R.drawable.gcwii_joystick_range,
             R.drawable.gcwii_joystick, R.drawable.gcwii_joystick_pressed,
             ButtonType.NUNCHUK_SWING, ControlId.NUNCHUK_SWING_X, ControlId.NUNCHUK_SWING_Y, orientation, "NSW"))
     }
-    if (getEffectiveToggle(toggleBase + "22")) {
+    if (getEffectiveToggle(toggleBase + "26")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SWING_FORWARD, ControlId.NUNCHUK_SWING_FORWARD, orientation, false, "NSF"))
     }
-    if (getEffectiveToggle(toggleBase + "23")) {
+    if (getEffectiveToggle(toggleBase + "27")) {
         overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
             ButtonType.NUNCHUK_SWING_BACKWARD, ControlId.NUNCHUK_SWING_BACKWARD, orientation, false, "NSB"))
     }
-    if (getEffectiveToggle(toggleBase + "24")) {
+    if (getEffectiveToggle(toggleBase + "28")) {
         overlayDpads.add(initializeOverlayDpad(context, R.drawable.gcwii_dpad,
             R.drawable.gcwii_dpad_pressed_one_direction, R.drawable.gcwii_dpad_pressed_two_directions,
             ButtonType.NUNCHUK_TILT, ControlId.NUNCHUK_TILT_LEFT, ControlId.NUNCHUK_TILT_RIGHT,
             ControlId.NUNCHUK_TILT_BACKWARD, ControlId.NUNCHUK_TILT_FORWARD, orientation, "NT"))
     }
-	if (getEffectiveToggle(toggleBase + "25")) {
+	if (getEffectiveToggle(toggleBase + "29")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.NUNCHUK_TILT_FORWARD, ControlId.NUNCHUK_TILT_LEFT, orientation,
+            getEffectiveLatching(latchingBase + "19"), "NTF"))
+    }
+	if (getEffectiveToggle(toggleBase + "30")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.NUNCHUK_TILT_BACKWARD, ControlId.NUNCHUK_TILT_RIGHT, orientation,
+            getEffectiveLatching(latchingBase + "20"), "NTB"))
+    }
+	if (getEffectiveToggle(toggleBase + "31")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.NUNCHUK_TILT_LEFT, ControlId.NUNCHUK_TILT_BACKWARD, orientation,
+            getEffectiveLatching(latchingBase + "21"), "NTL"))
+    }
+	if (getEffectiveToggle(toggleBase + "32")) {
+        overlayButtons.add(initializeOverlayButton(context, R.drawable.wiimote_em, R.drawable.wiimote_em_pressed,
+            ButtonType.NUNCHUK_TILT_RIGHT, ControlId.NUNCHUK_TILT_FORWARD, orientation,
+            getEffectiveLatching(latchingBase + "22"), "NTR"))
+    }
+	if (getEffectiveToggle(toggleBase + "33")) {
 		overlayJoysticks.add(initializeOverlayJoystick(context,
 			R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
 			R.drawable.gcwii_joystick_pressed,
@@ -3180,6 +3246,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.WIIMOTE_SHAKE_Z -> 220f
         ButtonType.WIIMOTE_SWING -> 320f   // WSW joystick
         ButtonType.WIIMOTE_TILT -> 20f    // WT dpad
+		ButtonType.WIIMOTE_TILT_FORWARD -> 100f
+		ButtonType.WIIMOTE_TILT_BACKWARD -> 110f
+		ButtonType.WIIMOTE_TILT_LEFT -> 120f
+		ButtonType.WIIMOTE_TILT_RIGHT -> 130f
         ButtonType.WIIMOTE_SWING_FORWARD -> 20f
         ButtonType.WIIMOTE_SWING_BACKWARD -> 120f
         ButtonType.NUNCHUK_SHAKE_X -> 20f
@@ -3187,6 +3257,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.NUNCHUK_SHAKE_Z -> 220f
         ButtonType.NUNCHUK_SWING -> 320f   // NSW joystick
         ButtonType.NUNCHUK_TILT -> 20f    // NT dpad
+		ButtonType.NUNCHUK_TILT_FORWARD -> 140f
+		ButtonType.NUNCHUK_TILT_BACKWARD -> 150f
+		ButtonType.NUNCHUK_TILT_LEFT -> 160f
+		ButtonType.NUNCHUK_TILT_RIGHT -> 170f
         ButtonType.NUNCHUK_SWING_FORWARD -> 20f
         ButtonType.NUNCHUK_SWING_BACKWARD -> 120f
         ButtonType.TATACON_RIM_LEFT -> 20f
@@ -3212,6 +3286,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
             ButtonType.WIIMOTE_SWING -> 300f           // WSW joystick
             ButtonType.WIIMOTE_TILT -> 500f            // WT dpad
+			ButtonType.WIIMOTE_TILT_FORWARD -> 510f
+			ButtonType.WIIMOTE_TILT_BACKWARD -> 520f
+			ButtonType.WIIMOTE_TILT_LEFT -> 530f
+			ButtonType.WIIMOTE_TILT_RIGHT -> 540f
 
             ButtonType.WIIMOTE_SWING_FORWARD,
             ButtonType.WIIMOTE_SWING_BACKWARD -> 140f
@@ -3222,6 +3300,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
             ButtonType.NUNCHUK_SWING -> 500f           // NSW joystick
             ButtonType.NUNCHUK_TILT -> 700f            // NT dpad
+			ButtonType.NUNCHUK_TILT_FORWARD -> 550f
+			ButtonType.NUNCHUK_TILT_BACKWARD -> 560f
+			ButtonType.NUNCHUK_TILT_LEFT -> 570f
+			ButtonType.NUNCHUK_TILT_RIGHT -> 580f
 
             ButtonType.NUNCHUK_SWING_FORWARD,
             ButtonType.NUNCHUK_SWING_BACKWARD -> 400f
