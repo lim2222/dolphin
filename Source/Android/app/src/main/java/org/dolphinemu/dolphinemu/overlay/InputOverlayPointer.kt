@@ -8,6 +8,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import org.dolphinemu.dolphinemu.NativeLibrary
 import org.dolphinemu.dolphinemu.features.input.model.InputOverrider
+import org.dolphinemu.dolphinemu.features.input.model.InputOverrider.ControlId
 
 class InputOverlayPointer(
     surfacePosition: Rect,
@@ -19,6 +20,8 @@ class InputOverlayPointer(
     private val secondFingerHoldControl: Int,
     private var mode: Int,
     private var recenter: Boolean,
+	private val swingOnSwipe: Boolean,
+	private val nswingOnSwipe: Boolean,
     private val controllerIndex: Int
 ) {
     var x = 0.0f
@@ -33,6 +36,9 @@ class InputOverlayPointer(
 
     private var touchStartX = 0f
     private var touchStartY = 0f
+
+	private var swingX = 0f
+	private var swingY = 0f
 
     private var doubleTap = false
 	private var doubleTapHolding = false
@@ -68,19 +74,19 @@ class InputOverlayPointer(
         val pointerIndex = if (firstPointer) 0 else event.actionIndex
 
         when (action) {
-			MotionEvent.ACTION_DOWN,
-			MotionEvent.ACTION_POINTER_DOWN -> {
-				if (trackId == -1) {
-					trackId = event.getPointerId(pointerIndex)
-					touchStartX = event.getX(pointerIndex)
-					touchStartY = event.getY(pointerIndex)
-					touchPress()
-				} else if (secondTrackId == -1) {
-					// second finger
-					secondTrackId = event.getPointerId(pointerIndex)
-					secondFingerPress()
-				}
-			}
+            MotionEvent.ACTION_DOWN,
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                if (trackId == -1) {
+                    trackId = event.getPointerId(pointerIndex)
+                    touchStartX = event.getX(pointerIndex)
+                    touchStartY = event.getY(pointerIndex)
+                    touchPress()
+                } else if (secondTrackId == -1) {
+                    // second finger
+                    secondTrackId = event.getPointerId(pointerIndex)
+                    secondFingerPress()
+                }
+            }
 
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP -> {
@@ -93,6 +99,35 @@ class InputOverlayPointer(
                     if (doubleTapHolding && doubleTapHoldControl != SINGLE_TAP_NONE) {
                         doubleTapHolding = false
                         InputOverrider.setControlState(controllerIndex, doubleTapHoldControl, 0.0)
+                    }
+                    if (swingOnSwipe) {
+                        swingX = 0f
+                        swingY = 0f
+                        InputOverrider.setControlState(
+                            controllerIndex,
+                            ControlId.WIIMOTE_SWING_X,
+                            0.0
+                        )
+                        InputOverrider.setControlState(
+                            controllerIndex,
+                            ControlId.WIIMOTE_SWING_Y,
+                            0.0
+                        )
+                    }
+                    if (nswingOnSwipe) {
+                        swingX = 0f
+                        swingY = 0f
+                        InputOverrider.setControlState(
+                            controllerIndex,
+                            ControlId.NUNCHUK_SWING_X,
+                            0.0
+                        )
+                        InputOverrider.setControlState(
+                            controllerIndex,
+                            ControlId.NUNCHUK_SWING_Y,
+                            0.0
+                        )
+
                     }
                     if (mode == MODE_DRAG)
                         updateOldAxes()
@@ -111,14 +146,86 @@ class InputOverlayPointer(
             return
 
         if (mode == MODE_FOLLOW) {
+            val prevX = x
+            val prevY = y
             x = (event.getX(eventPointerIndex) - gameCenterX) * gameWidthHalfInv
             y = (event.getY(eventPointerIndex) - gameCenterY) * gameHeightHalfInv
+
+            if (swingOnSwipe || nswingOnSwipe) {
+                val dx = (x - prevX) * 15f
+                val dy = (y - prevY) * 15f
+                swingX = (swingX + dx).coerceIn(-1f, 1f)
+                swingY = (swingY + dy).coerceIn(-1f, 1f)
+                swingX *= 0.85f
+                swingY *= 0.85f
+
+                if (swingOnSwipe) {
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.WIIMOTE_SWING_X,
+                        swingX.toDouble()
+                    )
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.WIIMOTE_SWING_Y,
+                        swingY.toDouble()
+                    )
+                }
+                if (nswingOnSwipe) {
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.NUNCHUK_SWING_X,
+                        swingX.toDouble()
+                    )
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.NUNCHUK_SWING_Y,
+                        swingY.toDouble()
+                    )
+                }
+            }
+
         } else if (mode == MODE_DRAG) {
+            val prevX = x
+            val prevY = y
             x = oldX + (event.getX(eventPointerIndex) - touchStartX) * gameWidthHalfInv
             y = oldY + (event.getY(eventPointerIndex) - touchStartY) * gameHeightHalfInv
+
+            if (swingOnSwipe || nswingOnSwipe) {
+                val dx = (x - prevX) * 15f
+                val dy = (y - prevY) * 15f
+                swingX = (swingX + dx).coerceIn(-1f, 1f)
+                swingY = (swingY + dy).coerceIn(-1f, 1f)
+                swingX *= 0.85f
+                swingY *= 0.85f
+
+                if (swingOnSwipe) {
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.WIIMOTE_SWING_X,
+                        swingX.toDouble()
+                    )
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.WIIMOTE_SWING_Y,
+                        swingY.toDouble()
+                    )
+                }
+                if (nswingOnSwipe) {
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.NUNCHUK_SWING_X,
+                        swingX.toDouble()
+                    )
+                    InputOverrider.setControlState(
+                        controllerIndex,
+                        ControlId.NUNCHUK_SWING_Y,
+                        swingY.toDouble()
+                    )
+                }
+            }
         }
     }
-
     private fun touchPress() {
         if (mode != MODE_DISABLED) {
             if (singleTapControl != SINGLE_TAP_NONE) {
@@ -195,57 +302,44 @@ class InputOverlayPointer(
 		const val SINGLE_TAP_NONE = -1
 
 		@JvmField
-		var SINGLE_TAP_OPTIONS = arrayListOf(
-			-1,  // None
-			NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
-			NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
-			NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
-			NativeLibrary.ButtonType.CLASSIC_BUTTON_A
-		)
+        val TAP_OPTIONS = arrayListOf(
+            -1,  // None
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_MINUS,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_PLUS,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_1,
+            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
+            NativeLibrary.ButtonType.NUNCHUK_BUTTON_C,
+            NativeLibrary.ButtonType.NUNCHUK_BUTTON_Z,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_A,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_B,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_X,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_Y,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_MINUS,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_PLUS,
+            NativeLibrary.ButtonType.CLASSIC_TRIGGER_L,
+            NativeLibrary.ButtonType.CLASSIC_TRIGGER_R,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_ZL,
+            NativeLibrary.ButtonType.CLASSIC_BUTTON_ZR
+        )
+
+        @JvmField
+		var SINGLE_TAP_OPTIONS = TAP_OPTIONS
 
 		@JvmField
-		var SINGLE_TAP_HOLD_OPTIONS = arrayListOf(
-			-1,  // None
-			NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
-			NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
-			NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
-			NativeLibrary.ButtonType.CLASSIC_BUTTON_A
-		)
-
-        @JvmField
-        var DOUBLE_TAP_OPTIONS = arrayListOf(
-			-1,  // None
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
-            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
-        )
+		var SINGLE_TAP_HOLD_OPTIONS = TAP_OPTIONS
 
 		@JvmField
-        var DOUBLE_TAP_HOLD_OPTIONS = arrayListOf(
-            -1,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
-            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
-        )
+		var DOUBLE_TAP_OPTIONS = TAP_OPTIONS
 
-        @JvmField
-        var SECOND_FINGER_TAP_OPTIONS = arrayListOf(
-            -1,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
-            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
-        )
+		@JvmField
+		var DOUBLE_TAP_HOLD_OPTIONS = TAP_OPTIONS
 
-        @JvmField
-        var SECOND_FINGER_HOLD_OPTIONS = arrayListOf(
-            -1,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_A,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_B,
-            NativeLibrary.ButtonType.WIIMOTE_BUTTON_2,
-            NativeLibrary.ButtonType.CLASSIC_BUTTON_A
-        )
+		@JvmField
+		var SECOND_FINGER_TAP_OPTIONS = TAP_OPTIONS
+
+		@JvmField
+		var SECOND_FINGER_HOLD_OPTIONS = TAP_OPTIONS
     }
 }

@@ -297,9 +297,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         var doubleTapControl = InputOverlayPointer.SINGLE_TAP_NONE
         when (doubleTapButton) {
             ButtonType.WIIMOTE_BUTTON_A -> doubleTapControl = ControlId.WIIMOTE_A_BUTTON
-            ButtonType.WIIMOTE_BUTTON_B -> doubleTapControl = ControlId.WIIMOTE_B_BUTTON
-            ButtonType.WIIMOTE_BUTTON_2 -> doubleTapControl = ControlId.WIIMOTE_TWO_BUTTON
-        }
+			ButtonType.WIIMOTE_BUTTON_B -> doubleTapControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_MINUS -> doubleTapControl = ControlId.WIIMOTE_MINUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_PLUS -> doubleTapControl = ControlId.WIIMOTE_PLUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_1 -> doubleTapControl = ControlId.WIIMOTE_ONE_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> doubleTapControl = ControlId.WIIMOTE_TWO_BUTTON
+			ButtonType.NUNCHUK_BUTTON_C -> doubleTapControl = ControlId.NUNCHUK_C_BUTTON
+			ButtonType.NUNCHUK_BUTTON_Z -> doubleTapControl = ControlId.NUNCHUK_Z_BUTTON
+			ButtonType.CLASSIC_BUTTON_A -> doubleTapControl = ControlId.CLASSIC_A_BUTTON
+			ButtonType.CLASSIC_BUTTON_B -> doubleTapControl = ControlId.CLASSIC_B_BUTTON
+			ButtonType.CLASSIC_BUTTON_X -> doubleTapControl = ControlId.CLASSIC_X_BUTTON
+			ButtonType.CLASSIC_BUTTON_Y -> doubleTapControl = ControlId.CLASSIC_Y_BUTTON
+			ButtonType.CLASSIC_BUTTON_MINUS -> doubleTapControl = ControlId.CLASSIC_MINUS_BUTTON
+			ButtonType.CLASSIC_BUTTON_PLUS -> doubleTapControl = ControlId.CLASSIC_PLUS_BUTTON
+			ButtonType.CLASSIC_TRIGGER_L -> doubleTapControl = ControlId.CLASSIC_L_DIGITAL
+			ButtonType.CLASSIC_TRIGGER_R -> doubleTapControl = ControlId.CLASSIC_R_DIGITAL
+			ButtonType.CLASSIC_BUTTON_ZL -> doubleTapControl = ControlId.CLASSIC_ZL_BUTTON
+			ButtonType.CLASSIC_BUTTON_ZR -> doubleTapControl = ControlId.CLASSIC_ZR_BUTTON
+		}
 
         // Double tap hold
         var doubleTapHoldButton = if (gameId != null)
@@ -309,9 +324,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         var doubleTapHoldControl = InputOverlayPointer.SINGLE_TAP_NONE
         when (doubleTapHoldButton) {
             ButtonType.WIIMOTE_BUTTON_A -> doubleTapHoldControl = ControlId.WIIMOTE_A_BUTTON
-            ButtonType.WIIMOTE_BUTTON_B -> doubleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
-            ButtonType.WIIMOTE_BUTTON_2 -> doubleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
-        }
+			ButtonType.WIIMOTE_BUTTON_B -> doubleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_MINUS -> doubleTapHoldControl = ControlId.WIIMOTE_MINUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_PLUS -> doubleTapHoldControl = ControlId.WIIMOTE_PLUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_1 -> doubleTapHoldControl = ControlId.WIIMOTE_ONE_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> doubleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
+			ButtonType.NUNCHUK_BUTTON_C -> doubleTapHoldControl = ControlId.NUNCHUK_C_BUTTON
+			ButtonType.NUNCHUK_BUTTON_Z -> doubleTapHoldControl = ControlId.NUNCHUK_Z_BUTTON
+			ButtonType.CLASSIC_BUTTON_A -> doubleTapHoldControl = ControlId.CLASSIC_A_BUTTON
+			ButtonType.CLASSIC_BUTTON_B -> doubleTapHoldControl = ControlId.CLASSIC_B_BUTTON
+			ButtonType.CLASSIC_BUTTON_X -> doubleTapHoldControl = ControlId.CLASSIC_X_BUTTON
+			ButtonType.CLASSIC_BUTTON_Y -> doubleTapHoldControl = ControlId.CLASSIC_Y_BUTTON
+			ButtonType.CLASSIC_BUTTON_MINUS -> doubleTapHoldControl = ControlId.CLASSIC_MINUS_BUTTON
+			ButtonType.CLASSIC_BUTTON_PLUS -> doubleTapHoldControl = ControlId.CLASSIC_PLUS_BUTTON
+			ButtonType.CLASSIC_TRIGGER_L -> doubleTapHoldControl = ControlId.CLASSIC_L_DIGITAL
+			ButtonType.CLASSIC_TRIGGER_R -> doubleTapHoldControl = ControlId.CLASSIC_R_DIGITAL
+			ButtonType.CLASSIC_BUTTON_ZL -> doubleTapHoldControl = ControlId.CLASSIC_ZL_BUTTON
+			ButtonType.CLASSIC_BUTTON_ZR -> doubleTapHoldControl = ControlId.CLASSIC_ZR_BUTTON
+		}
 
         // Single tap
         var singleTapButton = if (gameId != null)
@@ -321,9 +351,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         var singleTapControl = InputOverlayPointer.SINGLE_TAP_NONE
         when (singleTapButton) {
             ButtonType.WIIMOTE_BUTTON_A -> singleTapControl = ControlId.WIIMOTE_A_BUTTON
-            ButtonType.WIIMOTE_BUTTON_B -> singleTapControl = ControlId.WIIMOTE_B_BUTTON
-            ButtonType.WIIMOTE_BUTTON_2 -> singleTapControl = ControlId.WIIMOTE_TWO_BUTTON
-        }
+			ButtonType.WIIMOTE_BUTTON_B -> singleTapControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_MINUS -> singleTapControl = ControlId.WIIMOTE_MINUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_PLUS -> singleTapControl = ControlId.WIIMOTE_PLUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_1 -> singleTapControl = ControlId.WIIMOTE_ONE_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> singleTapControl = ControlId.WIIMOTE_TWO_BUTTON
+			ButtonType.NUNCHUK_BUTTON_C -> singleTapControl = ControlId.NUNCHUK_C_BUTTON
+			ButtonType.NUNCHUK_BUTTON_Z -> singleTapControl = ControlId.NUNCHUK_Z_BUTTON
+			ButtonType.CLASSIC_BUTTON_A -> singleTapControl = ControlId.CLASSIC_A_BUTTON
+			ButtonType.CLASSIC_BUTTON_B -> singleTapControl = ControlId.CLASSIC_B_BUTTON
+			ButtonType.CLASSIC_BUTTON_X -> singleTapControl = ControlId.CLASSIC_X_BUTTON
+			ButtonType.CLASSIC_BUTTON_Y -> singleTapControl = ControlId.CLASSIC_Y_BUTTON
+			ButtonType.CLASSIC_BUTTON_MINUS -> singleTapControl = ControlId.CLASSIC_MINUS_BUTTON
+			ButtonType.CLASSIC_BUTTON_PLUS -> singleTapControl = ControlId.CLASSIC_PLUS_BUTTON
+			ButtonType.CLASSIC_TRIGGER_L -> singleTapControl = ControlId.CLASSIC_L_DIGITAL
+			ButtonType.CLASSIC_TRIGGER_R -> singleTapControl = ControlId.CLASSIC_R_DIGITAL
+			ButtonType.CLASSIC_BUTTON_ZL -> singleTapControl = ControlId.CLASSIC_ZL_BUTTON
+			ButtonType.CLASSIC_BUTTON_ZR -> singleTapControl = ControlId.CLASSIC_ZR_BUTTON
+		}
 
         // Single tap hold
         var singleTapHoldButton = if (gameId != null)
@@ -333,9 +378,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         var singleTapHoldControl = InputOverlayPointer.SINGLE_TAP_NONE
         when (singleTapHoldButton) {
             ButtonType.WIIMOTE_BUTTON_A -> singleTapHoldControl = ControlId.WIIMOTE_A_BUTTON
-            ButtonType.WIIMOTE_BUTTON_B -> singleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
-            ButtonType.WIIMOTE_BUTTON_2 -> singleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
-        }
+			ButtonType.WIIMOTE_BUTTON_B -> singleTapHoldControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_MINUS -> singleTapHoldControl = ControlId.WIIMOTE_MINUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_PLUS -> singleTapHoldControl = ControlId.WIIMOTE_PLUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_1 -> singleTapHoldControl = ControlId.WIIMOTE_ONE_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> singleTapHoldControl = ControlId.WIIMOTE_TWO_BUTTON
+			ButtonType.NUNCHUK_BUTTON_C -> singleTapHoldControl = ControlId.NUNCHUK_C_BUTTON
+			ButtonType.NUNCHUK_BUTTON_Z -> singleTapHoldControl = ControlId.NUNCHUK_Z_BUTTON
+			ButtonType.CLASSIC_BUTTON_A -> singleTapHoldControl = ControlId.CLASSIC_A_BUTTON
+			ButtonType.CLASSIC_BUTTON_B -> singleTapHoldControl = ControlId.CLASSIC_B_BUTTON
+			ButtonType.CLASSIC_BUTTON_X -> singleTapHoldControl = ControlId.CLASSIC_X_BUTTON
+			ButtonType.CLASSIC_BUTTON_Y -> singleTapHoldControl = ControlId.CLASSIC_Y_BUTTON
+			ButtonType.CLASSIC_BUTTON_MINUS -> singleTapHoldControl = ControlId.CLASSIC_MINUS_BUTTON
+			ButtonType.CLASSIC_BUTTON_PLUS -> singleTapHoldControl = ControlId.CLASSIC_PLUS_BUTTON
+			ButtonType.CLASSIC_TRIGGER_L -> singleTapHoldControl = ControlId.CLASSIC_L_DIGITAL
+			ButtonType.CLASSIC_TRIGGER_R -> singleTapHoldControl = ControlId.CLASSIC_R_DIGITAL
+			ButtonType.CLASSIC_BUTTON_ZL -> singleTapHoldControl = ControlId.CLASSIC_ZL_BUTTON
+			ButtonType.CLASSIC_BUTTON_ZR -> singleTapHoldControl = ControlId.CLASSIC_ZR_BUTTON
+		}
 
         // Second finger tap
         var secondFingerTapButton = if (gameId != null)
@@ -345,9 +405,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         var secondFingerTapControl = InputOverlayPointer.SINGLE_TAP_NONE
         when (secondFingerTapButton) {
             ButtonType.WIIMOTE_BUTTON_A -> secondFingerTapControl = ControlId.WIIMOTE_A_BUTTON
-            ButtonType.WIIMOTE_BUTTON_B -> secondFingerTapControl = ControlId.WIIMOTE_B_BUTTON
-            ButtonType.WIIMOTE_BUTTON_2 -> secondFingerTapControl = ControlId.WIIMOTE_TWO_BUTTON
-        }
+			ButtonType.WIIMOTE_BUTTON_B -> secondFingerTapControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_MINUS -> secondFingerTapControl = ControlId.WIIMOTE_MINUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_PLUS -> secondFingerTapControl = ControlId.WIIMOTE_PLUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_1 -> secondFingerTapControl = ControlId.WIIMOTE_ONE_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> secondFingerTapControl = ControlId.WIIMOTE_TWO_BUTTON
+			ButtonType.NUNCHUK_BUTTON_C -> secondFingerTapControl = ControlId.NUNCHUK_C_BUTTON
+			ButtonType.NUNCHUK_BUTTON_Z -> secondFingerTapControl = ControlId.NUNCHUK_Z_BUTTON
+			ButtonType.CLASSIC_BUTTON_A -> secondFingerTapControl = ControlId.CLASSIC_A_BUTTON
+			ButtonType.CLASSIC_BUTTON_B -> secondFingerTapControl = ControlId.CLASSIC_B_BUTTON
+			ButtonType.CLASSIC_BUTTON_X -> secondFingerTapControl = ControlId.CLASSIC_X_BUTTON
+			ButtonType.CLASSIC_BUTTON_Y -> secondFingerTapControl = ControlId.CLASSIC_Y_BUTTON
+			ButtonType.CLASSIC_BUTTON_MINUS -> secondFingerTapControl = ControlId.CLASSIC_MINUS_BUTTON
+			ButtonType.CLASSIC_BUTTON_PLUS -> secondFingerTapControl = ControlId.CLASSIC_PLUS_BUTTON
+			ButtonType.CLASSIC_TRIGGER_L -> secondFingerTapControl = ControlId.CLASSIC_L_DIGITAL
+			ButtonType.CLASSIC_TRIGGER_R -> secondFingerTapControl = ControlId.CLASSIC_R_DIGITAL
+			ButtonType.CLASSIC_BUTTON_ZL -> secondFingerTapControl = ControlId.CLASSIC_ZL_BUTTON
+			ButtonType.CLASSIC_BUTTON_ZR -> secondFingerTapControl = ControlId.CLASSIC_ZR_BUTTON
+		}
 
         // Second finger hold
         var secondFingerHoldButton = if (gameId != null)
@@ -357,9 +432,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         var secondFingerHoldControl = InputOverlayPointer.SINGLE_TAP_NONE
         when (secondFingerHoldButton) {
             ButtonType.WIIMOTE_BUTTON_A -> secondFingerHoldControl = ControlId.WIIMOTE_A_BUTTON
-            ButtonType.WIIMOTE_BUTTON_B -> secondFingerHoldControl = ControlId.WIIMOTE_B_BUTTON
-            ButtonType.WIIMOTE_BUTTON_2 -> secondFingerHoldControl = ControlId.WIIMOTE_TWO_BUTTON
-        }
+			ButtonType.WIIMOTE_BUTTON_B -> secondFingerHoldControl = ControlId.WIIMOTE_B_BUTTON
+			ButtonType.WIIMOTE_BUTTON_MINUS -> secondFingerHoldControl = ControlId.WIIMOTE_MINUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_PLUS -> secondFingerHoldControl = ControlId.WIIMOTE_PLUS_BUTTON
+			ButtonType.WIIMOTE_BUTTON_1 -> secondFingerHoldControl = ControlId.WIIMOTE_ONE_BUTTON
+			ButtonType.WIIMOTE_BUTTON_2 -> secondFingerHoldControl = ControlId.WIIMOTE_TWO_BUTTON
+			ButtonType.NUNCHUK_BUTTON_C -> secondFingerHoldControl = ControlId.NUNCHUK_C_BUTTON
+			ButtonType.NUNCHUK_BUTTON_Z -> secondFingerHoldControl = ControlId.NUNCHUK_Z_BUTTON
+			ButtonType.CLASSIC_BUTTON_A -> secondFingerHoldControl = ControlId.CLASSIC_A_BUTTON
+			ButtonType.CLASSIC_BUTTON_B -> secondFingerHoldControl = ControlId.CLASSIC_B_BUTTON
+			ButtonType.CLASSIC_BUTTON_X -> secondFingerHoldControl = ControlId.CLASSIC_X_BUTTON
+			ButtonType.CLASSIC_BUTTON_Y -> secondFingerHoldControl = ControlId.CLASSIC_Y_BUTTON
+			ButtonType.CLASSIC_BUTTON_MINUS -> secondFingerHoldControl = ControlId.CLASSIC_MINUS_BUTTON
+			ButtonType.CLASSIC_BUTTON_PLUS -> secondFingerHoldControl = ControlId.CLASSIC_PLUS_BUTTON
+			ButtonType.CLASSIC_TRIGGER_L -> secondFingerHoldControl = ControlId.CLASSIC_L_DIGITAL
+			ButtonType.CLASSIC_TRIGGER_R -> secondFingerHoldControl = ControlId.CLASSIC_R_DIGITAL
+			ButtonType.CLASSIC_BUTTON_ZL -> secondFingerHoldControl = ControlId.CLASSIC_ZL_BUTTON
+			ButtonType.CLASSIC_BUTTON_ZR -> secondFingerHoldControl = ControlId.CLASSIC_ZR_BUTTON
+		}
 
         // IR mode
         val irMode = if (gameId != null)
@@ -373,6 +463,18 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         else
             BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean
 
+		// Swing on swipe
+		val swingOnSwipe = if (gameId != null)
+			prefs.getBoolean("IRSwingOnSwipe_$gameId", BooleanSetting.MAIN_IR_SWING_ON_SWIPE.boolean)
+		else
+			BooleanSetting.MAIN_IR_SWING_ON_SWIPE.boolean
+
+		// Nunchuk swing on swipe
+		val nswingOnSwipe = if (gameId != null)
+			prefs.getBoolean("IRNSwingOnSwipe_$gameId", BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.boolean)
+		else
+			BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.boolean
+		
         overlayPointer = InputOverlayPointer(
             surfacePosition!!,
             doubleTapControl,
@@ -383,6 +485,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             secondFingerHoldControl,
             irMode,
             recenter,
+			swingOnSwipe,
+			nswingOnSwipe,
             controllerIndex
         )
     }
@@ -2271,11 +2375,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     fun refreshOverlayPointer() {
-        if (overlayPointer != null) {
-            overlayPointer?.setMode(IntSetting.MAIN_IR_MODE.int)
-            overlayPointer?.setRecenter(BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean)
-        }
-    }
+		initTouchPointer()
+	}
 
     fun resetButtonPlacement() {
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
