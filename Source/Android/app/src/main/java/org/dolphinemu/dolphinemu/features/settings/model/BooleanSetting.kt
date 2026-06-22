@@ -288,6 +288,18 @@ enum class BooleanSetting(
         "IRAlwaysRecenter",
         false
     ),
+	MAIN_IR_SWING_ON_SWIPE(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID,
+		"IRSwingOnSwipe",
+		false
+	),
+	MAIN_IR_NUNCHUK_SWING_ON_SWIPE(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID,
+		"IRNSwingOnSwipe",
+		false
+	),
     MAIN_BUTTON_TOGGLE_GC_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,

@@ -459,6 +459,24 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     )
                 else
                     BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean
+					
+			menu.findItem(R.id.menu_emulation_ir_swing_on_swipe).isChecked =
+				if (gameId != null)
+					prefs.getBoolean(
+						"IRSwingOnSwipe_$gameId",
+						BooleanSetting.MAIN_IR_SWING_ON_SWIPE.boolean
+						)
+				else
+					BooleanSetting.MAIN_IR_SWING_ON_SWIPE.boolean
+					
+			menu.findItem(R.id.menu_emulation_ir_nunchuk_swing_on_swipe).isChecked =
+				if (gameId != null)
+					prefs.getBoolean(
+						"IRNSwingOnSwipe_$gameId",
+						BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.boolean
+						)
+				else
+					BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.boolean
         }
         popup.setOnMenuItemClickListener { item: MenuItem -> onOptionsItemSelected(item) }
         popup.show()
@@ -488,6 +506,16 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 item.isChecked = !item.isChecked
                 toggleRecenter(item.isChecked)
             }
+			
+			MENU_SET_IR_SWING_ON_SWIPE -> {
+				item.isChecked = !item.isChecked
+				toggleSwingOnSwipe(item.isChecked)
+			}
+			
+			MENU_SET_IR_NUNCHUK_SWING_ON_SWIPE -> {
+				item.isChecked = !item.isChecked
+				toggleNSwingOnSwipe(item.isChecked)
+			}
         }
     }
 
@@ -556,6 +584,26 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             BooleanSetting.MAIN_IR_ALWAYS_RECENTER.setBoolean(settings, state)
         emulationFragment?.refreshOverlayPointer()
     }
+	
+	private fun toggleSwingOnSwipe(state: Boolean) {
+		val gameId = NativeLibrary.GetCurrentGameID()
+		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+		if (gameId != null)
+			prefs.edit().putBoolean("IRSwingOnSwipe_$gameId", state).apply()
+		else
+			BooleanSetting.MAIN_IR_SWING_ON_SWIPE.setBoolean(settings, state)
+		emulationFragment?.refreshOverlayPointer()
+	}
+	
+	private fun toggleNSwingOnSwipe(state: Boolean) {
+		val gameId = NativeLibrary.GetCurrentGameID()
+		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+		if (gameId != null)
+			prefs.edit().putBoolean("IRNSwingOnSwipe_$gameId", state).apply()
+		else
+			BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.setBoolean(settings, state)
+		emulationFragment?.refreshOverlayPointer()
+	}
 
     private fun editControlsPlacement() {
         if (emulationFragment!!.isConfiguringControls) {
@@ -1306,6 +1354,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 		const val MENU_ACTION_CHOOSE_DOUBLETAPHOLD = 40
 		const val MENU_ACTION_CHOOSE_SECOND_FINGER_TAP = 41
 		const val MENU_ACTION_CHOOSE_SECOND_FINGER_HOLD = 42
+		const val MENU_SET_IR_SWING_ON_SWIPE = 43
+		const val MENU_SET_IR_NUNCHUK_SWING_ON_SWIPE = 44
 
         init {
             buttonsActionsMap.apply {
@@ -1317,6 +1367,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 append(R.id.menu_emulation_joystick_rel_center, MENU_ACTION_JOYSTICK_REL_CENTER)
                 append(R.id.menu_emulation_reset_overlay, MENU_ACTION_RESET_OVERLAY)
                 append(R.id.menu_emulation_ir_recenter, MENU_SET_IR_RECENTER)
+				append(R.id.menu_emulation_ir_swing_on_swipe, MENU_SET_IR_SWING_ON_SWIPE)
+				append(R.id.menu_emulation_ir_nunchuk_swing_on_swipe, MENU_SET_IR_NUNCHUK_SWING_ON_SWIPE)
                 append(R.id.menu_emulation_set_ir_mode, MENU_SET_IR_MODE)
                 append(R.id.menu_emulation_choose_doubletap, MENU_ACTION_CHOOSE_DOUBLETAP)
 				append(R.id.menu_emulation_choose_doubletaphold, MENU_ACTION_CHOOSE_DOUBLETAPHOLD)

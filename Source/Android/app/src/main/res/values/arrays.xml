@@ -587,15 +587,27 @@
 		<item>@string/tap_button_none</item>
         <item>@string/double_tap_a</item>
         <item>@string/double_tap_b</item>
-        <item>@string/double_tap_2</item>
+        <item>@string/double_tap_minus</item>
+		<item>@string/double_tap_plus</item>
+		<item>@string/double_tap_1</item>
+		<item>@string/double_tap_2</item>
+		<item>@string/double_tap_nunchuk_c</item>
+		<item>@string/double_tap_nunchuk_z</item>
     </string-array>
 
     <string-array name="doubleTapWithClassic">
 		<item>@string/tap_button_none</item>
-        <item>@string/double_tap_a</item>
-        <item>@string/double_tap_b</item>
-        <item>@string/double_tap_2</item>
-        <item>@string/double_tap_classic_a</item>
+		<item>@string/double_tap_a</item>
+		<item>@string/double_tap_classic_a</item>
+		<item>@string/double_tap_classic_b</item>
+		<item>@string/double_tap_classic_x</item>
+		<item>@string/double_tap_classic_y</item>
+		<item>@string/double_tap_classic_minus</item>
+		<item>@string/double_tap_classic_plus</item>
+		<item>@string/double_tap_classic_l</item>
+		<item>@string/double_tap_classic_r</item>
+		<item>@string/double_tap_classic_zl</item>
+		<item>@string/double_tap_classic_zr</item>
     </string-array>
 
     <string-array name="orientationEntries">
