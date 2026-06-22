@@ -648,6 +648,8 @@ It can efficiently compress both junk data and encrypted Wii data.
     <string name="emulation_touch_overlay_reset">Reset Overlay</string>
     <string name="emulation_ir_group">Touch IR Pointer</string>
     <string name="emulation_ir_recenter">Always recenter</string>
+	<string name="emulation_ir_swing_on_swipe">Swing on swipe</string>
+	<string name="emulation_ir_nunchuk_swing_on_swipe">Nunchuk swing on swipe</string>
     <string name="emulation_ir_mode">IR Mode</string>
     <string name="emulation_ir_sensitivity">IR Sensitivity</string>
     <string name="emulation_choose_doubletap">Double tap button</string>
@@ -868,8 +870,22 @@ It can efficiently compress both junk data and encrypted Wii data.
     <!-- Double Tap Buttons -->
     <string name="double_tap_a">Button A</string>
     <string name="double_tap_b">Button B</string>
-    <string name="double_tap_2">Button 2</string>
-    <string name="double_tap_classic_a">Classic A</string>
+    <string name="double_tap_minus">Button -</string>
+	<string name="double_tap_plus">Button +</string>
+	<string name="double_tap_1">Button 1</string>
+	<string name="double_tap_2">Button 2</string>
+	<string name="double_tap_nunchuk_c">Nunchuk C</string>
+	<string name="double_tap_nunchuk_z">Nunchuk Z</string>
+	<string name="double_tap_classic_a">Classic A</string>
+	<string name="double_tap_classic_b">Classic B</string>
+	<string name="double_tap_classic_x">Classic X</string>
+	<string name="double_tap_classic_y">Classic Y</string>
+	<string name="double_tap_classic_minus">Classic -</string>
+	<string name="double_tap_classic_plus">Classic +</string>
+	<string name="double_tap_classic_l">Classic L</string>
+	<string name="double_tap_classic_r">Classic R</string>
+	<string name="double_tap_classic_zl">Classic ZL</string>
+	<string name="double_tap_classic_zr">Classic ZR</string>
 
     <!-- Orientations -->
     <string name="orientation_landscape">Landscape</string>

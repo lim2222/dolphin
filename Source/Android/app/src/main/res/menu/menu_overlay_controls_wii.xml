@@ -37,6 +37,14 @@
                 android:id="@+id/menu_emulation_ir_recenter"
                 android:checkable="true"
                 android:title="@string/emulation_ir_recenter"/>
+			<item
+				android:id="@+id/menu_emulation_ir_swing_on_swipe"
+				android:title="@string/emulation_ir_swing_on_swipe"
+				android:checkable="true"/>
+			<item
+				android:id="@+id/menu_emulation_ir_nunchuk_swing_on_swipe"
+				android:title="@string/emulation_ir_nunchuk_swing_on_swipe"
+				android:checkable="true"/>
             <item
                 android:id="@+id/menu_emulation_set_ir_mode"
                 android:title="@string/emulation_ir_mode"/>
