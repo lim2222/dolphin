@@ -33,7 +33,8 @@ class InputOverlayDrawableButton(
     val overlayLabel: String? = null,
     val overlayLabelScale: Float = 0.28f,
     val isAnalogOnly: Boolean = false,
-    val analogPressValue: Double = 1.0
+    val analogPressValue: Double = 1.0,
+	val isHotkeyButton: Boolean = false
 ) {
     var trackId: Int = -1
     var useAlphaHitTest: Boolean = false
@@ -46,6 +47,7 @@ class InputOverlayDrawableButton(
     private val defaultStateBitmap: BitmapDrawable
     private val pressedStateBitmap: BitmapDrawable
     private var pressedState = false
+	private var hotkeyTriggered = false
 
     init {
         this.defaultStateBitmap = BitmapDrawable(res, defaultStateBitmap)
@@ -87,20 +89,43 @@ class InputOverlayDrawableButton(
     }
 
     private fun drawLabel(canvas: Canvas, label: String, bounds: Rect) {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = if (pressedState) Color.parseColor("#E6FFFFFF") else Color.BLACK
-        textSize = bounds.width() * 0.30f
-        typeface = Typeface.create("sans-serif", Typeface.BOLD)
-        textAlign = Paint.Align.CENTER
-        setShadowLayer(4f, 0f, 0f, Color.BLACK)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = when {
+                isHotkeyButton && pressedState -> Color.parseColor("#B71C1C")
+                isHotkeyButton -> Color.RED
+                pressedState -> Color.parseColor("#E6FFFFFF")
+                else -> Color.BLACK
+            }
+            textSize = bounds.width() * 0.30f
+            typeface = Typeface.create("sans-serif", Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+            setShadowLayer(4f, 0f, 0f, Color.BLACK)
+        }
+
+        val lines = label.split("\n")
+        if (lines.size == 1) {
+            canvas.drawText(
+                label,
+                bounds.exactCenterX(),
+                bounds.exactCenterY() + paint.textSize / 3f,
+                paint
+            )
+        } else {
+            paint.textSize = bounds.width() * 0.22f
+            val lineHeight = paint.textSize * 1.2f
+            val totalHeight = lineHeight * lines.size
+            val startY = bounds.exactCenterY() - totalHeight / 2f + paint.textSize / 2f
+
+            lines.forEachIndexed { i, line ->
+                canvas.drawText(
+                    line,
+                    bounds.exactCenterX(),
+                    startY + i * lineHeight,
+                    paint
+                )
+            }
+        }
     }
-    canvas.drawText(
-        label,
-        bounds.exactCenterX(),
-        bounds.exactCenterY() + paint.textSize / 3f,
-        paint
-    )
-}
 
     private val currentStateBitmapDrawable: BitmapDrawable
         get() = if (pressedState) pressedStateBitmap else defaultStateBitmap
@@ -136,8 +161,19 @@ class InputOverlayDrawableButton(
     }
 
     fun setPressedState(isPressed: Boolean) {
+        if (!isPressed) {
+            hotkeyTriggered = false
+        }
         pressedState = isPressed
     }
+
+	fun shouldTriggerHotkey(): Boolean {
+		if (pressedState && !hotkeyTriggered) {
+			hotkeyTriggered = true
+			return true
+		}
+		return false
+	}
 
     fun getPressedState(): Boolean {
         return pressedState;

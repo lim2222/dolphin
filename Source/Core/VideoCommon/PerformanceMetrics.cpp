@@ -131,7 +131,7 @@ void PerformanceMetrics::DrawImGuiStats(const float backbuffer_scale)
   const bool movable_overlays = Config::Get(Config::GFX_MOVABLE_PERFORMANCE_METRICS);
   const int movable_flag = movable_overlays ? ImGuiWindowFlags_None : ImGuiWindowFlags_NoMove;
 
-  const float bg_alpha = 0.7f;
+  const float bg_alpha = 0.0f;
   const auto imgui_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings |
                            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNav | movable_flag |
                            ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
@@ -153,7 +153,7 @@ void PerformanceMetrics::DrawImGuiStats(const float backbuffer_scale)
     b = (speed - 0.9) / 0.1;
   }
 
-  const float window_padding = 8.f * backbuffer_scale;
+  const float window_padding = 6.f * backbuffer_scale;
 
   const ImVec2& display_size = ImGui::GetIO().DisplaySize;
   const bool display_size_changed =

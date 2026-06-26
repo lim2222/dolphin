@@ -655,6 +655,16 @@ It can efficiently compress both junk data and encrypted Wii data.
 	<string name="emulation_choose_singletaphold">Single tap hold button</string>
 	<string name="emulation_choose_second_finger_tap">Second finger tap button</string>
 	<string name="emulation_choose_second_finger_hold">Second finger hold button</string>
+	<string name="emulation_toggle_hotkeys">Toggle Hotkeys</string>
+	<string name="hotkey_save_state_1">Save State 1</string>
+	<string name="hotkey_save_state_2">Save State 2</string>
+	<string name="hotkey_load_state_1">Load State 1</string>
+	<string name="hotkey_load_state_2">Load State 2</string>
+	<string name="hotkey_toggle_pause">Toggle Pause</string>
+	<string name="hotkey_toggle_skip_efb">Toggle Skip EFB</string>
+	<string name="hotkey_toggle_ignore_format">Toggle Ignore Format</string>
+	<string name="hotkey_toggle_efb_texture">Toggle EFB Texture</string>
+	<string name="hotkey_toggle_ir_recenter">Toggle IR Recenter</string>
 	<string name="tap_button_none">None</string>
 
     <!-- GC Adapter Menu-->
