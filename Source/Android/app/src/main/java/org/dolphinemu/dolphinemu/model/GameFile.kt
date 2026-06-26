@@ -5,6 +5,7 @@ package org.dolphinemu.dolphinemu.model
 import androidx.annotation.Keep
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.dolphinemu.dolphinemu.utils.DirectoryInitialization
 
 @Keep
 class GameFile private constructor(private val pointer: Long) {
@@ -66,7 +67,10 @@ class GameFile private constructor(private val pointer: Long) {
     external private fun getTimePlayedMsInternal(): Long
 
     val customCoverPath: String
-        get() = "${getPath().substring(0, getPath().lastIndexOf("."))}.cover.png"
+    get() {
+        val coversDir = DirectoryInitialization.getUserDirectory() + "/Cache/GameCovers/"
+        return coversDir + getGameTdbId() + ".png"
+    }
 
     companion object {
         var REGION_NTSC_J = 0
