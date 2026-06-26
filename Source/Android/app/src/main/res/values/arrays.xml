@@ -867,4 +867,29 @@
         <item>-</item>
         <item>@string/gamepad_home</item>
     </string-array>
+	
+	<!-- hotkey Buttons -->
+	<string-array name="hotkeyButtons">
+    <item>@string/hotkey_save_state_1</item>
+    <item>@string/hotkey_save_state_2</item>
+    <item>@string/hotkey_load_state_1</item>
+    <item>@string/hotkey_load_state_2</item>
+    <item>@string/hotkey_toggle_pause</item>
+	<item>@string/hotkey_toggle_skip_efb</item>
+	<item>@string/hotkey_toggle_ignore_format</item>
+	<item>@string/hotkey_toggle_efb_texture</item>
+	<item>@string/hotkey_toggle_ir_recenter</item>
+	</string-array>
+	
+	<!-- GChotkey Buttons -->
+	<string-array name="GChotkeyButtons">
+    <item>@string/hotkey_save_state_1</item>
+    <item>@string/hotkey_save_state_2</item>
+    <item>@string/hotkey_load_state_1</item>
+    <item>@string/hotkey_load_state_2</item>
+    <item>@string/hotkey_toggle_pause</item>
+    <item>@string/hotkey_toggle_skip_efb</item>
+    <item>@string/hotkey_toggle_ignore_format</item>
+    <item>@string/hotkey_toggle_efb_texture</item>
+</string-array>
 </resources>

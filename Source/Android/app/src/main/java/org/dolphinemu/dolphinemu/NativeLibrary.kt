@@ -216,6 +216,17 @@ object NativeLibrary {
 		const val CLASSIC_R_ANALOG_STICK = 805
 		const val CLASSIC_TRIGGER_ANALOG_STICK = 806
 		
+		// Hotkeys
+		const val HOTKEY_SAVE_STATE_1 = 1001
+		const val HOTKEY_SAVE_STATE_2 = 1002
+		const val HOTKEY_LOAD_STATE_1 = 1011
+		const val HOTKEY_LOAD_STATE_2 = 1012
+		const val HOTKEY_TOGGLE_PAUSE = 1020
+		const val HOTKEY_TOGGLE_SKIP_EFB = 1021
+		const val HOTKEY_TOGGLE_IGNORE_FORMAT = 1022
+		const val HOTKEY_TOGGLE_EFB_TEXTURE = 1023
+		const val HOTKEY_TOGGLE_IR_RECENTER = 1024
+
     }
 
     object ButtonState {

@@ -30,6 +30,8 @@ import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting
 import org.dolphinemu.dolphinemu.features.settings.model.IntSetting
 import org.dolphinemu.dolphinemu.features.settings.model.IntSetting.Companion.getSettingForSIDevice
 import org.dolphinemu.dolphinemu.features.settings.model.IntSetting.Companion.getSettingForWiimoteSource
+import org.dolphinemu.dolphinemu.features.settings.model.NativeConfig
+import org.dolphinemu.dolphinemu.features.settings.model.Settings
 import java.util.Arrays
 
 /**
@@ -41,6 +43,7 @@ import java.util.Arrays
  */
 class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context, attrs),
     OnTouchListener {
+
     private val overlayButtons: MutableSet<InputOverlayDrawableButton> = HashSet()
     private val overlayDpads: MutableSet<InputOverlayDrawableDpad> = HashSet()
     private val overlayJoysticks: MutableSet<InputOverlayDrawableJoystick> = HashSet()
@@ -100,6 +103,15 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.GC_R_ANALOG_STICK -> 400f
             ButtonType.CLASSIC_L_ANALOG_STICK -> 20f
             ButtonType.CLASSIC_R_ANALOG_STICK -> 400f
+			ButtonType.HOTKEY_SAVE_STATE_1 -> 210f
+			ButtonType.HOTKEY_SAVE_STATE_2 -> 270f
+			ButtonType.HOTKEY_LOAD_STATE_1 -> 330f
+			ButtonType.HOTKEY_LOAD_STATE_2 -> 390f
+			ButtonType.HOTKEY_TOGGLE_PAUSE -> 450f
+			ButtonType.HOTKEY_TOGGLE_SKIP_EFB -> 510f
+			ButtonType.HOTKEY_TOGGLE_IGNORE_FORMAT -> 570f
+			ButtonType.HOTKEY_TOGGLE_EFB_TEXTURE -> 630f
+			ButtonType.HOTKEY_TOGGLE_IR_RECENTER -> 750f
 
             else -> getDefaultXFromIntegers(legacyId, orientation)
         }
@@ -193,6 +205,15 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.GC_R_ANALOG_STICK -> 700f
         ButtonType.CLASSIC_L_ANALOG_STICK -> 700f
         ButtonType.CLASSIC_R_ANALOG_STICK -> 700f
+		ButtonType.HOTKEY_SAVE_STATE_1 -> 30f
+		ButtonType.HOTKEY_SAVE_STATE_2 -> 30f
+		ButtonType.HOTKEY_LOAD_STATE_1 -> 30f
+		ButtonType.HOTKEY_LOAD_STATE_2 -> 30f
+		ButtonType.HOTKEY_TOGGLE_PAUSE -> 30f
+		ButtonType.HOTKEY_TOGGLE_SKIP_EFB -> 30f
+		ButtonType.HOTKEY_TOGGLE_IGNORE_FORMAT -> 30f
+		ButtonType.HOTKEY_TOGGLE_EFB_TEXTURE -> 30f
+		ButtonType.HOTKEY_TOGGLE_IR_RECENTER -> 30f
 
         else -> getDefaultYFromIntegers(legacyId, orientation)
     }
@@ -266,6 +287,10 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         // Request focus for the overlay so it has priority on presses.
         requestFocus()
     }
+
+	fun recenterPointer() {
+    overlayPointer?.recenter()
+	}
 
     fun setSurfacePosition(rect: Rect?) {
         surfacePosition = rect
@@ -474,7 +499,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 			prefs.getBoolean("IRNSwingOnSwipe_$gameId", BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.boolean)
 		else
 			BooleanSetting.MAIN_IR_NUNCHUK_SWING_ON_SWIPE.boolean
-		
+
         overlayPointer = InputOverlayPointer(
             surfacePosition!!,
             doubleTapControl,
@@ -830,7 +855,149 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun applyButtonControlState(button: InputOverlayDrawableButton) {
-        if (button.isAnalogOnly) {
+        // Hotkey buttons
+    if (button.isHotkeyButton) {
+        if (button.shouldTriggerHotkey()) {
+            when (button.legacyId) {
+                ButtonType.HOTKEY_SAVE_STATE_1 -> NativeLibrary.SaveState(0)
+                ButtonType.HOTKEY_SAVE_STATE_2 -> NativeLibrary.SaveState(1)
+                ButtonType.HOTKEY_LOAD_STATE_1 -> NativeLibrary.LoadState(0)
+                ButtonType.HOTKEY_LOAD_STATE_2 -> NativeLibrary.LoadState(1)
+                ButtonType.HOTKEY_TOGGLE_PAUSE -> {
+                    if (NativeLibrary.IsRunning()) {
+                        if (NativeLibrary.IsRunningAndUnpaused()) {
+                            NativeLibrary.PauseEmulation(false)
+                        } else {
+                            NativeLibrary.UnPauseEmulation()
+                        }
+
+                        // Toast
+                        (context as? Activity)?.runOnUiThread {
+                            val msg = if (NativeLibrary.IsRunningAndUnpaused())
+                                "Emulation: Resumed" else "Emulation: Paused"
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                ButtonType.HOTKEY_TOGGLE_SKIP_EFB -> {
+                    val before = NativeConfig.getBoolean(
+                        NativeConfig.LAYER_ACTIVE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBAccessEnable",
+                        true
+                    )
+
+                    val after = !before
+
+                    NativeConfig.setBoolean(
+                        NativeConfig.LAYER_ACTIVE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBAccessEnable",
+                        after
+                    )
+
+                    NativeConfig.setBoolean(
+                        NativeConfig.LAYER_BASE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBAccessEnable",
+                        after
+                    )
+                    NativeConfig.save(NativeConfig.LAYER_BASE)
+                    (context as? Activity)?.runOnUiThread {
+                        val isSkipEfbOn = !after
+                        Toast.makeText(
+                            context,
+                            "Skip EFB Access: ${if (isSkipEfbOn) "ON" else "OFF"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                ButtonType.HOTKEY_TOGGLE_IGNORE_FORMAT -> {
+                    val before = NativeConfig.getBoolean(
+                        NativeConfig.LAYER_ACTIVE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBEmulateFormatChanges",
+                        true
+                    )
+                    val after = !before
+                    NativeConfig.setBoolean(
+                        NativeConfig.LAYER_ACTIVE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBEmulateFormatChanges",
+                        after
+                    )
+                    NativeConfig.setBoolean(
+                        NativeConfig.LAYER_BASE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBEmulateFormatChanges",
+                        after
+                    )
+                    NativeConfig.save(NativeConfig.LAYER_BASE)
+
+                    (context as? Activity)?.runOnUiThread {
+                        val enabled = !after
+                        Toast.makeText(
+                            context,
+                            "Ignore Format Changes: ${if (enabled) "ON" else "OFF"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                ButtonType.HOTKEY_TOGGLE_EFB_TEXTURE -> {
+                    val before = NativeConfig.getBoolean(
+                        NativeConfig.LAYER_ACTIVE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBToTextureEnable",
+                        true
+                    )
+                    val after = !before
+                    NativeConfig.setBoolean(
+                        NativeConfig.LAYER_ACTIVE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBToTextureEnable",
+                        after
+                    )
+                    NativeConfig.setBoolean(
+                        NativeConfig.LAYER_BASE,
+                        Settings.FILE_GFX,
+                        Settings.SECTION_GFX_HACKS,
+                        "EFBToTextureEnable",
+                        after
+                    )
+                    NativeConfig.save(NativeConfig.LAYER_BASE)
+
+                    (context as? Activity)?.runOnUiThread {
+                        Toast.makeText(
+                            context,
+                            "Store EFB Copies: ${if (after) "Texture" else "RAM"}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                ButtonType.HOTKEY_TOGGLE_IR_RECENTER -> {
+                    recenterPointer()
+                    (context as? Activity)?.runOnUiThread {
+                        Toast.makeText(context, "IR Recentered", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        return
+    }
+
+		if (button.isAnalogOnly) {
             if (button.control == ControlId.GCPAD_L_ANALOG ||
                 button.control == ControlId.GCPAD_R_ANALOG
             ) {
@@ -984,6 +1151,44 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             dpad.setState(InputOverlayDrawableDpad.STATE_PRESSED_LEFT)
         } else if (right) {
             dpad.setState(InputOverlayDrawableDpad.STATE_PRESSED_RIGHT)
+        }
+    }
+
+    private fun addHotkeyOverlayControls(orientation: String) {
+        val hotkeyBase = "MAIN_BUTTON_TOGGLE_HOTKEY_"
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val isGameCube = gameId?.startsWith("G") == true
+        val hotkeyButtons = mutableListOf(
+            Triple(ButtonType.HOTKEY_SAVE_STATE_1, "Save1", 0),
+            Triple(ButtonType.HOTKEY_SAVE_STATE_2, "Save2", 1),
+            Triple(ButtonType.HOTKEY_LOAD_STATE_1, "Load1", 2),
+            Triple(ButtonType.HOTKEY_LOAD_STATE_2, "Load2", 3),
+            Triple(ButtonType.HOTKEY_TOGGLE_PAUSE, "Pause", 4),
+            Triple(ButtonType.HOTKEY_TOGGLE_SKIP_EFB, "Skip\nEFB", 5),
+            Triple(ButtonType.HOTKEY_TOGGLE_IGNORE_FORMAT, "Ignore\nFormat", 6),
+            Triple(ButtonType.HOTKEY_TOGGLE_EFB_TEXTURE, "Store\nEFB", 7),
+        )
+
+        if (!isGameCube) {
+            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_IR_RECENTER, "IR\nRecenter", 8))
+        }
+
+        for ((buttonType, label, index) in hotkeyButtons) {
+            if (getEffectiveToggle(hotkeyBase + index)) {
+                overlayButtons.add(
+                    initializeOverlayButton(
+                        context,
+                        R.drawable.wiimote_em,
+                        R.drawable.wiimote_em_pressed,
+                        buttonType,
+                        -1,
+                        orientation,
+                        false,
+                        label,
+                        isHotkeyButton = true
+                    )
+                )
+            }
         }
     }
 
@@ -1221,6 +1426,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+		addHotkeyOverlayControls(orientation)
     }
 
     private fun addWiimoteOverlayControls(orientation: String) {
@@ -1467,6 +1673,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+		addHotkeyOverlayControls(orientation)
     }
 
     private fun addNunchukOverlayControls(orientation: String) {
@@ -1886,6 +2093,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+		addHotkeyOverlayControls(orientation)
     }
 
     private fun addTaTaConOverlayControls(orientation: String) {
@@ -2023,6 +2231,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 ).also { it.useAlphaHitTest = true }
             )
         }
+		addHotkeyOverlayControls(orientation)
     }
 
     private fun addClassicOverlayControls(orientation: String) {
@@ -2295,6 +2504,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+		addHotkeyOverlayControls(orientation)
     }
 
     fun refreshControls() {
@@ -2377,6 +2587,21 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     fun refreshOverlayPointer() {
 		initTouchPointer()
 	}
+
+    fun toggleSidewaysWiimote() {
+        val wiimoteIndex = when {
+            configuredControllerType == OVERLAY_WIIMOTE ||
+                configuredControllerType == OVERLAY_WIIMOTE_SIDEWAYS ||
+                configuredControllerType == OVERLAY_WIIMOTE_NUNCHUK -> controllerIndex - 4
+
+            else -> return
+        }
+        val setting = EmulatedController.getSidewaysWiimoteSetting(wiimoteIndex)
+        val mappingSetting = InputMappingBooleanSetting(setting)
+        val current = mappingSetting.boolean
+        setting.setBooleanValue(!current)
+        refreshControls()
+    }
 
     fun resetButtonPlacement() {
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -2503,7 +2728,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         overlayLabel: String? = null,
         overlayLabelScale: Float = 0.28f,
         isAnalogOnly: Boolean = false,
-        analogPressValue: Double = 1.0
+        analogPressValue: Double = 1.0,
+		isHotkeyButton: Boolean = false
     ): InputOverlayDrawableButton {
         // Decide scale based on button ID and user preference
         var scale = when (legacyId) {
@@ -2568,7 +2794,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             overlayLabel,
             overlayLabelScale,
             isAnalogOnly,
-            analogPressValue
+            analogPressValue,
+			isHotkeyButton
         )
 
         // The X and Y coordinates of the InputOverlayDrawableButton on the InputOverlay.

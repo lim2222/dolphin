@@ -294,6 +294,10 @@ class InputOverlayPointer(
     fun setRecenter(recenter: Boolean) {
         this.recenter = recenter
     }
+	
+	fun recenter() {
+    reset()
+	}
 
     companion object {
         const val MODE_DISABLED = 0

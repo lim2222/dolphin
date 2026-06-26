@@ -459,7 +459,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                     )
                 else
                     BooleanSetting.MAIN_IR_ALWAYS_RECENTER.boolean
-					
+
 			menu.findItem(R.id.menu_emulation_ir_swing_on_swipe).isChecked =
 				if (gameId != null)
 					prefs.getBoolean(
@@ -468,7 +468,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 						)
 				else
 					BooleanSetting.MAIN_IR_SWING_ON_SWIPE.boolean
-					
+
 			menu.findItem(R.id.menu_emulation_ir_nunchuk_swing_on_swipe).isChecked =
 				if (gameId != null)
 					prefs.getBoolean(
@@ -506,12 +506,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 item.isChecked = !item.isChecked
                 toggleRecenter(item.isChecked)
             }
-			
+
 			MENU_SET_IR_SWING_ON_SWIPE -> {
 				item.isChecked = !item.isChecked
 				toggleSwingOnSwipe(item.isChecked)
 			}
-			
+
 			MENU_SET_IR_NUNCHUK_SWING_ON_SWIPE -> {
 				item.isChecked = !item.isChecked
 				toggleNSwingOnSwipe(item.isChecked)
@@ -524,6 +524,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             MENU_ACTION_EDIT_CONTROLS_PLACEMENT -> editControlsPlacement()
             MENU_ACTION_RESET_OVERLAY -> resetOverlay()
             MENU_ACTION_TOGGLE_CONTROLS -> toggleControls()
+			MENU_ACTION_TOGGLE_HOTKEYS -> toggleHotkeys()
             MENU_ACTION_LATCHING_CONTROLS -> latchingControls()
             MENU_ACTION_ADJUST_SCALE -> adjustScale()
             MENU_ACTION_CHOOSE_CONTROLLER -> chooseController()
@@ -584,7 +585,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             BooleanSetting.MAIN_IR_ALWAYS_RECENTER.setBoolean(settings, state)
         emulationFragment?.refreshOverlayPointer()
     }
-	
+
 	private fun toggleSwingOnSwipe(state: Boolean) {
 		val gameId = NativeLibrary.GetCurrentGameID()
 		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -594,7 +595,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 			BooleanSetting.MAIN_IR_SWING_ON_SWIPE.setBoolean(settings, state)
 		emulationFragment?.refreshOverlayPointer()
 	}
-	
+
 	private fun toggleNSwingOnSwipe(state: Boolean) {
 		val gameId = NativeLibrary.GetCurrentGameID()
 		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -746,6 +747,44 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             .setNeutralButton(R.string.emulation_toggle_all) { _, _ ->
                 emulationFragment!!.toggleInputOverlayVisibility(settings)
             }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
+    private fun toggleHotkeys() {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val hotkeyBase = "MAIN_BUTTON_TOGGLE_HOTKEY_"
+
+        val isGameCube = gameId?.startsWith("G") == true
+        val indices = if (isGameCube) intArrayOf(0, 1, 2, 3, 4, 5, 6, 7)
+        else intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8)
+
+        val arrayRes = if (isGameCube) R.array.GChotkeyButtons else R.array.hotkeyButtons
+
+        fun readToggle(): BooleanArray = BooleanArray(indices.size) { pos ->
+            val i = indices[pos]
+            if (gameId != null)
+                prefs.getBoolean(
+                    "Toggle_${gameId}_${hotkeyBase}$i",
+                    BooleanSetting.valueOf(hotkeyBase + i).boolean
+                )
+            else
+                BooleanSetting.valueOf(hotkeyBase + i).boolean
+        }
+
+        fun saveToggle(pos: Int, checked: Boolean) {
+            val i = indices[pos]
+            if (gameId != null)
+                prefs.edit().putBoolean("Toggle_${gameId}_${hotkeyBase}$i", checked).apply()
+            else
+                BooleanSetting.valueOf(hotkeyBase + i).setBoolean(settings, checked)
+            emulationFragment?.refreshInputOverlay()
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.emulation_toggle_hotkeys)
+            .setMultiChoiceItems(arrayRes, readToggle()) { _, pos, c -> saveToggle(pos, c) }
             .setPositiveButton(R.string.ok, null)
             .show()
     }
@@ -1356,11 +1395,13 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 		const val MENU_ACTION_CHOOSE_SECOND_FINGER_HOLD = 42
 		const val MENU_SET_IR_SWING_ON_SWIPE = 43
 		const val MENU_SET_IR_NUNCHUK_SWING_ON_SWIPE = 44
+		const val MENU_ACTION_TOGGLE_HOTKEYS = 45
 
         init {
             buttonsActionsMap.apply {
                 append(R.id.menu_emulation_edit_layout, MENU_ACTION_EDIT_CONTROLS_PLACEMENT)
                 append(R.id.menu_emulation_toggle_controls, MENU_ACTION_TOGGLE_CONTROLS)
+				append(R.id.menu_emulation_toggle_hotkeys, MENU_ACTION_TOGGLE_HOTKEYS)
                 append(R.id.menu_emulation_latching_controls, MENU_ACTION_LATCHING_CONTROLS)
                 append(R.id.menu_emulation_adjust_scale, MENU_ACTION_ADJUST_SCALE)
                 append(R.id.menu_emulation_choose_controller, MENU_ACTION_CHOOSE_CONTROLLER)

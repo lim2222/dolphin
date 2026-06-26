@@ -1563,6 +1563,60 @@ enum class BooleanSetting(
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
         "ButtonLatchingNunchukOnlyNTiltRight",
         false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_0(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeySaveState1",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_1(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeySaveState2",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_2(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyLoadState1",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_3(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyLoadState2",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_4(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyTogglePause",
+		false
+	),	
+	MAIN_BUTTON_TOGGLE_HOTKEY_5(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeySkipEFB",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_6(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyIgnoreFormat",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_7(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyEFBTexture",
+		false
+	),	
+	MAIN_BUTTON_TOGGLE_HOTKEY_8(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyIRRecenter",
+		false
     );
 
     override val isOverridden: Boolean

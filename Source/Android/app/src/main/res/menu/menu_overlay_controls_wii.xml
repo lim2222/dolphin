@@ -9,6 +9,10 @@
     <item
         android:id="@+id/menu_emulation_toggle_controls"
         android:title="@string/emulation_toggle_controls"/>
+		
+	<item
+		android:id="@+id/menu_emulation_toggle_hotkeys"
+		android:title="@string/emulation_toggle_hotkeys"/>	
 
     <item
         android:id="@+id/menu_emulation_latching_controls"
