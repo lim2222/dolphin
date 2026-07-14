@@ -449,6 +449,22 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         // Populate the switch value for joystick center on touch
         menu.findItem(R.id.menu_emulation_joystick_rel_center).isChecked =
             BooleanSetting.MAIN_JOYSTICK_REL_CENTER.boolean
+        menu.findItem(R.id.menu_emulation_haptic_feedback).isChecked =
+            if (gameId != null)
+                prefs.getBoolean(
+                    "OverlayHapticFeedback_$gameId",
+                    BooleanSetting.MAIN_OVERLAY_HAPTIC_FEEDBACK.boolean
+                )
+            else
+                BooleanSetting.MAIN_OVERLAY_HAPTIC_FEEDBACK.boolean
+        menu.findItem(R.id.menu_emulation_keep_first_touched).isChecked =
+            if (gameId != null)
+                prefs.getBoolean(
+                    "OverlayKeepFirstTouched_$gameId",
+                    BooleanSetting.MAIN_OVERLAY_KEEP_FIRST_TOUCHED.boolean
+                )
+            else
+                BooleanSetting.MAIN_OVERLAY_KEEP_FIRST_TOUCHED.boolean
         if (wii) {
 
             menu.findItem(R.id.menu_emulation_ir_recenter).isChecked =
@@ -500,6 +516,16 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             MENU_ACTION_JOYSTICK_REL_CENTER -> {
                 item.isChecked = !item.isChecked
                 toggleJoystickRelCenter(item.isChecked)
+            }
+
+            MENU_ACTION_HAPTIC_FEEDBACK -> {
+                item.isChecked = !item.isChecked
+                toggleOverlayHapticFeedback(item.isChecked)
+            }
+
+            MENU_ACTION_KEEP_FIRST_TOUCHED -> {
+                item.isChecked = !item.isChecked
+                toggleOverlayKeepFirstTouched(item.isChecked)
             }
 
             MENU_SET_IR_RECENTER -> {
@@ -574,6 +600,24 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
     private fun toggleJoystickRelCenter(state: Boolean) {
         BooleanSetting.MAIN_JOYSTICK_REL_CENTER.setBoolean(settings, state)
+    }
+
+    private fun toggleOverlayHapticFeedback(state: Boolean) {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        if (gameId != null)
+            prefs.edit().putBoolean("OverlayHapticFeedback_$gameId", state).apply()
+        else
+            BooleanSetting.MAIN_OVERLAY_HAPTIC_FEEDBACK.setBoolean(settings, state)
+    }
+
+    private fun toggleOverlayKeepFirstTouched(state: Boolean) {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        if (gameId != null)
+            prefs.edit().putBoolean("OverlayKeepFirstTouched_$gameId", state).apply()
+        else
+            BooleanSetting.MAIN_OVERLAY_KEEP_FIRST_TOUCHED.setBoolean(settings, state)
     }
 
     private fun toggleRecenter(state: Boolean) {
@@ -756,11 +800,15 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val hotkeyBase = "MAIN_BUTTON_TOGGLE_HOTKEY_"
 
-        val isGameCube = gameId?.startsWith("G") == true
-        val indices = if (isGameCube) intArrayOf(0, 1, 2, 3, 4, 5, 6, 7)
-        else intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8)
+        val controller = InputOverlay.configuredControllerType
+        val indices = when (controller) {
+            InputOverlay.OVERLAY_GAMECUBE -> intArrayOf(0, 1, 2, 3, 4, 5, 6, 7)
+            InputOverlay.OVERLAY_WIIMOTE_TATACON,
+            InputOverlay.OVERLAY_WIIMOTE_CLASSIC -> intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8)
+            else -> intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        }
 
-        val arrayRes = if (isGameCube) R.array.GChotkeyButtons else R.array.hotkeyButtons
+        val arrayRes = if (controller == InputOverlay.OVERLAY_GAMECUBE) R.array.GChotkeyButtons else R.array.hotkeyButtons
 
         fun readToggle(): BooleanArray = BooleanArray(indices.size) { pos ->
             val i = indices[pos]
@@ -1377,6 +1425,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         const val MENU_ACTION_EXIT = 22
         const val MENU_ACTION_CHANGE_DISC = 23
         const val MENU_ACTION_JOYSTICK_REL_CENTER = 24
+        const val MENU_ACTION_HAPTIC_FEEDBACK = 25
+        const val MENU_ACTION_KEEP_FIRST_TOUCHED = 46
         const val MENU_ACTION_RESET_OVERLAY = 26
         const val MENU_SET_IR_RECENTER = 27
         const val MENU_SET_IR_MODE = 28
@@ -1406,6 +1456,8 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
                 append(R.id.menu_emulation_adjust_scale, MENU_ACTION_ADJUST_SCALE)
                 append(R.id.menu_emulation_choose_controller, MENU_ACTION_CHOOSE_CONTROLLER)
                 append(R.id.menu_emulation_joystick_rel_center, MENU_ACTION_JOYSTICK_REL_CENTER)
+                append(R.id.menu_emulation_haptic_feedback, MENU_ACTION_HAPTIC_FEEDBACK)
+                append(R.id.menu_emulation_keep_first_touched, MENU_ACTION_KEEP_FIRST_TOUCHED)
                 append(R.id.menu_emulation_reset_overlay, MENU_ACTION_RESET_OVERLAY)
                 append(R.id.menu_emulation_ir_recenter, MENU_SET_IR_RECENTER)
 				append(R.id.menu_emulation_ir_swing_on_swipe, MENU_SET_IR_SWING_ON_SWIPE)

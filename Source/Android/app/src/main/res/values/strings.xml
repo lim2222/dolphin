@@ -642,6 +642,8 @@ It can efficiently compress both junk data and encrypted Wii data.
     <string name="emulation_control_opacity">Opacity</string>
     <string name="emulation_control_adjustments">Adjust Controls</string>
     <string name="emulation_control_joystick_rel_center">Relative Stick Center</string>
+    <string name="emulation_control_haptic_feedback">Haptic Feedback</string>
+    <string name="emulation_keep_first_touched">Button Pressed Dragging</string>
     <string name="emulation_choose_controller">Choose Controller</string>
     <string name="emulation_more_controller_settings">More Settings</string>
     <string name="emulation_menu_help">Press Back to access the menu.\nLong press Back to exit emulation.</string>
@@ -668,6 +670,8 @@ It can efficiently compress both junk data and encrypted Wii data.
 	<string name="hotkey_toggle_ignore_format">Toggle Ignore Format</string>
 	<string name="hotkey_toggle_efb_texture">Toggle EFB Texture</string>
 	<string name="hotkey_toggle_ir_recenter">Toggle IR Recenter</string>
+	<string name="hotkey_toggle_wiimote_upright">Toggle Wii Remote Upright</string>
+	<string name="hotkey_toggle_wiimote_sideways">Toggle Wii Remote Sideways</string>
 	<string name="tap_button_none">None</string>
 
     <!-- GC Adapter Menu-->

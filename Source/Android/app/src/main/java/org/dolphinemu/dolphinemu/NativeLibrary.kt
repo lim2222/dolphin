@@ -226,11 +226,8 @@ object NativeLibrary {
 		const val HOTKEY_TOGGLE_IGNORE_FORMAT = 1022
 		const val HOTKEY_TOGGLE_EFB_TEXTURE = 1023
 		const val HOTKEY_TOGGLE_IR_RECENTER = 1024
-
-    }
-
-    object ButtonState {
-        const val RELEASED = 0
+        const val HOTKEY_TOGGLE_WIIMOTE_UPRIGHT = 1025
+        const val HOTKEY_TOGGLE_WIIMOTE_SIDEWAYS = 1026
         const val PRESSED = 1
     }
 

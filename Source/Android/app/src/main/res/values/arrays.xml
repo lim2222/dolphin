@@ -879,6 +879,8 @@
 	<item>@string/hotkey_toggle_ignore_format</item>
 	<item>@string/hotkey_toggle_efb_texture</item>
 	<item>@string/hotkey_toggle_ir_recenter</item>
+	<item>@string/hotkey_toggle_wiimote_upright</item>
+	<item>@string/hotkey_toggle_wiimote_sideways</item>
 	</string-array>
 	
 	<!-- GChotkey Buttons -->

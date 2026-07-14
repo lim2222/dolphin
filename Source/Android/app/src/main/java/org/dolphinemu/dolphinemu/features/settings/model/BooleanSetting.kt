@@ -276,6 +276,18 @@ enum class BooleanSetting(
         "JoystickRelCenter",
         true
     ),
+    MAIN_OVERLAY_HAPTIC_FEEDBACK(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID,
+        "OverlayHapticFeedback",
+        true
+    ),
+    MAIN_OVERLAY_KEEP_FIRST_TOUCHED(
+        Settings.FILE_DOLPHIN,
+        Settings.SECTION_INI_ANDROID,
+        "OverlayKeepFirstTouched",
+        true
+    ),
     MAIN_SHOW_INPUT_OVERLAY(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID,
@@ -1617,7 +1629,19 @@ enum class BooleanSetting(
 		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
 		"ButtonToggleHotkeyIRRecenter",
 		false
-    );
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_9(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyWiimoteUpright",
+		false
+	),
+	MAIN_BUTTON_TOGGLE_HOTKEY_10(
+		Settings.FILE_DOLPHIN,
+		Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+		"ButtonToggleHotkeyWiimoteSideways",
+		false
+	);
 
     override val isOverridden: Boolean
         get() = NativeConfig.isOverridden(file, section, key)

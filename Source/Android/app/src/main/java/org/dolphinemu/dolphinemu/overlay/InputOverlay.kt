@@ -10,6 +10,10 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.AttributeSet
 import android.util.DisplayMetrics
 import android.view.MotionEvent
@@ -61,9 +65,52 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     private var dpadBeingConfigured: InputOverlayDrawableDpad? = null
     private var joystickBeingConfigured: InputOverlayDrawableJoystick? = null
 
+    // For keep-first-touched behavior
+    private var keepFirstTouchedButton: InputOverlayDrawableButton? = null
+    private var keepFirstTouchedPointer: Int = -1
+    // Defer overlay rebuilds when we're iterating input collections to avoid
+    // ConcurrentModificationException from modifying overlayButtons while
+    // handling touch events.
+    private var pendingRefreshControls: Boolean = false
+
+    private val vibrator: Vibrator? by lazy {
+        val ctx = context ?: return@lazy null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager =
+                ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager?
+            manager?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator?
+        }
+    }
+
     private val preferences: SharedPreferences
         get() =
             PreferenceManager.getDefaultSharedPreferences(DolphinApplication.getAppContext())
+
+    private fun overlayHapticFeedbackEnabled(): Boolean {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        return if (gameId != null)
+            preferences.getBoolean(
+                "OverlayHapticFeedback_$gameId",
+                BooleanSetting.MAIN_OVERLAY_HAPTIC_FEEDBACK.boolean
+            )
+        else
+            BooleanSetting.MAIN_OVERLAY_HAPTIC_FEEDBACK.boolean
+    }
+
+    private fun overlayKeepFirstTouchedEnabled(): Boolean {
+        val gameId = NativeLibrary.GetCurrentGameID()
+        return if (gameId != null)
+            preferences.getBoolean(
+                "OverlayKeepFirstTouched_$gameId",
+                BooleanSetting.MAIN_OVERLAY_KEEP_FIRST_TOUCHED.boolean
+            )
+        else
+            BooleanSetting.MAIN_OVERLAY_KEEP_FIRST_TOUCHED.boolean
+    }
+
     private fun getMotionButtonDefaultX(
         legacyId: Int,
         orientation: String = "landscape"
@@ -558,8 +605,16 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     ) {
                         button.setPressedState(if (button.latching) !button.getPressedState() else true)
                         button.trackId = event.getPointerId(pointerIndex)
+                        
+                        // Track this button for keep-first-touched behavior
+                        if (overlayKeepFirstTouchedEnabled() && !button.latching) {
+                            keepFirstTouchedButton = button
+                            keepFirstTouchedPointer = event.getPointerId(pointerIndex)
+                        }
+                        
                         pressed = true
                         applyButtonControlState(button)
+                        maybeHapticFeedback(hapticDurationForButton(button.legacyId))
                     }
                 }
 
@@ -572,6 +627,46 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                         applyButtonControlState(button)
 
                         button.trackId = -1
+                        
+                        // Clear keep-first-touched tracking if this pointer is released
+                        if (keepFirstTouchedPointer == event.getPointerId(pointerIndex)) {
+                            keepFirstTouchedButton = null
+                            keepFirstTouchedPointer = -1
+                        }
+                    }
+                }
+                
+                MotionEvent.ACTION_MOVE -> {
+                    if (overlayKeepFirstTouchedEnabled() && keepFirstTouchedPointer != -1) {
+                        val movePointerIndex = event.findPointerIndex(keepFirstTouchedPointer)
+                        if (movePointerIndex != -1) {
+                            val pointerX = event.getX(movePointerIndex).toInt()
+                            val pointerY = event.getY(movePointerIndex).toInt()
+                            val pointerOverButton = button.hitTest(
+                                pointerX,
+                                pointerY,
+                                button.useAlphaHitTest
+                            )
+
+                            if (keepFirstTouchedButton == button) {
+                                // keep the first touched button pressed until release
+                                button.setPressedState(true)
+                                pressed = true
+                            } else if (!button.latching && pointerOverButton) {
+                                // Press another button when drag moves over it.
+                                if (!button.getPressedState()) {
+                                    button.setPressedState(true)
+                                    applyButtonControlState(button)
+                                }
+                                button.trackId = keepFirstTouchedPointer
+                                pressed = true
+                            } else if (button.trackId == keepFirstTouchedPointer && button != keepFirstTouchedButton) {
+                                // Release a non-first-touched button when the pointer leaves it.
+                                button.setPressedState(false)
+                                applyButtonControlState(button)
+                                button.trackId = -1
+                            }
+                        }
                     }
                 }
             }
@@ -610,6 +705,18 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                         if (dpad.bounds.right - dpad.width / 3 < event.getX(pointerIndex).toInt())
                             dpadPressed[3] = true
 
+                        // Haptic only when a cardinal direction newly engages (not center touch)
+                        var directionNewlyPressed = false
+                        for (i in dpadPressed.indices) {
+                            if (dpadPressed[i] && !dpad.lastDirectionPressed[i]) {
+                                directionNewlyPressed = true
+                            }
+                            dpad.lastDirectionPressed[i] = dpadPressed[i]
+                        }
+                        if (directionNewlyPressed) {
+                            maybeHapticFeedback(HAPTIC_DPAD_MS)
+                        }
+
                         // Release the buttons first, then press
                         for (i in dpadPressed.indices) {
                             if (!dpadPressed[i]) {
@@ -647,6 +754,7 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                                 dpad.getControl(i),
                                 0.0
                             )
+                            dpad.lastDirectionPressed[i] = false
                         }
                         dpad.trackId = -1
                     }
@@ -658,6 +766,15 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             if (joystick.trackEvent(event)) {
                 if (joystick.trackId != -1)
                     pressed = true
+            }
+
+            // Max-throw "bump" when stick first reaches the gate edge
+            if (joystick.trackId != -1) {
+                val atMax = joystick.isAtMaxExtent()
+                if (atMax && !joystick.wasAtMaxExtent) {
+                    maybeHapticFeedback(HAPTIC_JOYSTICK_MS)
+                }
+                joystick.wasAtMaxExtent = atMax
             }
 
             if (!joystick.isAnalogTriggerStick && !joystick.isVerticalTriggerStick) {
@@ -698,6 +815,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                     -overlayPointer!!.y.toDouble()
                 )
             }
+        }
+
+        if (pendingRefreshControls) {
+            pendingRefreshControls = false
+            refreshControls()
         }
 
         invalidate()
@@ -992,6 +1114,24 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                         Toast.makeText(context, "IR Recentered", Toast.LENGTH_SHORT).show()
                     }
                 }
+
+                ButtonType.HOTKEY_TOGGLE_WIIMOTE_UPRIGHT -> {
+                    // Don't refresh controls while we're iterating overlayButtons.
+                    setWiimoteSideways(false, false)
+                    pendingRefreshControls = true
+                    (context as? Activity)?.runOnUiThread {
+                        Toast.makeText(context, "Wiimote: Upright", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                ButtonType.HOTKEY_TOGGLE_WIIMOTE_SIDEWAYS -> {
+                    // Don't refresh controls while we're iterating overlayButtons.
+                    setWiimoteSideways(true, false)
+                    pendingRefreshControls = true
+                    (context as? Activity)?.runOnUiThread {
+                        Toast.makeText(context, "Wiimote: Sideways", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
         return
@@ -1120,6 +1260,32 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         )
     }
 
+    private fun hapticDurationForButton(legacyId: Int): Long {
+        // Tatacon drum pads get a stronger (longer) hit so Taiko feel is punchier
+        return if (isTataconPad(legacyId)) HAPTIC_TATACON_MS else HAPTIC_BUTTON_MS
+    }
+
+    private fun isTataconPad(legacyId: Int): Boolean {
+        return legacyId == ButtonType.TATACON_RIM_LEFT ||
+            legacyId == ButtonType.TATACON_RIM_RIGHT ||
+            legacyId == ButtonType.TATACON_CENTER_LEFT ||
+            legacyId == ButtonType.TATACON_CENTER_RIGHT
+    }
+
+    private fun maybeHapticFeedback(durationMs: Long) {
+        if (!overlayHapticFeedbackEnabled()) return
+        val v = vibrator ?: return
+        if (!v.hasVibrator()) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            v.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            v.vibrate(durationMs)
+        }
+    }
+
     private fun setDpadState(
         dpad: InputOverlayDrawableDpad,
         up: Boolean,
@@ -1171,6 +1337,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         if (!isGameCube) {
             hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_IR_RECENTER, "IR\nRecenter", 8))
+            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_WIIMOTE_UPRIGHT, "Upright", 9))
+            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_WIIMOTE_SIDEWAYS, "Sideways", 10))
         }
 
         for ((buttonType, label, index) in hotkeyButtons) {
@@ -2589,18 +2757,35 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 	}
 
     fun toggleSidewaysWiimote() {
+        setWiimoteSideways(!isWiimoteSideways())
+    }
+
+    private fun isWiimoteSideways(): Boolean {
         val wiimoteIndex = when {
             configuredControllerType == OVERLAY_WIIMOTE ||
                 configuredControllerType == OVERLAY_WIIMOTE_SIDEWAYS ||
-                configuredControllerType == OVERLAY_WIIMOTE_NUNCHUK -> controllerIndex - 4
+                configuredControllerType == OVERLAY_WIIMOTE_NUNCHUK ||
+                configuredControllerType == OVERLAY_WIIMOTE_CLASSIC -> controllerIndex
+
+            else -> return false
+        }
+        val setting = EmulatedController.getSidewaysWiimoteSetting(wiimoteIndex)
+        val mappingSetting = InputMappingBooleanSetting(setting)
+        return mappingSetting.boolean
+    }
+
+    private fun setWiimoteSideways(sideways: Boolean, refresh: Boolean = true) {
+        val wiimoteIndex = when {
+            configuredControllerType == OVERLAY_WIIMOTE ||
+                configuredControllerType == OVERLAY_WIIMOTE_SIDEWAYS ||
+                configuredControllerType == OVERLAY_WIIMOTE_NUNCHUK ||
+                configuredControllerType == OVERLAY_WIIMOTE_CLASSIC -> controllerIndex
 
             else -> return
         }
         val setting = EmulatedController.getSidewaysWiimoteSetting(wiimoteIndex)
-        val mappingSetting = InputMappingBooleanSetting(setting)
-        val current = mappingSetting.boolean
-        setting.setBooleanValue(!current)
-        refreshControls()
+        setting.setBooleanValue(sideways)
+        if (refresh) refreshControls() else pendingRefreshControls = true
     }
 
     fun resetButtonPlacement() {
@@ -3966,6 +4151,15 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     companion object {
+        /** Overlay button press vibration duration (ms). */
+        private const val HAPTIC_BUTTON_MS = 80L
+        /** Tatacon rim/center pads — stronger hit (ms). */
+        private const val HAPTIC_TATACON_MS = 120L
+        /** D-pad direction engage vibration duration (ms). */
+        private const val HAPTIC_DPAD_MS = 30L
+        /** Joystick max-throw edge vibration duration (ms). */
+        private const val HAPTIC_JOYSTICK_MS = 30L
+
         const val OVERLAY_GAMECUBE = 0
         const val OVERLAY_WIIMOTE = 1
         const val OVERLAY_WIIMOTE_SIDEWAYS = 2
