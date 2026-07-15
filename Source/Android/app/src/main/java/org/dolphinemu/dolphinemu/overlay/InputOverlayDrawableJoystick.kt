@@ -68,6 +68,9 @@ class InputOverlayDrawableJoystick(
     private val boundsBoxBitmap: BitmapDrawable
     private var pressedState = false
 
+    /** True while stick is held at the gate edge; used for edge-triggered haptic. */
+    var wasAtMaxExtent = false
+
     var bounds: Rect
         get() = outerBitmap.bounds
         set(bounds) {
@@ -170,6 +173,7 @@ class InputOverlayDrawableJoystick(
                         Rect(origBounds.left, origBounds.top, origBounds.right, origBounds.bottom)
                     setInnerBounds()
                     trackId = -1
+                    wasAtMaxExtent = false
                 }
             }
         }
@@ -244,11 +248,7 @@ class InputOverlayDrawableJoystick(
 
         val angle = atan2(y, x) + Math.PI + Math.PI
         val radius = hypot(y, x)
-        val maxRadius = if (isAnalogTriggerStick || isVerticalTriggerStick) {
-			1.0
-        } else {
-            InputOverrider.getGateRadiusAtAngle(controllerIndex, xControl, angle)
-        }
+        val maxRadius = getMaxRadiusAtAngle(angle)
         if (radius > maxRadius) {
             x = maxRadius * cos(angle)
             y = maxRadius * sin(angle)
@@ -268,6 +268,31 @@ class InputOverlayDrawableJoystick(
             pixelY + height
         )
         pressedStateInnerBitmap.bounds = defaultStateInnerBitmap.bounds
+    }
+
+    private fun getMaxRadiusAtAngle(angle: Double): Double {
+        return if (isAnalogTriggerStick || isVerticalTriggerStick) {
+            1.0
+        } else {
+            InputOverrider.getGateRadiusAtAngle(controllerIndex, xControl, angle)
+        }
+    }
+
+    /**
+     * True when the stick is held at (or past) the outer gate edge — used for max-throw haptic.
+     */
+    fun isAtMaxExtent(threshold: Float = 0.97f): Boolean {
+        if (trackId == -1) return false
+        val x = x.toDouble()
+        val y = y.toDouble()
+        if (isAnalogTriggerStick || isVerticalTriggerStick) {
+            // 1D sticks: max when |Y| is near full throw
+            return kotlin.math.abs(y) >= threshold
+        }
+        val angle = atan2(y, x) + Math.PI + Math.PI
+        val radius = hypot(y, x)
+        val maxRadius = getMaxRadiusAtAngle(angle)
+        return maxRadius > 0.0 && radius >= maxRadius * threshold
     }
 
     fun setPosition(x: Int, y: Int) {

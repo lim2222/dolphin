@@ -49,7 +49,11 @@ class InputOverlayDrawableDpad(
     private val defaultStateBitmap: BitmapDrawable
     private val pressedOneDirectionStateBitmap: BitmapDrawable
     private val pressedTwoDirectionsStateBitmap: BitmapDrawable
-    private var pressState = STATE_DEFAULT
+    var pressState = STATE_DEFAULT
+        private set
+
+    /** Previous up/down/left/right pressed flags, for edge-triggered haptic. */
+    val lastDirectionPressed = booleanArrayOf(false, false, false, false)
 
     init {
         this.defaultStateBitmap = BitmapDrawable(res, defaultStateBitmap)

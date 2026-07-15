@@ -7,6 +7,16 @@
         android:title="@string/emulation_edit_layout"/>
 
     <item
+        android:id="@+id/menu_emulation_haptic_feedback"
+        android:checkable="true"
+        android:title="@string/emulation_control_haptic_feedback"/>
+
+    <item
+        android:id="@+id/menu_emulation_keep_first_touched"
+        android:checkable="true"
+        android:title="@string/emulation_keep_first_touched"/>
+
+    <item
         android:id="@+id/menu_emulation_toggle_controls"
         android:title="@string/emulation_toggle_controls"/>
 		

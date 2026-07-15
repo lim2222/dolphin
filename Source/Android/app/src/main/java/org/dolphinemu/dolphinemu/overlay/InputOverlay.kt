@@ -1337,8 +1337,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         if (!isGameCube) {
             hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_IR_RECENTER, "IR\nRecenter", 8))
-            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_WIIMOTE_UPRIGHT, "Upright", 9))
-            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_WIIMOTE_SIDEWAYS, "Sideways", 10))
+            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_WIIMOTE_UPRIGHT, "Upright\nWiimote", 9))
+            hotkeyButtons.add(Triple(ButtonType.HOTKEY_TOGGLE_WIIMOTE_SIDEWAYS, "Sideways\nWiimote", 10))
         }
 
         for ((buttonType, label, index) in hotkeyButtons) {

@@ -114,7 +114,8 @@ class InputOverlayDrawableButton(
             paint.textSize = bounds.width() * 0.22f
             val lineHeight = paint.textSize * 1.2f
             val totalHeight = lineHeight * lines.size
-            val startY = bounds.exactCenterY() - totalHeight / 2f + paint.textSize / 2f
+            val fm = paint.fontMetrics
+            val startY = bounds.exactCenterY() - totalHeight / 2f - fm.ascent
 
             lines.forEachIndexed { i, line ->
                 canvas.drawText(
