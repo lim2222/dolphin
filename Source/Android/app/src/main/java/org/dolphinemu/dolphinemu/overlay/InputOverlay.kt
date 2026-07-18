@@ -672,6 +672,48 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             }
         }
 
+        // Follow-finger exclusive transfer when keep-first is off: sliding A→B→A
+        // releases the previous button and presses the one currently under the finger.
+        if (action == MotionEvent.ACTION_MOVE && !overlayKeepFirstTouchedEnabled()) {
+            for (i in 0 until event.pointerCount) {
+                val pointerId = event.getPointerId(i)
+                val pointerX = event.getX(i).toInt()
+                val pointerY = event.getY(i).toInt()
+
+                // Prefer staying on the button this pointer already owns if still over it
+                // (stable when bounds slightly overlap).
+                val underFinger = overlayButtons.firstOrNull { candidate ->
+                    candidate.trackId == pointerId &&
+                        !candidate.latching &&
+                        candidate.hitTest(pointerX, pointerY, candidate.useAlphaHitTest)
+                } ?: overlayButtons.firstOrNull { candidate ->
+                    !candidate.latching &&
+                        candidate.hitTest(pointerX, pointerY, candidate.useAlphaHitTest) &&
+                        (candidate.trackId == -1 || candidate.trackId == pointerId)
+                }
+
+                for (old in overlayButtons) {
+                    if (old.trackId == pointerId && old != underFinger) {
+                        if (!old.latching) {
+                            old.setPressedState(false)
+                            applyButtonControlState(old)
+                        }
+                        old.trackId = -1
+                    }
+                }
+
+                if (underFinger != null) {
+                    if (!underFinger.getPressedState()) {
+                        underFinger.setPressedState(true)
+                        applyButtonControlState(underFinger)
+                        maybeHapticFeedback(hapticDurationForButton(underFinger.legacyId))
+                    }
+                    underFinger.trackId = pointerId
+                    pressed = true
+                }
+            }
+        }
+
         for (dpad in overlayDpads) {
             // Determine the button state to apply based on the MotionEvent action flag.
             when (event.action and MotionEvent.ACTION_MASK) {
