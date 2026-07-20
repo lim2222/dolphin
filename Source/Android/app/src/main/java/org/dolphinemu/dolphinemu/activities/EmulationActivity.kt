@@ -677,20 +677,26 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         val currentController = InputOverlay.configuredControllerType
         val gameId = NativeLibrary.GetCurrentGameID()
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val orientKey = if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) "Portrait" else "Landscape"
 
         fun readLatching(base: String, size: Int): BooleanArray =
             BooleanArray(size) { i ->
-                if (gameId != null)
-                    prefs.getBoolean("Latching_${gameId}_${base}$i",
-                        BooleanSetting.valueOf(base + i).boolean)
-                else
+                if (gameId != null) {
+                    val perOrientKey = "Latching_${gameId}_${orientKey}_${base}$i"
+                    if (prefs.contains(perOrientKey))
+                        prefs.getBoolean(perOrientKey, BooleanSetting.valueOf(base + i).boolean)
+                    else
+                        prefs.getBoolean("Latching_${gameId}_${base}$i",
+                            BooleanSetting.valueOf(base + i).boolean)
+                } else
                     BooleanSetting.valueOf(base + i).boolean
             }
 
         fun saveLatching(base: String, index: Int, checked: Boolean) {
-            if (gameId != null)
-                prefs.edit().putBoolean("Latching_${gameId}_${base}$index", checked).apply()
-            else
+            if (gameId != null) {
+                val perOrientKey = "Latching_${gameId}_${orientKey}_${base}$index"
+                prefs.edit().putBoolean(perOrientKey, checked).apply()
+            } else
                 BooleanSetting.valueOf(base + index).setBoolean(settings, checked)
             emulationFragment?.refreshInputOverlay()
         }
@@ -742,20 +748,26 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         val currentController = InputOverlay.configuredControllerType
         val gameId = NativeLibrary.GetCurrentGameID()
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val orientKey = if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) "Portrait" else "Landscape"
 
         fun readToggle(base: String, size: Int): BooleanArray =
             BooleanArray(size) { i ->
-                if (gameId != null)
-                    prefs.getBoolean("Toggle_${gameId}_${base}$i",
-                        BooleanSetting.valueOf(base + i).boolean)
-                else
+                if (gameId != null) {
+                    val perOrientKey = "Toggle_${gameId}_${orientKey}_${base}$i"
+                    if (prefs.contains(perOrientKey))
+                        prefs.getBoolean(perOrientKey, BooleanSetting.valueOf(base + i).boolean)
+                    else
+                        prefs.getBoolean("Toggle_${gameId}_${base}$i",
+                            BooleanSetting.valueOf(base + i).boolean)
+                } else
                     BooleanSetting.valueOf(base + i).boolean
             }
 
         fun saveToggle(base: String, index: Int, checked: Boolean) {
-            if (gameId != null)
-                prefs.edit().putBoolean("Toggle_${gameId}_${base}$index", checked).apply()
-            else
+            if (gameId != null) {
+                val perOrientKey = "Toggle_${gameId}_${orientKey}_${base}$index"
+                prefs.edit().putBoolean(perOrientKey, checked).apply()
+            } else
                 BooleanSetting.valueOf(base + index).setBoolean(settings, checked)
             emulationFragment?.refreshInputOverlay()
         }
@@ -799,6 +811,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         val gameId = NativeLibrary.GetCurrentGameID()
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val hotkeyBase = "MAIN_BUTTON_TOGGLE_HOTKEY_"
+        val orientKey = if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) "Portrait" else "Landscape"
 
         val controller = InputOverlay.configuredControllerType
         val indices = when (controller) {
@@ -812,20 +825,25 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 
         fun readToggle(): BooleanArray = BooleanArray(indices.size) { pos ->
             val i = indices[pos]
-            if (gameId != null)
-                prefs.getBoolean(
-                    "Toggle_${gameId}_${hotkeyBase}$i",
-                    BooleanSetting.valueOf(hotkeyBase + i).boolean
-                )
-            else
+            if (gameId != null) {
+                val perOrientKey = "Toggle_${gameId}_${orientKey}_${hotkeyBase}$i"
+                if (prefs.contains(perOrientKey))
+                    prefs.getBoolean(perOrientKey, BooleanSetting.valueOf(hotkeyBase + i).boolean)
+                else
+                    prefs.getBoolean(
+                        "Toggle_${gameId}_${hotkeyBase}$i",
+                        BooleanSetting.valueOf(hotkeyBase + i).boolean
+                    )
+            } else
                 BooleanSetting.valueOf(hotkeyBase + i).boolean
         }
 
         fun saveToggle(pos: Int, checked: Boolean) {
             val i = indices[pos]
-            if (gameId != null)
-                prefs.edit().putBoolean("Toggle_${gameId}_${hotkeyBase}$i", checked).apply()
-            else
+            if (gameId != null) {
+                val perOrientKey = "Toggle_${gameId}_${orientKey}_${hotkeyBase}$i"
+                prefs.edit().putBoolean(perOrientKey, checked).apply()
+            } else
                 BooleanSetting.valueOf(hotkeyBase + i).setBoolean(settings, checked)
             emulationFragment?.refreshInputOverlay()
         }
