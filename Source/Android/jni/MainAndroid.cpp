@@ -63,6 +63,7 @@
 #include "VideoCommon/OnScreenDisplay.h"
 #include "VideoCommon/Present.h"
 #include "VideoCommon/VideoBackendBase.h"
+#include "VideoCommon/VideoConfig.h"
 
 #include "jni/AndroidCommon/AndroidCommon.h"
 #include "jni/AndroidCommon/IDCache.h"
@@ -85,6 +86,8 @@ bool s_need_nonblocking_alert_msg;
 Common::Flag s_is_booting;
 bool s_game_metadata_is_valid = false;
 }  // Anonymous namespace
+
+bool g_dolphin_is_portrait = false;
 
 void UpdatePointer()
 {
@@ -437,12 +440,9 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_WriteJitBloc
 }
 
 // Surface Handling
-JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceChanged(JNIEnv* env,
-                                                                                   jclass,
-                                                                                   jobject surf)
+JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceChanged(JNIEnv* env, jclass, jobject surf)
 {
   std::lock_guard<std::mutex> guard(s_surface_lock);
-
   s_surf = ANativeWindow_fromSurface(env, surf);
   if (s_surf == nullptr)
     __android_log_print(ANDROID_LOG_ERROR, DOLPHIN_TAG, "Error: Surface is null.");
@@ -451,6 +451,16 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceChang
     g_presenter->ChangeSurface(s_surf);
 
   s_surface_cv.notify_all();
+
+  if (s_surf != nullptr)
+  {
+    int w = ANativeWindow_getWidth(s_surf);
+    int h = ANativeWindow_getHeight(s_surf);
+    g_dolphin_is_portrait = h > w;
+    
+    g_Config.Refresh();
+    UpdateActiveConfig();
+  }
 }
 
 JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceDestroyed(JNIEnv*,

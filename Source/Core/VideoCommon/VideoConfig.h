@@ -407,3 +407,5 @@ extern VideoConfig g_ActiveConfig;
 // Called every frame.
 void UpdateActiveConfig();
 void CheckForConfigChanges();
+
+extern bool g_dolphin_is_portrait;

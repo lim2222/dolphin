@@ -1506,17 +1506,26 @@ class SettingsFragmentPresenter(
                 R.string.wait_for_shaders_description
             )
         )
-        sl.add(
-            SingleChoiceSetting(
-                context,
-                IntSetting.GFX_ASPECT_RATIO,
-                R.string.aspect_ratio,
-                0,
-                R.array.aspectRatioEntries,
-                R.array.aspectRatioValues
-            )
-        )
-
+		sl.add(
+			SingleChoiceSetting(
+			context,
+			IntSetting.GFX_ASPECT_RATIO_PORTRAIT,
+			R.string.aspect_ratio_portrait,
+			0,
+			R.array.aspectRatioEntries,
+			R.array.aspectRatioValues
+			)
+		)
+		sl.add(
+			SingleChoiceSetting(
+			context,
+			IntSetting.GFX_ASPECT_RATIO_LANDSCAPE,
+			R.string.aspect_ratio_landscape,
+			0,
+			R.array.aspectRatioEntries,
+			R.array.aspectRatioValues
+			)
+		)
         sl.add(HeaderSetting(context, R.string.graphics_more_settings, 0))
         sl.add(
             SubmenuSetting(

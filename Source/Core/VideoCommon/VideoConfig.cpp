@@ -87,6 +87,22 @@ void VideoConfig::Refresh()
 
   bWidescreenHack = Config::Get(Config::GFX_WIDESCREEN_HACK);
   aspect_mode = Config::Get(Config::GFX_ASPECT_RATIO);
+
+  bWidescreenHack = Config::Get(Config::GFX_WIDESCREEN_HACK);
+
+  bWidescreenHack = Config::Get(Config::GFX_WIDESCREEN_HACK);
+
+  bWidescreenHack = Config::Get(Config::GFX_WIDESCREEN_HACK);
+
+#ifdef ANDROID
+  if (g_dolphin_is_portrait)
+    aspect_mode = Config::Get(Config::GFX_ASPECT_RATIO_PORTRAIT);
+  else
+    aspect_mode = Config::Get(Config::GFX_ASPECT_RATIO_LANDSCAPE);
+#else
+  aspect_mode = Config::Get(Config::GFX_ASPECT_RATIO);
+#endif
+  
   custom_aspect_width = Config::Get(Config::GFX_CUSTOM_ASPECT_RATIO_WIDTH);
   custom_aspect_height = Config::Get(Config::GFX_CUSTOM_ASPECT_RATIO_HEIGHT);
   suggested_aspect_mode = Config::Get(Config::GFX_SUGGESTED_ASPECT_RATIO);
