@@ -157,8 +157,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 			ButtonType.HOTKEY_TOGGLE_PAUSE -> 450f
 			ButtonType.HOTKEY_TOGGLE_SKIP_EFB -> 510f
 			ButtonType.HOTKEY_TOGGLE_IGNORE_FORMAT -> 570f
-			ButtonType.HOTKEY_TOGGLE_EFB_TEXTURE -> 630f
-			ButtonType.HOTKEY_TOGGLE_IR_RECENTER -> 750f
+			ButtonType.HOTKEY_TOGGLE_EFB_TEXTURE -> 600f
+			ButtonType.HOTKEY_TOGGLE_IR_RECENTER -> 620f
 
             else -> getDefaultXFromIntegers(legacyId, orientation)
         }
@@ -233,25 +233,25 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.NUNCHUK_SHAKE_Y -> 500f
         ButtonType.NUNCHUK_SHAKE_Z -> 500f
         ButtonType.NUNCHUK_SWING -> 520f      // NSW
-        ButtonType.NUNCHUK_TILT -> 620f       // NT
-        ButtonType.NUNCHUK_TILT_FORWARD -> 620f
-        ButtonType.NUNCHUK_TILT_BACKWARD -> 640f
-        ButtonType.NUNCHUK_TILT_LEFT -> 660f
-        ButtonType.NUNCHUK_TILT_RIGHT -> 680f
+        ButtonType.NUNCHUK_TILT -> 580f       // NT
+        ButtonType.NUNCHUK_TILT_FORWARD -> 600f
+        ButtonType.NUNCHUK_TILT_BACKWARD -> 610f
+        ButtonType.NUNCHUK_TILT_LEFT -> 600f
+        ButtonType.NUNCHUK_TILT_RIGHT -> 600f
         ButtonType.NUNCHUK_SWING_FORWARD -> 540f
         ButtonType.NUNCHUK_SWING_BACKWARD -> 560f
         ButtonType.TATACON_RIM_LEFT -> 200f
         ButtonType.TATACON_RIM_RIGHT -> 200f
         ButtonType.TATACON_CENTER_LEFT -> 260f
         ButtonType.TATACON_CENTER_RIGHT -> 260f
-        ButtonType.TRIGGER_ANALOG_STICK -> 700f
+        ButtonType.TRIGGER_ANALOG_STICK -> 560f
         ButtonType.WIIMOTE_IR -> 150f
-        ButtonType.CLASSIC_TRIGGER_L_HALF -> 700f
-        ButtonType.CLASSIC_TRIGGER_R_HALF -> 700f
-        ButtonType.GC_L_ANALOG_STICK -> 700f
-        ButtonType.GC_R_ANALOG_STICK -> 700f
-        ButtonType.CLASSIC_L_ANALOG_STICK -> 700f
-        ButtonType.CLASSIC_R_ANALOG_STICK -> 700f
+        ButtonType.CLASSIC_TRIGGER_L_HALF -> 560f
+        ButtonType.CLASSIC_TRIGGER_R_HALF -> 560f
+        ButtonType.GC_L_ANALOG_STICK -> 560f
+        ButtonType.GC_R_ANALOG_STICK -> 560f
+        ButtonType.CLASSIC_L_ANALOG_STICK -> 560f
+        ButtonType.CLASSIC_R_ANALOG_STICK -> 560f
 		ButtonType.HOTKEY_SAVE_STATE_1 -> 30f
 		ButtonType.HOTKEY_SAVE_STATE_2 -> 30f
 		ButtonType.HOTKEY_LOAD_STATE_1 -> 30f
@@ -2831,21 +2831,49 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     fun resetButtonPlacement() {
+        // Reset only current game + current orientation, including hotkey and motion
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val gameId = NativeLibrary.GetCurrentGameID()
+        val isGlobal = gameId == null
+        val currentGameId = gameId ?: "Global"
+        val targetOri = if (isLandscape) "" else "-Portrait"
+
+        val editor = preferences.edit()
+        // Scan all saved overlay keys - robust for hotkey, motion, tatacon, etc.
+        for (key in preferences.all.keys) {
+            if (!key.endsWith("-X") && !key.endsWith("-Y")) continue
+            // Check orientation match
+            val isPortraitKey = key.contains("-Portrait")
+            val matchesOri = if (isLandscape) !isPortraitKey else isPortraitKey
+            if (!matchesOri) continue
+
+            if (isGlobal) {
+                // Global reset: remove keys that are global (no gameId or _Global)
+                // Global keys are like BUTTON_A-X or BUTTON_A_Global_W-X or BUTTON_A_Global_H-X etc.
+                // Keep per-game keys like GALE01
+                val isPerGameKey = '_' in key && !key.contains("_Global") && !key.startsWith("BUTTON_") && !key.startsWith("WIIMOTE_") && !key.startsWith("NUNCHUK_") && !key.startsWith("CLASSIC_") && !key.startsWith("HOTKEY_") && !key.startsWith("STICK_") && !key.startsWith("TRIGGER_") && !key.startsWith("TATACON_")
+                // Simpler: if key contains _ and second part is not Global and looks like a gameId (4-6 chars uppercase/digit), skip
+                // We detect per-game by: contains _<gameId>_ or _<gameId><ori>
+                // For global reset, we only remove if it contains _Global or it does NOT contain a gameId pattern
+                // GameId pattern: _[A-Z0-9]{4,6}...
+                val containsGameId = Regex("_[A-Z0-9]{4,6}(_|-|$)").containsMatchIn(key) && !key.contains("_Global")
+                if (!containsGameId) {
+                    editor.remove(key)
+                }
+            } else {
+                // Per-game reset: only remove keys containing currentGameId
+                if (key.contains(currentGameId)) {
+                    editor.remove(key)
+                }
+            }
+        }
+        editor.apply()
 
         val controller = configuredControllerType
         if (controller == OVERLAY_GAMECUBE) {
-            if (isLandscape) {
-                gcDefaultOverlay()
-            } else {
-                gcPortraitDefaultOverlay()
-            }
+            if (isLandscape) gcDefaultOverlay() else gcPortraitDefaultOverlay()
         } else if (controller == OVERLAY_WIIMOTE_CLASSIC) {
-            if (isLandscape) {
-                wiiClassicDefaultOverlay()
-            } else {
-                wiiClassicPortraitDefaultOverlay()
-            }
+            if (isLandscape) wiiClassicDefaultOverlay() else wiiClassicPortraitDefaultOverlay()
         } else {
             if (isLandscape) {
                 wiiDefaultOverlay()
@@ -3301,6 +3329,20 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             .apply()
     }
 
+
+    //  Clamp default positions for 20:9 (720x1612) - keeps original logic but adds 8% inset
+    private fun clampDefaultX(pct: Int, maxX: Float): Float {
+        val raw = pct.toFloat() / 1000f * maxX
+        val inset = maxX * 0.08f
+        // Keep fully visible, assume button ~100px
+        return raw.coerceIn(inset, maxX - inset - 100f)
+    }
+    private fun clampDefaultY(pct: Int, maxY: Float): Float {
+        val raw = pct.toFloat() / 1000f * maxY
+        val inset = maxY * 0.08f
+        return raw.coerceIn(inset, maxY - inset - 100f)
+    }
+
     private fun gcDefaultOverlay() {
         // Get screen size
         val display = (context as Activity).windowManager.defaultDisplay
@@ -3320,115 +3362,115 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.BUTTON_A.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_A_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_A_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_A.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_A_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_A_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_B.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_B_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_B_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_B.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_B_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_B_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_X.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_X_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_X_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_X.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_X_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_X_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_Y.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_Y_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_Y_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_Y.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_Y_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_Y_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_Z.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_Z_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_Z_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_Z.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_Z_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_Z_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_UP.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_UP_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_UP_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_UP.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_UP_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_UP_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_L.toString() + "-X",
-                resources.getInteger(R.integer.TRIGGER_L_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_L_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_L.toString() + "-Y",
-                resources.getInteger(R.integer.TRIGGER_L_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_L_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_R.toString() + "-X",
-                resources.getInteger(R.integer.TRIGGER_R_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_R_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_R.toString() + "-Y",
-                resources.getInteger(R.integer.TRIGGER_R_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_R_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_L_HALF.toString() + "-X",
-                resources.getInteger(R.integer.TRIGGER_L_HALF_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_L_HALF_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_L_HALF.toString() + "-Y",
-                resources.getInteger(R.integer.TRIGGER_L_HALF_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_L_HALF_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_R_HALF.toString() + "-X",
-                resources.getInteger(R.integer.TRIGGER_R_HALF_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_R_HALF_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_R_HALF.toString() + "-Y",
-                resources.getInteger(R.integer.TRIGGER_R_HALF_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_R_HALF_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_START.toString() + "-X",
-                resources.getInteger(R.integer.BUTTON_START_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_START_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_START.toString() + "-Y",
-                resources.getInteger(R.integer.BUTTON_START_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_START_Y, maxY)
             )
             .putFloat(
                 ButtonType.STICK_C.toString() + "-X",
-                resources.getInteger(R.integer.STICK_C_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.STICK_C_X, maxX)
             )
             .putFloat(
                 ButtonType.STICK_C.toString() + "-Y",
-                resources.getInteger(R.integer.STICK_C_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.STICK_C_Y, maxY)
             )
             .putFloat(
                 ButtonType.STICK_MAIN.toString() + "-X",
-                resources.getInteger(R.integer.STICK_MAIN_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.STICK_MAIN_X, maxX)
             )
             .putFloat(
                 ButtonType.STICK_MAIN.toString() + "-Y",
-                resources.getInteger(R.integer.STICK_MAIN_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.STICK_MAIN_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_ANALOG_STICK.toString() + "-X",
-                resources.getInteger(R.integer.TRIGGER_ANALOG_STICK_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_ANALOG_STICK_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_ANALOG_STICK.toString() + "-Y",
-                resources.getInteger(R.integer.TRIGGER_ANALOG_STICK_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_ANALOG_STICK_Y, maxY)
             )
             .apply()
     }
@@ -3453,107 +3495,107 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.BUTTON_A.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_A_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_A_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_A.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_A_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_A_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_B.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_B_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_B_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_B.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_B_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_B_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_X.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_X_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_X_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_X.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_X_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_X_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_Y.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_Y_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_Y_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_Y.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_Y_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_Y_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_Z.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_Z_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_Z_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_Z.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_Z_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_Z_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_UP.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_UP_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_UP_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_UP.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_UP_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_UP_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_L.toString() + portrait + "-X",
-                resources.getInteger(R.integer.TRIGGER_L_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_L_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_L.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.TRIGGER_L_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_L_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_R.toString() + portrait + "-X",
-                resources.getInteger(R.integer.TRIGGER_R_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_R_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_R.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.TRIGGER_R_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_R_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_L_HALF.toString() + portrait + "-X",
-                resources.getInteger(R.integer.TRIGGER_L_HALF_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_L_HALF_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_L_HALF.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.TRIGGER_L_HALF_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_L_HALF_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_R_HALF.toString() + portrait + "-X",
-                resources.getInteger(R.integer.TRIGGER_R_HALF_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.TRIGGER_R_HALF_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.TRIGGER_R_HALF.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.TRIGGER_R_HALF_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.TRIGGER_R_HALF_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.BUTTON_START.toString() + portrait + "-X",
-                resources.getInteger(R.integer.BUTTON_START_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.BUTTON_START_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.BUTTON_START.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.BUTTON_START_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.BUTTON_START_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.STICK_C.toString() + portrait + "-X",
-                resources.getInteger(R.integer.STICK_C_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.STICK_C_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.STICK_C.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.STICK_C_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.STICK_C_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.STICK_MAIN.toString() + portrait + "-X",
-                resources.getInteger(R.integer.STICK_MAIN_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.STICK_MAIN_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.STICK_MAIN.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.STICK_MAIN_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.STICK_MAIN_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.TRIGGER_ANALOG_STICK.toString() + portrait + "-X",
@@ -3587,91 +3629,91 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_A.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_A_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_A_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_A.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_A_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_A_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_B.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_B_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_B_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_B.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_B_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_B_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_1.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_1_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_1_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_1.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_1_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_1_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_2.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_2_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_2_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_2.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_2_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_2_Y, maxY)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_Z.toString() + "-X",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_Z_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.NUNCHUK_BUTTON_Z_X, maxX)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_Z.toString() + "-Y",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_Z_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.NUNCHUK_BUTTON_Z_Y, maxY)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_C.toString() + "-X",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_C_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.NUNCHUK_BUTTON_C_X, maxX)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_C.toString() + "-Y",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_C_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.NUNCHUK_BUTTON_C_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_MINUS.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_MINUS_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_MINUS_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_MINUS.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_MINUS_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_MINUS_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_PLUS.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_PLUS_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_PLUS_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_PLUS.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_PLUS_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_PLUS_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_UP_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_UP_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_UP_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_UP_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_HOME.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_HOME_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_HOME_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_HOME.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_HOME_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_HOME_Y, maxY)
             )
             .putFloat(
                 ButtonType.NUNCHUK_STICK.toString() + "-X",
-                resources.getInteger(R.integer.NUNCHUK_STICK_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.NUNCHUK_STICK_X, maxX)
             )
             .putFloat(
                 ButtonType.NUNCHUK_STICK.toString() + "-Y",
-                resources.getInteger(R.integer.NUNCHUK_STICK_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.NUNCHUK_STICK_Y, maxY)
             )
             .apply()
     }
@@ -3695,52 +3737,52 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_A.toString() + "_H-X",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_A_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_H_BUTTON_A_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_A.toString() + "_H-Y",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_A_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_H_BUTTON_A_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_B.toString() + "_H-X",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_B_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_H_BUTTON_B_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_B.toString() + "_H-Y",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_B_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_H_BUTTON_B_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_1.toString() + "_H-X",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_1_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_H_BUTTON_1_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_1.toString() + "_H-Y",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_1_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_H_BUTTON_1_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_2.toString() + "_H-X",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_2_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_H_BUTTON_2_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_2.toString() + "_H-Y",
-                resources.getInteger(R.integer.WIIMOTE_H_BUTTON_2_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_H_BUTTON_2_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + "_O-X",
-                resources.getInteger(R.integer.WIIMOTE_O_UP_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_O_UP_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + "_O-Y",
-                resources.getInteger(R.integer.WIIMOTE_O_UP_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_O_UP_Y, maxY)
             )
             // Horizontal dpad
             .putFloat(
                 ButtonType.WIIMOTE_RIGHT.toString() + "-X",
-                resources.getInteger(R.integer.WIIMOTE_RIGHT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_RIGHT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_RIGHT.toString() + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_RIGHT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_RIGHT_Y, maxY)
             )
             .apply()
     }
@@ -3765,51 +3807,51 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_A.toString() + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_A_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_A_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_A.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_A_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_A_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_B.toString() + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_B_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_B_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_B.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_B_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_B_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_1.toString() + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_1_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_1_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_1.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_1_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_1_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_2.toString() + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_2_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_BUTTON_2_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_2.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_BUTTON_2_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_BUTTON_2_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_Z.toString() + portrait + "-X",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_Z_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.NUNCHUK_BUTTON_Z_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_Z.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_Z_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.NUNCHUK_BUTTON_Z_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_C.toString() + portrait + "-X",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_C_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.NUNCHUK_BUTTON_C_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.NUNCHUK_BUTTON_C.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.NUNCHUK_BUTTON_C_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.NUNCHUK_BUTTON_C_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_MINUS.toString() + portrait + "-X",
@@ -3833,11 +3875,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_UP_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_UP_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_UP_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_UP_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.WIIMOTE_BUTTON_HOME.toString() + portrait + "-X",
@@ -3851,20 +3893,20 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
             .putFloat(
                 ButtonType.NUNCHUK_STICK.toString() + portrait + "-X",
-                resources.getInteger(R.integer.NUNCHUK_STICK_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.NUNCHUK_STICK_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.NUNCHUK_STICK.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.NUNCHUK_STICK_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.NUNCHUK_STICK_PORTRAIT_Y, maxY)
             )
             // Horizontal dpad
             .putFloat(
                 ButtonType.WIIMOTE_RIGHT.toString() + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_RIGHT_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_RIGHT_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_RIGHT.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_RIGHT_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_RIGHT_PORTRAIT_Y, maxY)
             )
             .apply()
     }
@@ -3929,11 +3971,11 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + "_O" + portrait + "-X",
-                resources.getInteger(R.integer.WIIMOTE_O_UP_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.WIIMOTE_O_UP_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.WIIMOTE_UP.toString() + "_O" + portrait + "-Y",
-                resources.getInteger(R.integer.WIIMOTE_O_UP_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.WIIMOTE_O_UP_PORTRAIT_Y, maxY)
             )
             .apply()
     }
@@ -3957,115 +3999,115 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_A.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_A_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_A_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_A.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_A_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_A_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_B.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_B_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_B_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_B.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_B_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_B_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_X.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_X_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_X_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_X.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_X_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_X_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_Y.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_Y_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_Y_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_Y.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_Y_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_Y_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_MINUS.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_MINUS_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_MINUS_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_MINUS.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_MINUS_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_MINUS_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_PLUS.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_PLUS_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_PLUS_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_PLUS.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_PLUS_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_PLUS_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_HOME.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_HOME_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_HOME_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_HOME.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_HOME_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_HOME_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZL.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZL_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_ZL_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZL.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZL_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_ZL_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZR.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZR_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_ZR_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZR.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZR_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_ZR_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_DPAD_UP.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_DPAD_UP_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_DPAD_UP_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_DPAD_UP.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_DPAD_UP_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_DPAD_UP_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_STICK_LEFT.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_STICK_LEFT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_STICK_LEFT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_STICK_LEFT.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_STICK_LEFT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_STICK_LEFT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_STICK_RIGHT.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_STICK_RIGHT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_STICK_RIGHT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_STICK_RIGHT.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_STICK_RIGHT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_STICK_RIGHT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_L.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_L_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_TRIGGER_L_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_L.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_L_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_TRIGGER_L_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_R.toString() + "-X",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_R_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_TRIGGER_R_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_R.toString() + "-Y",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_R_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_TRIGGER_R_Y, maxY)
             )
             .apply()
     }
@@ -4090,35 +4132,35 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         preferences.edit()
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_A.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_A_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_A_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_A.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_A_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_A_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_B.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_B_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_B_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_B.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_B_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_B_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_X.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_X_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_X_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_X.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_X_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_X_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_Y.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_Y_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_Y_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_Y.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_Y_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_Y_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_MINUS.toString() + portrait + "-X",
@@ -4152,27 +4194,27 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZL.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZL_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_ZL_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZL.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZL_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_ZL_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZR.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZR_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_BUTTON_ZR_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_BUTTON_ZR.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_BUTTON_ZR_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_BUTTON_ZR_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_DPAD_UP.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_DPAD_UP_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_DPAD_UP_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_DPAD_UP.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_DPAD_UP_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_DPAD_UP_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_STICK_LEFT.toString() + portrait + "-X",
@@ -4196,19 +4238,19 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_L.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_L_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_TRIGGER_L_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_L.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_L_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_TRIGGER_L_PORTRAIT_Y, maxY)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_R.toString() + portrait + "-X",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_R_PORTRAIT_X).toFloat() / 1000 * maxX
+                clampDefaultX(R.integer.CLASSIC_TRIGGER_R_PORTRAIT_X, maxX)
             )
             .putFloat(
                 ButtonType.CLASSIC_TRIGGER_R.toString() + portrait + "-Y",
-                resources.getInteger(R.integer.CLASSIC_TRIGGER_R_PORTRAIT_Y).toFloat() / 1000 * maxY
+                clampDefaultY(R.integer.CLASSIC_TRIGGER_R_PORTRAIT_Y, maxY)
             )
             .apply()
     }
