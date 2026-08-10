@@ -822,35 +822,46 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
         }
 
         val arrayRes = if (controller == InputOverlay.OVERLAY_GAMECUBE) R.array.GChotkeyButtons else R.array.hotkeyButtons
+        // [CRASH FIX] Classic/Tatacon has 9 indices but hotkeyButtons array has 11 items -> length mismatch crashes dialog
+        val fullHotkeyLabels = resources.getStringArray(arrayRes)
+        val filteredLabels = indices.map { idx -> fullHotkeyLabels.getOrElse(idx) { "Hotkey $idx" } }.toTypedArray()
 
         fun readToggle(): BooleanArray = BooleanArray(indices.size) { pos ->
             val i = indices[pos]
-            if (gameId != null) {
-                val perOrientKey = "Toggle_${gameId}_${orientKey}_${hotkeyBase}$i"
-                if (prefs.contains(perOrientKey))
-                    prefs.getBoolean(perOrientKey, BooleanSetting.valueOf(hotkeyBase + i).boolean)
-                else
-                    prefs.getBoolean(
-                        "Toggle_${gameId}_${hotkeyBase}$i",
-                        BooleanSetting.valueOf(hotkeyBase + i).boolean
-                    )
-            } else
-                BooleanSetting.valueOf(hotkeyBase + i).boolean
+            try {
+                if (gameId != null) {
+                    val perOrientKey = "Toggle_${gameId}_${orientKey}_${hotkeyBase}$i"
+                    if (prefs.contains(perOrientKey))
+                        prefs.getBoolean(perOrientKey, BooleanSetting.valueOf(hotkeyBase + i).boolean)
+                    else
+                        prefs.getBoolean(
+                            "Toggle_${gameId}_${hotkeyBase}$i",
+                            BooleanSetting.valueOf(hotkeyBase + i).boolean
+                        )
+                } else
+                    BooleanSetting.valueOf(hotkeyBase + i).boolean
+            } catch (e: Exception) {
+                true
+            }
         }
 
         fun saveToggle(pos: Int, checked: Boolean) {
             val i = indices[pos]
-            if (gameId != null) {
-                val perOrientKey = "Toggle_${gameId}_${orientKey}_${hotkeyBase}$i"
-                prefs.edit().putBoolean(perOrientKey, checked).apply()
-            } else
-                BooleanSetting.valueOf(hotkeyBase + i).setBoolean(settings, checked)
+            try {
+                if (gameId != null) {
+                    val perOrientKey = "Toggle_${gameId}_${orientKey}_${hotkeyBase}$i"
+                    prefs.edit().putBoolean(perOrientKey, checked).apply()
+                } else
+                    BooleanSetting.valueOf(hotkeyBase + i).setBoolean(settings, checked)
+            } catch (e: Exception) {
+                // ignore missing setting
+            }
             emulationFragment?.refreshInputOverlay()
         }
 
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.emulation_toggle_hotkeys)
-            .setMultiChoiceItems(arrayRes, readToggle()) { _, pos, c -> saveToggle(pos, c) }
+            .setMultiChoiceItems(filteredLabels, readToggle()) { _, pos, c -> saveToggle(pos, c) }
             .setPositiveButton(R.string.ok, null)
             .show()
     }

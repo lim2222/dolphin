@@ -2952,44 +2952,43 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
     // Fall back to BooleanSetting if no gameID
     // Per-orientation support: checks Toggle_${gameId}_Portrait/Landscape_$settingName first
     private fun getEffectiveToggle(settingName: String, orientation: String = ""): Boolean {
+        // [HOTKEY CRASH FIX] Safe for missing BooleanSetting (classic/tatacon hotkey 9/10)
+        val defaultBoolean = try {
+            BooleanSetting.valueOf(settingName).boolean
+        } catch (e: Exception) {
+            // If setting doesn't exist (e.g., HOTKEY_9/10 on old builds), default to true
+            true
+        }
         val gameId = NativeLibrary.GetCurrentGameID()
         if (gameId != null) {
-            // Normalize orientation: "-Portrait" -> "Portrait", "" -> "Landscape"
             val orientKey = if (orientation.contains("Portrait")) "Portrait" else "Landscape"
             val perOrientKey = "Toggle_${gameId}_${orientKey}_$settingName"
             if (preferences.contains(perOrientKey)) {
-                return preferences.getBoolean(
-                    perOrientKey,
-                    BooleanSetting.valueOf(settingName).boolean
-                )
+                return preferences.getBoolean(perOrientKey, defaultBoolean)
             }
-            // Fallback to old global per-game key for compatibility
-            return preferences.getBoolean(
-                "Toggle_${gameId}_$settingName",
-                BooleanSetting.valueOf(settingName).boolean
-            )
+            return preferences.getBoolean("Toggle_${gameId}_$settingName", defaultBoolean)
         } else {
-            return BooleanSetting.valueOf(settingName).boolean
+            return defaultBoolean
         }
     }
 
     private fun getEffectiveLatching(settingName: String, orientation: String = ""): Boolean {
+        // [HOTKEY CRASH FIX] Safe for missing settings
+        val defaultBoolean = try {
+            BooleanSetting.valueOf(settingName).boolean
+        } catch (e: Exception) {
+            false
+        }
         val gameId = NativeLibrary.GetCurrentGameID()
         if (gameId != null) {
             val orientKey = if (orientation.contains("Portrait")) "Portrait" else "Landscape"
             val perOrientKey = "Latching_${gameId}_${orientKey}_$settingName"
             if (preferences.contains(perOrientKey)) {
-                return preferences.getBoolean(
-                    perOrientKey,
-                    BooleanSetting.valueOf(settingName).boolean
-                )
+                return preferences.getBoolean(perOrientKey, defaultBoolean)
             }
-            return preferences.getBoolean(
-                "Latching_${gameId}_$settingName",
-                BooleanSetting.valueOf(settingName).boolean
-            )
+            return preferences.getBoolean("Latching_${gameId}_$settingName", defaultBoolean)
         } else {
-            return BooleanSetting.valueOf(settingName).boolean
+            return defaultBoolean
         }
     }
 
