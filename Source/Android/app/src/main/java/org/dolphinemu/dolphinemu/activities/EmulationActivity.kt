@@ -792,12 +792,12 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             }
         } else if (currentController == InputOverlay.OVERLAY_WIIMOTE_NUNCHUK) {
             val base = "MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_"
-            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 34)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.nunchukButtons, readToggle(base, 36)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         } else {
             val base = "MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_"
-            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 20)) { _, i, c ->
+            builder.setMultiChoiceItems(R.array.wiimoteButtons, readToggle(base, 21)) { _, i, c ->
                 saveToggle(base, i, c)
             }
         }

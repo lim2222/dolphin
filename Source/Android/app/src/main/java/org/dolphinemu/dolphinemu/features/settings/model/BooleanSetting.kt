@@ -1139,13 +1139,19 @@ enum class BooleanSetting(
         false
     ),
 	MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_19(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleWiimoteOnlyIRJoystick",
-        false
-    ),
+	    Settings.FILE_DOLPHIN,
+	    Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+	    "ButtonToggleWiimoteOnlyIRJoystick",
+	    false
+	),
+	MAIN_BUTTON_TOGGLE_WIIMOTE_ONLY_20(
+	    Settings.FILE_DOLPHIN,
+	    Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+	    "ButtonToggleWiimoteOnlyTiltJoystick",
+	    false
+	),
 
-    // ==================== Nunchuk toggle lists (34lines) ====================
+	// ==================== Nunchuk toggle lists (34lines) ====================
     MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_0(
         Settings.FILE_DOLPHIN,
         Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
@@ -1345,11 +1351,23 @@ enum class BooleanSetting(
         false
     ),
 	MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_33(
-        Settings.FILE_DOLPHIN,
-        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
-        "ButtonToggleNunchukOnlyIRJoystick",
-        false
-    ),
+	        Settings.FILE_DOLPHIN,
+	        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+	        "ButtonToggleNunchukOnlyIRJoystick",
+	        false
+	    ),
+	MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_34(
+	        Settings.FILE_DOLPHIN,
+	        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+	        "ButtonToggleNunchukOnlyTiltJoystick",
+	        false
+	    ),
+	MAIN_BUTTON_TOGGLE_NUNCHUK_ONLY_35(
+	        Settings.FILE_DOLPHIN,
+	        Settings.SECTION_INI_ANDROID_OVERLAY_BUTTONS,
+	        "ButtonToggleNunchukOnlyWiimoteTiltJoystick",
+	        false
+	    ),
 
 	// ==================== Wiimote Latching (14lines) ====================
     MAIN_BUTTON_LATCHING_WIIMOTE_ONLY_0(

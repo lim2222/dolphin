@@ -457,6 +457,7 @@
 		<item>WTL (Wii Remote Tilt Left)</item>
 		<item>WTR (Wii Remote Tilt Right)</item>
 		<item>IR (Wii Remote Pointer Joystick)</item>
+		<item>JWT (Wii Remote Tilt joystick)</item>
     </string-array>
 
     <string-array name="wiimoteLatchableButtons">
@@ -511,8 +512,9 @@
 		<item>NTL (Nunchuk Tilt Left)</item>
 		<item>NTR (Nunchuk Tilt Right)</item>
 		<item>IR (Wii Remote Pointer Joystick)</item>
+		<item>JNT (Nunchuk Tilt joystick)</item>
+		<item>JWT (Wii Remote Tilt joystick)</item>
     </string-array>
-
     <string-array name="nunchukLatchableButtons">
         <item>A</item>
         <item>B</item>

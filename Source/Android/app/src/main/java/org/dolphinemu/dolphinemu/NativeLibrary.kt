@@ -84,6 +84,7 @@ object NativeLibrary {
         const val WIIMOTE_TILT_LEFT = 129
         const val WIIMOTE_TILT_RIGHT = 130
         const val WIIMOTE_TILT_MODIFIER = 131
+        const val WIIMOTE_TILT_JOYSTICK = 135
         const val WIIMOTE_SHAKE_X = 132
         const val WIIMOTE_SHAKE_Y = 133
         const val WIIMOTE_SHAKE_Z = 134
@@ -107,6 +108,7 @@ object NativeLibrary {
         const val NUNCHUK_TILT_LEFT = 217
         const val NUNCHUK_TILT_RIGHT = 218
         const val NUNCHUK_TILT_MODIFIER = 219
+        const val NUNCHUK_TILT_JOYSTICK = 223
         const val NUNCHUK_SHAKE_X = 220
         const val NUNCHUK_SHAKE_Y = 221
         const val NUNCHUK_SHAKE_Z = 222

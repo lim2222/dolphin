@@ -155,6 +155,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             ButtonType.TATACON_CENTER_RIGHT -> 400f
             ButtonType.TRIGGER_ANALOG_STICK -> 380f
             ButtonType.WIIMOTE_IR -> 200f
+            ButtonType.WIIMOTE_TILT_JOYSTICK -> 200f
+            ButtonType.NUNCHUK_TILT_JOYSTICK -> 20f
             ButtonType.CLASSIC_TRIGGER_L_HALF -> 20f
             ButtonType.CLASSIC_TRIGGER_R_HALF -> 400f
             ButtonType.GC_L_ANALOG_STICK -> 20f
@@ -257,6 +259,8 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
         ButtonType.TATACON_CENTER_RIGHT -> 260f
         ButtonType.TRIGGER_ANALOG_STICK -> 560f
         ButtonType.WIIMOTE_IR -> 150f
+        ButtonType.WIIMOTE_TILT_JOYSTICK -> 150f
+        ButtonType.NUNCHUK_TILT_JOYSTICK -> 580f
         ButtonType.CLASSIC_TRIGGER_L_HALF -> 560f
         ButtonType.CLASSIC_TRIGGER_R_HALF -> 560f
         ButtonType.GC_L_ANALOG_STICK -> 560f
@@ -842,7 +846,36 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 joystick.wasAtMaxExtent = atMax
             }
 
-            if (!joystick.isAnalogTriggerStick && !joystick.isVerticalTriggerStick) {
+            if ((joystick.legacyId == ButtonType.WIIMOTE_TILT_JOYSTICK ||
+                joystick.legacyId == ButtonType.NUNCHUK_TILT_JOYSTICK
+            ) && joystick.trackId != -1
+            ) {
+                // Tilt joystick: map normalized stick position to the 4 Tilt direction
+                // channels so the on-screen push direction matches the in-game tilt direction
+                // (push the stick the way you want the object to go), with no X mirror. Clamped
+                // to half-range so full deflection = 90deg. On-device SS beetle confirmed
+                // push-left->left, push-right->right, push-up->up, push-down->down.
+                // Only write while the stick is actually being touched (trackId != -1); when
+                // released we stop touching the channels so the WT/NT dpad can drive them
+                // without being overwritten to 0 every frame.
+                val nx = joystick.x.toDouble()
+                val ny = joystick.y.toDouble()
+                val right = maxOf(0.0, ny) * 0.5
+                val left = maxOf(0.0, -ny) * 0.5
+                val forward = maxOf(0.0, nx) * 0.5
+                val back = maxOf(0.0, -nx) * 0.5
+                if (joystick.legacyId == ButtonType.WIIMOTE_TILT_JOYSTICK) {
+                    InputOverrider.setControlState(controllerIndex, ControlId.WIIMOTE_TILT_RIGHT, right)
+                    InputOverrider.setControlState(controllerIndex, ControlId.WIIMOTE_TILT_LEFT, left)
+                    InputOverrider.setControlState(controllerIndex, ControlId.WIIMOTE_TILT_FORWARD, forward)
+                    InputOverrider.setControlState(controllerIndex, ControlId.WIIMOTE_TILT_BACKWARD, back)
+                } else {
+                    InputOverrider.setControlState(controllerIndex, ControlId.NUNCHUK_TILT_RIGHT, right)
+                    InputOverrider.setControlState(controllerIndex, ControlId.NUNCHUK_TILT_LEFT, left)
+                    InputOverrider.setControlState(controllerIndex, ControlId.NUNCHUK_TILT_FORWARD, forward)
+                    InputOverrider.setControlState(controllerIndex, ControlId.NUNCHUK_TILT_BACKWARD, back)
+                }
+            } else if (!joystick.isAnalogTriggerStick && !joystick.isVerticalTriggerStick) {
                 InputOverrider.setControlState(
                     controllerIndex,
                     joystick.xControl,
@@ -1906,6 +1939,19 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
                 )
             )
         }
+        if (getEffectiveToggle(toggleBase + "20", orientation)) {
+            overlayJoysticks.add(
+                initializeOverlayJoystick(
+                    context,
+                    R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+                    R.drawable.gcwii_joystick_pressed,
+                    ButtonType.WIIMOTE_TILT_JOYSTICK,
+                    0,
+                    0,
+                    orientation, "JWT"
+                )
+            )
+        }
 		addHotkeyOverlayControls(orientation)
     }
 
@@ -2327,6 +2373,32 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
         }
 		addHotkeyOverlayControls(orientation)
+        if (getEffectiveToggle(toggleBase + "34", orientation)) {
+            overlayJoysticks.add(
+                initializeOverlayJoystick(
+                    context,
+                    R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+                    R.drawable.gcwii_joystick_pressed,
+                    ButtonType.NUNCHUK_TILT_JOYSTICK,
+                    0,
+                    0,
+                    orientation, "JNT"
+                )
+            )
+        }
+        if (getEffectiveToggle(toggleBase + "35", orientation)) {
+            overlayJoysticks.add(
+                initializeOverlayJoystick(
+                    context,
+                    R.drawable.gcwii_joystick_range, R.drawable.gcwii_joystick,
+                    R.drawable.gcwii_joystick_pressed,
+                    ButtonType.WIIMOTE_TILT_JOYSTICK,
+                    0,
+                    0,
+                    orientation, "JWT"
+                )
+            )
+        }
     }
 
     private fun addTaTaConOverlayControls(orientation: String) {

@@ -13,6 +13,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.view.MotionEvent
 import org.dolphinemu.dolphinemu.features.input.model.InputOverrider
 import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting
+import org.dolphinemu.dolphinemu.NativeLibrary.ButtonType
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -271,7 +272,14 @@ class InputOverlayDrawableJoystick(
     }
 
     private fun getMaxRadiusAtAngle(angle: Double): Double {
-        return if (isAnalogTriggerStick || isVerticalTriggerStick) {
+        // Tilt joysticks (WT/JNT) are driven via the 4 Tilt direction channels in onTouch,
+        // not via a real X/Y control id. Passing xControl=0 into getGateRadiusAtAngle would
+        // hit a native assert (SIGTRAP) during construction, so short-circuit to a circular
+        // gate like the analog trigger sticks.
+        return if (isAnalogTriggerStick || isVerticalTriggerStick ||
+            legacyId == ButtonType.WIIMOTE_TILT_JOYSTICK ||
+            legacyId == ButtonType.NUNCHUK_TILT_JOYSTICK
+        ) {
             1.0
         } else {
             InputOverrider.getGateRadiusAtAngle(controllerIndex, xControl, angle)
