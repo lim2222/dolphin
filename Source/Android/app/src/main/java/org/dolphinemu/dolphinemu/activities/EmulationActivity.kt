@@ -4,6 +4,7 @@ package org.dolphinemu.dolphinemu.activities
 
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
@@ -42,6 +43,7 @@ import org.dolphinemu.dolphinemu.features.infinitybase.model.Figure
 import org.dolphinemu.dolphinemu.features.infinitybase.ui.FigureSlot
 import org.dolphinemu.dolphinemu.features.infinitybase.ui.FigureSlotAdapter
 import org.dolphinemu.dolphinemu.features.input.model.ControllerInterface
+import org.dolphinemu.dolphinemu.features.input.model.controlleremu.EmulatedController
 import org.dolphinemu.dolphinemu.features.input.model.DolphinSensorEventListener
 import org.dolphinemu.dolphinemu.features.settings.model.BooleanSetting
 import org.dolphinemu.dolphinemu.features.settings.model.IntSetting
@@ -554,6 +556,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             MENU_ACTION_LATCHING_CONTROLS -> latchingControls()
             MENU_ACTION_ADJUST_SCALE -> adjustScale()
             MENU_ACTION_CHOOSE_CONTROLLER -> chooseController()
+            MENU_ACTION_CHOOSE_EXTENSION -> chooseExtension()
             MENU_ACTION_REFRESH_WIIMOTES -> NativeLibrary.RefreshWiimotes()
             MENU_ACTION_PAUSE_EMULATION -> {
                 hasUserPausedEmulation = true
@@ -1275,6 +1278,61 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
             .show()
     }
 
+    private fun chooseExtension() {
+        if (!NativeLibrary.IsEmulatingWii()) return
+
+        // Per-game single value (no orientation dimension): the real Wii Remote extension is
+        // one value per game and is persisted to the per-game WiimoteNew.ini, which only has a
+        // single slot for it. Overlay layout editing (edit/adjust/toggle) stays per-orientation.
+        val orientation = ""
+
+        // Current selection: prefer the per-game override, else fall back to the real Wii Remote 1
+        // attachment so the dialog reflects actual (persisted) state.
+        val override = InputOverlay.getOverlayExtensionOverride(orientation)
+        val currentValue = if (override >= 0) {
+            override
+        } else {
+            val attachment = EmulatedController.getSelectedWiimoteAttachment(0)
+            when (attachment) {
+                1 -> 1 // Nunchuk
+                2 -> 2 // Classic
+                8 -> 3 // Tatacon
+                else -> 0 // None / no extension (shows plain Wii Remote overlay)
+            }
+        }
+
+        val entries = arrayOf<CharSequence>(
+            getString(R.string.extension_none),
+            getString(R.string.extension_nunchuk),
+            getString(R.string.extension_classic),
+            getString(R.string.extension_tatacon)
+        )
+        val values = intArrayOf(0, 1, 2, 3)
+
+        var checkedItem = 0
+        for (i in values.indices) {
+            if (values[i] == currentValue) {
+                checkedItem = i
+                break
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.emulation_choose_extension)
+            .setSingleChoiceItems(entries, checkedItem) { _: DialogInterface?, indexSelected: Int ->
+                val chosen = values[indexSelected]
+                // Persist the per-game overlay choice (single value, no orientation).
+                InputOverlay.setOverlayExtensionOverride(orientation, chosen)
+                // Switch the real Wii Remote 1 extension: updates the runtime attachment
+                // (game recognizes it immediately) and saves it to the per-game WiimoteNew.ini
+                // so the choice survives restart. Does not touch global defaults/other slots.
+                EmulatedController.setSelectedWiimoteAttachment(0, chosen)
+                emulationFragment?.refreshInputOverlay()
+            }
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
     private fun showSkylanderPortalSettings() {
         skylandersBinding = DialogNfcFiguresManagerBinding.inflate(layoutInflater)
         skylandersBinding.figureManager.apply {
@@ -1475,6 +1533,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 		const val MENU_SET_IR_SWING_ON_SWIPE = 43
 		const val MENU_SET_IR_NUNCHUK_SWING_ON_SWIPE = 44
 		const val MENU_ACTION_TOGGLE_HOTKEYS = 45
+		const val MENU_ACTION_CHOOSE_EXTENSION = 46
 
         init {
             buttonsActionsMap.apply {
@@ -1498,6 +1557,7 @@ class EmulationActivity : AppCompatActivity(), ThemeProvider {
 				append(R.id.menu_emulation_choose_singletaphold, MENU_ACTION_CHOOSE_SINGLETAPHOLD)
 				append(R.id.menu_emulation_choose_second_finger_tap, MENU_ACTION_CHOOSE_SECOND_FINGER_TAP)
 				append(R.id.menu_emulation_choose_second_finger_hold, MENU_ACTION_CHOOSE_SECOND_FINGER_HOLD)
+				append(R.id.menu_emulation_choose_extension, MENU_ACTION_CHOOSE_EXTENSION)
             }
         }
 

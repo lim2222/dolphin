@@ -65,6 +65,9 @@ class EmulatedController private constructor(private val pointer: Long) : Contro
         external fun getSelectedWiimoteAttachment(controllerIndex: Int): Int
 
         @JvmStatic
+        external fun setSelectedWiimoteAttachment(controllerIndex: Int, attachment: Int)
+
+        @JvmStatic
         external fun getSidewaysWiimoteSetting(controllerIndex: Int): NumericSetting
     }
 }

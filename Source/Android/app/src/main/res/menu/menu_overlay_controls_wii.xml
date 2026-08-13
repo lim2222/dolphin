@@ -44,6 +44,10 @@
         android:title="@string/emulation_choose_controller"/>
 
     <item
+        android:id="@+id/menu_emulation_choose_extension"
+        android:title="@string/emulation_choose_extension"/>
+
+    <item
         android:id="@+id/menu_emulation_ir_group"
         android:title="@string/emulation_ir_group">
         <menu>

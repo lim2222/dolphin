@@ -209,6 +209,33 @@ Java_org_dolphinemu_dolphinemu_features_input_model_controlleremu_EmulatedContro
   return static_cast<jint>(attachments->GetSelectedAttachment());
 }
 
+// Set the real Wii Remote extension for an emulated wiimote (slot 0 = Wiimote 1).
+// overlayValue: 0=None, 1=Nunchuk, 2=Classic, 3=TaTaCon (matches the in-game menu).
+// Writes the runtime attachment (live value, applied on the next Wiimote::Update via
+// HandleExtensionSwap) AND persists it to the per-game WiimoteNew.ini so the choice
+// survives game restart. Does not touch global defaults or other wiimote slots.
+JNIEXPORT void JNICALL
+Java_org_dolphinemu_dolphinemu_features_input_model_controlleremu_EmulatedController_setSelectedWiimoteAttachment(
+    JNIEnv* env, jclass, jint controller_index, jint overlayValue)
+{
+  const u32 attachment_index = [overlayValue]() -> u32 {
+    switch (overlayValue)
+    {
+      case 1: return 1; // Nunchuk
+      case 2: return 2; // Classic
+      case 3: return 8; // TaTaCon
+      default: return 0; // None / Wii Remote only
+    }
+  }();
+
+  auto* attachments = static_cast<ControllerEmu::Attachments*>(
+      Wiimote::GetWiimoteGroup(controller_index, WiimoteEmu::WiimoteGroup::Attachments));
+  attachments->SetSelectedAttachment(attachment_index);
+
+  // Persist to the per-game WiimoteNew.ini so the next game launch keeps this extension.
+  Wiimote::GetConfig()->SaveConfig();
+}
+
 JNIEXPORT jobject JNICALL
 Java_org_dolphinemu_dolphinemu_features_input_model_controlleremu_EmulatedController_getSidewaysWiimoteSetting(
     JNIEnv* env, jclass, jint controller_index)

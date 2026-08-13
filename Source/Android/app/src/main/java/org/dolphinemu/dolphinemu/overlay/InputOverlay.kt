@@ -6,11 +6,14 @@ import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
+import android.database.ContentObserver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -47,6 +50,14 @@ import java.util.Arrays
  */
 class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(context, attrs),
     OnTouchListener {
+
+    // Re-layout the overlay when the device orientation changes so the per-orientation
+    // extension override (keyed by "-Portrait") is re-read and applied.
+    private val orientationObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) {
+            refreshControls()
+        }
+    }
 
     private val overlayButtons: MutableSet<InputOverlayDrawableButton> = HashSet()
     private val overlayDpads: MutableSet<InputOverlayDrawableDpad> = HashSet()
@@ -333,6 +344,18 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
 
         // Request focus for the overlay so it has priority on presses.
         requestFocus()
+
+        // Watch for orientation changes so the per-orientation extension override re-applies.
+        context?.contentResolver?.registerContentObserver(
+            android.provider.Settings.System.getUriFor(android.provider.Settings.System.USER_ROTATION),
+            false,
+            orientationObserver
+        )
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        context?.contentResolver?.unregisterContentObserver(orientationObserver)
     }
 
 	fun recenterPointer() {
@@ -4321,12 +4344,79 @@ class InputOverlay(context: Context?, attrs: AttributeSet?) : SurfaceView(contex
             )
         }
 
+        /**
+         * Per-game + per-orientation overlay extension override.
+         *
+         * The overlay type derivation in [configuredControllerType] normally follows the
+         * real Wii Remote attachment config. This lets the user override it from the in-game
+         * side menu on a per-game / per-orientation basis without touching the saved
+         * wiimote configuration. Stored in SharedPreferences (key includes gameId + orientation).
+         *
+         * Value meanings (mirror the real attachment enumeration used by configuredControllerType):
+         *   -1 = no override (follow real attachment)
+         *   0  = None            -> OVERLAY_NONE
+         *   1  = Nunchuk         -> OVERLAY_WIIMOTE_NUNCHUK
+         *   2  = Classic         -> OVERLAY_WIIMOTE_CLASSIC
+         *   3  = Tatacon         -> OVERLAY_WIIMOTE_TATACON
+         *   4  = Wiimote (no ext) -> OVERLAY_WIIMOTE
+         */
+        private const val OVERLAY_EXT_OVERRIDE_NONE = 0
+        private const val OVERLAY_EXT_OVERRIDE_NUNCHUK = 1
+        private const val OVERLAY_EXT_OVERRIDE_CLASSIC = 2
+        private const val OVERLAY_EXT_OVERRIDE_TATACON = 3
+        private const val OVERLAY_EXT_OVERRIDE_WIIMOTE = 4
+
+        @JvmStatic
+        fun getOverlayExtensionOverride(orientation: String): Int {
+            val gameId = NativeLibrary.GetCurrentGameID() ?: return -1
+            val prefs = PreferenceManager.getDefaultSharedPreferences(DolphinApplication.getAppContext())
+            return prefs.getInt("OverlayExtension_${gameId}${orientation}", -1)
+        }
+
+        @JvmStatic
+        fun setOverlayExtensionOverride(orientation: String, value: Int) {
+            val gameId = NativeLibrary.GetCurrentGameID() ?: return
+            val prefs = PreferenceManager.getDefaultSharedPreferences(DolphinApplication.getAppContext())
+            prefs.edit().putInt("OverlayExtension_${gameId}${orientation}", value).apply()
+        }
+
+        private fun overlayTypeFromExtensionOverride(override: Int): Int {
+            // Per user-observed behavior: choosing "None" extension shows the plain Wii Remote
+            // overlay (same as OVERLAY_WIIMOTE), not a hidden overlay. So map None -> WIIMOTE.
+            return when (override) {
+                OVERLAY_EXT_OVERRIDE_NONE -> OVERLAY_WIIMOTE
+                OVERLAY_EXT_OVERRIDE_NUNCHUK -> OVERLAY_WIIMOTE_NUNCHUK
+                OVERLAY_EXT_OVERRIDE_CLASSIC -> OVERLAY_WIIMOTE_CLASSIC
+                OVERLAY_EXT_OVERRIDE_TATACON -> OVERLAY_WIIMOTE_TATACON
+                OVERLAY_EXT_OVERRIDE_WIIMOTE -> OVERLAY_WIIMOTE
+                else -> -1
+            }
+        }
+
         @JvmStatic
         val configuredControllerType: Int
             get() {
                 val controllerSetting =
                     if (NativeLibrary.IsEmulatingWii()) IntSetting.MAIN_OVERLAY_WII_CONTROLLER else IntSetting.MAIN_OVERLAY_GC_CONTROLLER
                 val controllerIndex = controllerSetting.int
+
+                // Per-game overlay extension override (in-game side menu). Single value per game
+                // (no orientation dimension) because the real Wii Remote extension is one value
+                // persisted to the per-game WiimoteNew.ini. This mirrors the real attachment set
+                // via setSelectedWiimoteAttachment, so overlay and game stay in sync.
+                if (NativeLibrary.IsEmulatingWii()) {
+                    val override = getOverlayExtensionOverride("")
+                    if (override >= 0) {
+                        val overriddenType = overlayTypeFromExtensionOverride(override)
+                        if (overriddenType >= 0 &&
+                            (overriddenType == OVERLAY_NONE ||
+                                (controllerIndex in 4 until 8 &&
+                                    getSettingForWiimoteSource(controllerIndex - 4).int == 1))
+                        ) {
+                            return overriddenType
+                        }
+                    }
+                }
 
                 if (controllerIndex in 0 until 4) {
                     // GameCube controller
